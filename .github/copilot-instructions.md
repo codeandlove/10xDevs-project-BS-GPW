@@ -2,69 +2,69 @@
 
 {{project-description}}
 
-## Tech Stack
+## FRONTEND
 
-- Astro 5
-- TypeScript 5
-- React 19
-- Tailwind 4
-- Shadcn/ui
+### Guidelines for REACT
 
-## Project Structure
+#### REACT_CODING_STANDARDS
 
-When introducing changes to the project, always follow the directory structure below:
+- Use functional components with hooks instead of class components
+- Implement React.memo() for expensive components that render often with the same props
+- Utilize React.lazy() and Suspense for code-splitting and performance optimization
+- Use the useCallback hook for event handlers passed to child components to prevent unnecessary re-renders
+- Prefer useMemo for expensive calculations to avoid recomputation on every render
+- Implement useId() for generating unique IDs for accessibility attributes
+- Use the new use hook for data fetching in React 19+ projects
+- Leverage Server Components for {{data_fetching_heavy_components}} when using React with Next.js or similar frameworks
+- Consider using the new useOptimistic hook for optimistic UI updates in forms
+- Use useTransition for non-urgent state updates to keep the UI responsive
 
-- `./src` - source code
-- `./src/layouts` - Astro layouts
-- `./src/pages` - Astro pages
-- `./src/pages/api` - API endpoints
-- `./src/middleware/index.ts` - Astro middleware
-- `./src/db` - Supabase clients and types
-- `./src/types.ts` - Shared types for backend and frontend (Entities, DTOs)
-- `./src/components` - Client-side components written in Astro (static) and React (dynamic)
-- `./src/components/ui` - Client-side components from Shadcn/ui
-- `./src/lib` - Services and helpers
-- `./src/assets` - static internal assets
-- `./public` - public assets
+### Guidelines for ASTRO
 
-When modifying the directory structure, always update this section.
-
-## Coding practices
-
-### Guidelines for clean code
-
-- Use feedback from linters to improve the code when making changes.
-- Prioritize error handling and edge cases.
-- Handle errors and edge cases at the beginning of functions.
-- Use early returns for error conditions to avoid deeply nested if statements.
-- Place the happy path last in the function for improved readability.
-- Avoid unnecessary else statements; use if-return pattern instead.
-- Use guard clauses to handle preconditions and invalid states early.
-- Implement proper error logging and user-friendly error messages.
-- Consider using custom error types or error factories for consistent error handling.
-
-## Frontend
-
-### General Guidelines
+#### ASTRO_CODING_STANDARDS
 
 - Use Astro components (.astro) for static content and layout
-- Implement framework components in React only when interactivity is needed
+- Implement framework components in {{framework_name}} only when interactivity is needed
+- Leverage View Transitions API for smooth page transitions
+- Use content collections with type safety for blog posts, documentation, etc.
+- Implement middleware for request/response modification
+- Use image optimization with the Astro Image integration
+- Leverage Server Endpoints for API routes
+- Implement hybrid rendering with server-side rendering where needed
+- Use Astro.cookies for server-side cookie management
+- Leverage import.meta.env for environment variables
 
-### Guidelines for Styling
+#### ASTRO_ISLANDS
 
-#### Tailwind
+- Use client:visible directive for components that should hydrate when visible in viewport
+- Implement shared state with nanostores instead of prop drilling between islands
+- Use content collections for type-safe content management of structured content
+- Leverage client:media directive for components that should only hydrate at specific breakpoints
+- Implement partial hydration strategies to minimize JavaScript sent to the client
+- Use client:only for components that should never render on the server
+- Leverage client:idle for non-critical UI elements that can wait until the browser is idle
+- Implement client:load for components that should hydrate immediately
+- Use Astro's transition:\* directives for view transitions between pages
+- Leverage props for passing data from Astro to framework components
+
+### Guidelines for STYLING
+
+#### TAILWIND
 
 - Use the @layer directive to organize styles into components, utilities, and base layers
+- Implement Just-in-Time (JIT) mode for development efficiency and smaller CSS bundles
 - Use arbitrary values with square brackets (e.g., w-[123px]) for precise one-off designs
+- Leverage the @apply directive in component classes to reuse utility combinations
 - Implement the Tailwind configuration file for customizing theme, plugins, and variants
+- Use component extraction for repeated UI patterns instead of copying utility classes
 - Leverage the theme() function in CSS for accessing Tailwind theme values
 - Implement dark mode with the dark: variant
 - Use responsive variants (sm:, md:, lg:, etc.) for adaptive designs
-- Leverage state variants (hover:, focus-visible:, active:, etc.) for interactive elements
+- Leverage state variants (hover:, focus:, active:, etc.) for interactive elements
 
-### Guidelines for Accessibility
+### Guidelines for ACCESSIBILITY
 
-#### ARIA Best Practices
+#### ARIA
 
 - Use ARIA landmarks to identify regions of the page (main, navigation, search, etc.)
 - Apply appropriate ARIA roles to custom interface elements that lack semantic HTML equivalents
@@ -75,39 +75,122 @@ When modifying the directory structure, always update this section.
 - Use aria-describedby to associate descriptive text with form inputs or complex elements
 - Implement aria-current for indicating the current item in a set, navigation, or process
 - Avoid redundant ARIA that duplicates the semantics of native HTML elements
+- Apply aria-invalid and appropriate error messaging for form validation in {{form_validation}}
 
-### Guidelines for Astro
+#### ACCESSIBILITY_TESTING
 
-- Leverage View Transitions API for smooth page transitions (use ClientRouter)
-- Use content collections with type safety for blog posts, documentation, etc.
-- Leverage Server Endpoints for API routes
-- Use POST, GET  - uppercase format for endpoint handlers
-- Use `export const prerender = false` for API routes
-- Use zod for input validation in API routes
-- Extract logic into services in `src/lib/services`
-- Implement middleware for request/response modification
-- Use image optimization with the Astro Image integration
-- Implement hybrid rendering with server-side rendering where needed
-- Use Astro.cookies for server-side cookie management
-- Leverage import.meta.env for environment variables
+- Test keyboard navigation to verify all interactive elements are operable without a mouse
+- Verify screen reader compatibility with NVDA, JAWS, and VoiceOver for {{critical_user_journeys}}
+- Use automated testing tools like Axe, WAVE, or Lighthouse to identify common accessibility issues
+- Check color contrast using tools like Colour Contrast Analyzer for all text and UI components
+- Test with page zoomed to 200% to ensure content remains usable and visible
+- Perform manual accessibility audits using WCAG 2.2 checklist for key user flows
+- Test with voice recognition software like Dragon NaturallySpeaking for voice navigation
+- Validate form inputs have proper labels, instructions, and error handling mechanisms
+- Conduct usability testing with disabled users representing various disability types
+- Implement accessibility unit tests for UI components to prevent regression
 
-### Guidelines for React
+#### MOBILE_ACCESSIBILITY
 
-- Use functional components with hooks instead of class components
-- Never use "use client" and other Next.js directives as we use React with Astro
-- Extract logic into custom hooks in `src/components/hooks`
-- Implement React.memo() for expensive components that render often with the same props
-- Utilize React.lazy() and Suspense for code-splitting and performance optimization
-- Use the useCallback hook for event handlers passed to child components to prevent unnecessary re-renders
-- Prefer useMemo for expensive calculations to avoid recomputation on every render
-- Implement useId() for generating unique IDs for accessibility attributes
-- Consider using the new useOptimistic hook for optimistic UI updates in forms
-- Use useTransition for non-urgent state updates to keep the UI responsive
+- Ensure touch targets are at least 44 by 44 pixels for comfortable interaction on mobile devices
+- Implement proper viewport configuration to support pinch-to-zoom and prevent scaling issues
+- Design layouts that adapt to both portrait and landscape orientations without loss of content
+- Support both touch and keyboard navigation for hybrid devices with {{input_methods}}
+- Ensure interactive elements have sufficient spacing to prevent accidental activation
+- Test with mobile screen readers like VoiceOver (iOS) and TalkBack (Android)
+- Design forms that work efficiently with on-screen keyboards and autocomplete functionality
+- Implement alternatives to complex gestures that require fine motor control
+- Ensure content is accessible when device orientation is locked for users with fixed devices
+- Provide alternatives to motion-based interactions for users with vestibular disorders
 
-### Backend and Database
+#### WCAG_PERCEIVABLE
 
-- Use Supabase for backend services, including authentication and database interactions.
-- Follow Supabase guidelines for security and performance.
-- Use Zod schemas to validate data exchanged with the backend.
-- Use supabase from context.locals in Astro routes instead of importing supabaseClient directly
-- Use SupabaseClient type from `src/db/supabase.client.ts`, not from `@supabase/supabase-js`
+- Provide text alternatives for non-text content including images, icons, and graphics with appropriate alt attributes
+- Ensure pre-recorded audio-visual content has captions, audio descriptions, and transcripts for {{media_content}}
+- Maintain minimum contrast ratios of 4.5:1 for normal text and 3:1 for large text and UI components
+- Enable content to be presented in different ways without losing information or structure when zoomed or resized
+- Avoid using color alone to convey information; pair with text, patterns, or icons for {{status_indicators}}
+- Provide controls to pause, stop, or hide any moving, blinking, or auto-updating content
+- Ensure text can be resized up to 200% without loss of content or functionality in {{responsive_layouts}}
+- Use responsive design that adapts to different viewport sizes and zoom levels without horizontal scrolling
+- Enable users to customize text spacing (line height, paragraph spacing, letter/word spacing) without breaking layouts
+
+#### WCAG_OPERABLE
+
+- Make all functionality accessible via keyboard with visible focus indicators for {{interactive_elements}}
+- Avoid keyboard traps where focus cannot move away from a component via standard navigation
+- Provide mechanisms to extend, adjust, or disable time limits if present in {{timed_interactions}}
+- Avoid content that flashes more than three times per second to prevent seizure triggers
+- Implement skip navigation links to bypass blocks of repeated content across pages
+- Use descriptive page titles, headings, and link text that indicate purpose and destination
+- Ensure focus order matches the visual and logical sequence of information presentation
+- Support multiple ways to find content (search, site map, logical navigation hierarchy)
+- Allow pointer gesture actions to be accomplished with a single pointer without path-based gestures
+- Implement pointer cancellation to prevent unintended function activation, especially for {{critical_actions}}
+
+#### WCAG_UNDERSTANDABLE
+
+- Specify the human language of the page and any language changes using lang attributes
+- Ensure components with the same functionality have consistent identification and behavior across {{application_sections}}
+- Provide clear labels, instructions, and error messages for user inputs and {{form_elements}}
+- Implement error prevention for submissions with legal or financial consequences (confirmation, review, undo)
+- Make navigation consistent across the site with predictable patterns for menus and interactive elements
+- Ensure that receiving focus or changing settings does not automatically trigger unexpected context changes
+- Design context-sensitive help for complex interactions including validated input formats
+- Use clear language and define unusual terms, abbreviations, and jargon for {{domain_specific_content}}
+- Provide visual and programmatic indication of current location within navigation systems
+
+#### WCAG_ROBUST
+
+- Use valid, well-formed markup that follows HTML specifications for {{document_structure}}
+- Provide name, role, and value information for all user interface components
+- Ensure custom controls and interactive elements maintain compatibility with assistive technologies
+- Implement status messages that can be programmatically determined without receiving focus
+- Use semantic HTML elements that correctly describe the content they contain (buttons, lists, headings, etc.)
+- Validate code against technical specifications to minimize compatibility errors
+- Test with multiple browsers and assistive technologies for cross-platform compatibility
+- Avoid deprecated HTML elements and attributes that may not be supported in future technologies
+
+## DATABASE
+
+### Guidelines for SQL
+
+#### POSTGRES
+
+- Use connection pooling to manage database connections efficiently
+- Implement JSONB columns for semi-structured data instead of creating many tables for {{flexible_data}}
+- Use materialized views for complex, frequently accessed read-only data
+
+## DEVOPS
+
+### Guidelines for CI_CD
+
+#### GITHUB_ACTIONS
+
+- Check if `package.json` exists in project root and summarize key scripts
+- Check if `.nvmrc` exists in project root
+- Check if `.env.example` exists in project root to identify key `env:` variables
+- Always use terminal command: `git branch -a | cat` to verify whether we use `main` or `master` branch
+- Always use `env:` variables and secrets attached to jobs instead of global workflows
+- Always use `npm ci` for Node-based dependency setup
+- Extract common steps into composite actions in separate files
+- Once you're done, as a final step conduct the following: for each public action always use <tool>"Run Terminal"</tool> to see what is the most up-to-date version (use only major version) - extract tag_name from the response:
+- `bash curl -s https://api.github.com/repos/{owner}/{repo}/releases/latest `
+
+## TESTING
+
+### Guidelines for E2E
+
+#### PLAYWRIGHT
+
+- Initialize configuration only with Chromium/Desktop Chrome browser
+- Use browser contexts for isolating test environments
+- Implement the Page Object Model for maintainable tests
+- Use locators for resilient element selection
+- Leverage API testing for backend validation
+- Implement visual comparison with expect(page).toHaveScreenshot()
+- Use the codegen tool for test recording
+- Leverage trace viewer for debugging test failures
+- Implement test hooks for setup and teardown
+- Use expect assertions with specific matchers
+- Leverage parallel execution for faster test runs

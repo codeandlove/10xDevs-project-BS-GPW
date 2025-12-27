@@ -1,94 +1,151 @@
-# 10x Astro Starter
+# Black Swan Grid (GPW)
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+## Project description
 
-## Tech Stack
+Black Swan Grid is a desktop-focused web application MVP that helps retail investors and short-term traders on the Warsaw Stock Exchange (GPW) quickly identify and inspect historical price-anomaly events (e.g., large intraday moves, volatility spikes). The app shows an interactive grid (dates × tickers), lets users open AI-generated summaries for events, and provides deep links to full event pages and source articles. Data is sourced from NocoDB, authentication and subscriptions are handled by Supabase and Stripe.
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+## Table of contents
 
-## Prerequisites
+- Tech stack
+- Getting started locally
+- Available scripts
+- Project scope
+- Project status
+- License
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+## Tech stack
 
-## Getting Started
+- Frontend: Astro 5 with React 19 for interactive components
+- Language: TypeScript 5
+- Styling: Tailwind CSS 4
+- UI components: shadcn/ui (React)
+- Backend / Auth: Supabase (Postgres + Auth)
+- AI access: Openrouter.ai (models via external provider)
+- CI/CD: GitHub Actions
+- Hosting: DigitalOcean (Docker image)
 
-1. Clone the repository:
+## Getting started locally
+
+Prerequisites
+
+- Node.js (use nvm) — recommended version from .nvmrc: 22.14.0
+- npm (comes with Node.js) or your preferred package manager
+
+Quick start
+
+1. Use Node version from .nvmrc
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
+nvm install
+nvm use
 ```
 
-2. Install dependencies:
+2. Install dependencies
 
 ```bash
 npm install
 ```
 
-3. Run the development server:
+3. Create environment file
+
+Create a `.env` (or `.env.local`) in project root with required variables. Example variables (names are suggestions—match your app config):
+
+- NOCODB_BASE_URL=\"https://your-nocodb-instance/api/v1\"
+- NOCODB_API_KEY=\"your_nocodb_api_key\" (if needed)
+- SUPABASE_URL=\"https://your-supabase-url\"
+- SUPABASE_ANON_KEY=\"your-supabase-anon-key\"
+- SUPABASE_SERVICE_ROLE_KEY=\"your-supabase-service-role-key\" (server-side only)
+- STRIPE*PUBLIC_KEY=\"pk*...\"
+- STRIPE*SECRET_KEY=\"sk*...\"
+- OPENROUTER_API_KEY=\"your_openrouter_api_key\"
+
+Note: Do not commit secrets. Keep server-side keys (service role) out of client bundles.
+
+4. Run in development mode
 
 ```bash
 npm run dev
 ```
 
-4. Build for production:
+Open http://localhost:3000 (or the port printed by Astro) in your browser.
+
+5. Build and preview
 
 ```bash
 npm run build
+npm run preview
 ```
 
-## Available Scripts
+## Available scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
+Extracted from `package.json`:
 
-## Project Structure
+- `npm run dev` — start development server (Astro)
+- `npm run build` — build for production
+- `npm run preview` — preview built site locally
+- `npm run astro` — run astro CLI
+- `npm run lint` — run ESLint checks
+- `npm run lint:fix` — run ESLint with auto-fix
+- `npm run format` — run Prettier to format files
 
-```md
-.
-├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
-```
 
-## AI Development Support
+## Project scope (MVP)
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
+Includes
 
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
+- Interactive virtualized grid displaying events per ticker and date (default: last week)
+- Cell-level event display with percent change and event type coloring
+- Sidebar (33% width) with first AI summary and article links
+- Full event page with list of AI summaries and articles
+- Deep links/permalinks per event (protected by auth)
+- Supabase-based authentication and 7-day trial logic
+- Client-side cache (in-memory + LocalStorage) with stale-while-revalidate
+- Virtualization using react-window; default visible rows 10–25
+- Basic accessibility (keyboard navigation, aria attributes)
 
-### Cursor IDE
+Out of scope for MVP
 
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
+- Editing data or adding user notes
+- Personalized alerts (email/push)
+- Real-time market API integration (only historical data from NocoDB)
+- Advanced visualizations (correlations, trend charts)
+- Mobile/PWA-specific UI
+- Admin dashboard
+- Production monitoring (Sentry) and server-side Redis cache (can be added post-MVP)
 
-### GitHub Copilot
+## Project status
 
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
+- Current stage: MVP planning and initial implementation (core components prioritized)
+- High priority tasks: middleware auth, client cache hook, grid + virtualization, sidebar + full view, auth/trial flows
+- Medium priority: optional API proxy for NocoDB, Playwright E2E tests
+- Low priority: monitoring, server cache, admin UI
 
-### Windsurf
-
-The `.windsurfrules` file contains AI configuration for Windsurf.
+If you want a concise task list for the first sprint (PRs), ask and a prioritized backlog will be generated.
 
 ## Contributing
 
-Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
+- Follow existing code style (ESLint + Prettier).
+- Run lint and format before committing: `npm run lint` and `npm run format`.
+
+## Testing
+
+- End-to-end tests: Playwright (recommended)
+- Create mocks in `scripts/test-data/` if needed for stable E2E runs.
+
+## Security notes
+
+- Keep Supabase service role keys and Stripe secret keys server-side only
+- If you implement a server proxy for NocoDB, store service keys server-side and protect endpoints with rate limiting
+- Do not commit `.env` files with secrets
 
 ## License
 
-MIT
+No license specified. Please add a LICENSE file (for example: MIT) if you want to open-source this repository.
+
+---
+
+If you'd like, I can now:
+
+- generate a short executive summary for README top (1-2 paragraphs),
+- add a `.env.example` template with recommended keys,
+- create a CONTRIBUTING.md or an initial Playwright test scaffold.
