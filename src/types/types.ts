@@ -80,3 +80,22 @@ export type {
   WebhookEventRecord,
   ProcessEventResult,
 } from "./webhook.types";
+
+// ============================================
+// NocoDB Proxy Types
+// ============================================
+
+export type {
+  EventType,
+  ArticleSentiment,
+  DateRange,
+  GridQueryParams,
+  SummariesQueryParams,
+  BlackSwanEventMinimal,
+  GridResponse,
+  AISummary,
+  HistoricDataPoint,
+  BlackSwanEventDetailed,
+  EventDetailsResponse,
+  SummariesResponse,
+} from "./nocodb.types";
