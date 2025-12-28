@@ -68,3 +68,15 @@ export type {
   CheckoutSessionDTO,
   PortalSessionDTO,
 } from "./subscription.types";
+
+// ============================================
+// Webhook Types
+// ============================================
+
+export type {
+  StripeWebhookEvent,
+  WebhookEventType,
+  WebhookProcessingResult,
+  WebhookEventRecord,
+  ProcessEventResult,
+} from "./webhook.types";
