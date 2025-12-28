@@ -56,3 +56,15 @@ export interface UpdateUserMetadataResponseDTO {
 export interface SoftDeleteUserCommand {
   auth_uid: string;
 }
+
+// ============================================
+// Subscription Management Types
+// ============================================
+
+export type {
+  CreateCheckoutDTO,
+  CreatePortalDTO,
+  SubscriptionStatusDTO,
+  CheckoutSessionDTO,
+  PortalSessionDTO,
+} from "./subscription.types";
