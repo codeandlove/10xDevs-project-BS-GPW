@@ -6,6 +6,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { supabaseClient } from "@/db/supabase.client";
+import { apiClient } from "@/lib/api-client";
 import type { UserProfileDTO } from "@/types/types";
 
 interface AuthContextValue {
@@ -29,11 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch user profile from API
   const fetchProfile = async () => {
     try {
-      const response = await fetch("/api/users/me");
-      if (response.ok) {
-        const data = await response.json();
-        setProfile(data);
-      }
+      const response = await apiClient.get<{ success: boolean; data: { user: UserProfileDTO } }>("/api/users/me");
+      setProfile(response.data?.user || null);
     } catch {
       // Silent fail - profile will remain null
     }

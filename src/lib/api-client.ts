@@ -3,9 +3,12 @@
  * Centralized fetch wrapper with error handling and retry logic
  */
 
+import { supabaseClient } from "@/db/supabase.client";
+
 interface FetchOptions extends RequestInit {
   retry?: number;
   retryDelay?: number;
+  skipAuth?: boolean; // Skip automatic auth header injection
 }
 
 class APIError extends Error {
@@ -23,8 +26,21 @@ class APIError extends Error {
  * Enhanced fetch with error handling and retry
  */
 async function fetchWithRetry(url: string, options: FetchOptions = {}): Promise<Response> {
-  const { retry = 3, retryDelay = 1000, ...fetchOptions } = options;
+  const { retry = 3, retryDelay = 1000, skipAuth = false, ...fetchOptions } = options;
   let lastError: Error | null = null;
+
+  // Automatically add Authorization header if not skipped
+  if (!skipAuth) {
+    const {
+      data: { session },
+    } = await supabaseClient.auth.getSession();
+
+    if (session?.access_token) {
+      const headers = new Headers(fetchOptions.headers || {});
+      headers.set("Authorization", `Bearer ${session.access_token}`);
+      fetchOptions.headers = headers;
+    }
+  }
 
   for (let attempt = 0; attempt <= retry; attempt++) {
     try {

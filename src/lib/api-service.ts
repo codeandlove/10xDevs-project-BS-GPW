@@ -49,7 +49,7 @@ export async function fetchUserProfile(): Promise<UserProfileDTO> {
  */
 export async function initializeUser(authUid: string, email?: string) {
   const url = API_ENDPOINTS.initializeUser();
-  return apiClient.post(url, { auth_uid: authUid, email });
+  return apiClient.post(url, { auth_uid: authUid, email }, { skipAuth: true });
 }
 
 /**

@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Loader2 } from "lucide-react";
+import { apiClient } from "@/lib/api-client";
 
 interface ManageSubscriptionButtonProps {
   onError?: (error: Error) => void;
@@ -18,21 +19,9 @@ export function ManageSubscriptionButton({ onError }: ManageSubscriptionButtonPr
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/subscriptions/create-portal", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          return_url: window.location.href,
-        }),
+      const data = await apiClient.post<{ url?: string }>("/api/subscriptions/create-portal", {
+        return_url: window.location.href,
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to create portal session");
-      }
-
-      const data = await response.json();
 
       if (data.url) {
         window.location.href = data.url;

@@ -192,9 +192,11 @@ Wszystkie endpointy operują na tabeli `app_users` i są zabezpieczone przez Sup
 
 ---
 
-### 2.3. PUT /api/users/me
+### 2.3. PATCH /api/users/me
 
-**Metoda HTTP:** PUT
+**Metoda HTTP:** PATCH
+
+**Nota:** Plan oryginalnie wymagał PUT, ale PATCH jest semantycznie bardziej poprawny dla częściowej aktualizacji (tylko metadata). PUT sugerowałby pełną zamianę zasobu.
 
 **Struktura URL:** `/api/users/me`
 
@@ -1427,6 +1429,7 @@ Plan implementacji definiuje:
 6. ✅ Optymalizacje wydajnościowe (caching, indexing)
 7. ✅ Szczegółowe kroki implementacji
 8. ✅ Plan testowania i deployment
+9. ✅ Dokumentacja API
 
 **Następne kroki:**
 

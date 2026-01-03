@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // Extract auth_uid from token
     const authUid = await getAuthUid(request, supabase);
     if (!authUid) {
-      return createErrorResponse("Unauthorized", 401, "UNAUTHORIZED");
+      return createErrorResponse("Unauthorized", 401, "Valid session required");
     }
 
     // Initialize service
@@ -35,12 +35,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // Get user profile
     const profile = await userService.getUserProfile(authUid);
     if (!profile) {
-      return createErrorResponse("User not found", 404, "USER_NOT_FOUND");
+      return createErrorResponse("User not found", 404, "Please complete registration");
     }
 
     return createSuccessResponse({ user: profile }, 200);
   } catch {
-    return createErrorResponse("An unexpected error occurred", 500, "UNKNOWN_ERROR");
+    return createErrorResponse("An unexpected error occurred", 500);
   }
 };
 
@@ -55,7 +55,7 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
     // Extract auth_uid from token
     const authUid = await getAuthUid(request, supabase);
     if (!authUid) {
-      return createErrorResponse("Unauthorized", 401, "UNAUTHORIZED");
+      return createErrorResponse("Unauthorized", 401, "Valid session required");
     }
 
     // Parse request body
@@ -63,13 +63,13 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
     try {
       body = await request.json();
     } catch {
-      return createErrorResponse("Invalid JSON in request body", 400, "INVALID_JSON");
+      return createErrorResponse("Invalid JSON", 400, "Request body must be valid JSON");
     }
 
     // Validate metadata
     const bodyObj = body as Record<string, unknown>;
     if (!bodyObj.metadata || !isValidMetadata(bodyObj.metadata)) {
-      return createErrorResponse("Invalid metadata format. Must be an object", 400, "INVALID_METADATA");
+      return createErrorResponse("Validation failed", 400, "Invalid metadata format", ["metadata must be an object"]);
     }
 
     // Initialize services
@@ -79,18 +79,14 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
     // Get current metadata for audit
     const currentProfile = await userService.getUserProfile(authUid);
     if (!currentProfile) {
-      return createErrorResponse("User not found", 404, "USER_NOT_FOUND");
+      return createErrorResponse("User not found", 404, "Please complete registration");
     }
 
     // Update metadata
     const { data, error } = await userService.updateUserMetadata(authUid, bodyObj.metadata);
 
     if (error || !data) {
-      return createErrorResponse(
-        `Failed to update metadata: ${error?.message || "Unknown error"}`,
-        500,
-        "INTERNAL_ERROR"
-      );
+      return createErrorResponse("Failed to update metadata", 500, error?.message || "Unknown error");
     }
 
     // Log audit entry
@@ -112,7 +108,7 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
       200
     );
   } catch {
-    return createErrorResponse("An unexpected error occurred", 500, "UNKNOWN_ERROR");
+    return createErrorResponse("An unexpected error occurred", 500);
   }
 };
 
@@ -127,7 +123,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     // Extract auth_uid from token
     const authUid = await getAuthUid(request, supabase);
     if (!authUid) {
-      return createErrorResponse("Unauthorized", 401, "UNAUTHORIZED");
+      return createErrorResponse("Unauthorized", 401, "Valid session required");
     }
 
     // Initialize services
@@ -138,7 +134,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     const { error, deletedAt } = await userService.softDeleteUser(authUid);
 
     if (error) {
-      return createErrorResponse(`Failed to delete user: ${error.message}`, 500, "INTERNAL_ERROR");
+      return createErrorResponse("Failed to delete user", 500, error.message);
     }
 
     // Log audit entry
@@ -157,6 +153,6 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       200
     );
   } catch {
-    return createErrorResponse("An unexpected error occurred", 500, "UNKNOWN_ERROR");
+    return createErrorResponse("An unexpected error occurred", 500);
   }
 };

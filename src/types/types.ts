@@ -35,6 +35,7 @@ export interface UserProfileDTO {
   stripe_customer_id: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
+  deleted_at: string | null;
 }
 
 // DTO for User Metadata Update

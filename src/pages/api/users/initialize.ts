@@ -21,18 +21,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
     try {
       body = await request.json();
     } catch {
-      return createErrorResponse("Invalid JSON in request body", 400, "INVALID_JSON");
+      return createErrorResponse("Invalid JSON", 400, "Request body must be valid JSON");
     }
 
     // Validate required fields
     const bodyObj = body as Record<string, unknown>;
     if (!bodyObj.auth_uid) {
-      return createErrorResponse("Missing required field: auth_uid", 400, "MISSING_FIELD");
+      return createErrorResponse("Validation failed", 400, "Missing required field: auth_uid", [
+        "auth_uid is required",
+      ]);
     }
 
     // Validate UUID format
     if (!isUUID(bodyObj.auth_uid)) {
-      return createErrorResponse("Invalid auth_uid format. Must be a valid UUID", 400, "INVALID_UUID");
+      return createErrorResponse("Validation failed", 400, "Invalid auth_uid format", [
+        "auth_uid must be a valid UUID",
+      ]);
     }
 
     // Initialize services
@@ -49,14 +53,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // Handle specific database errors
       if (error.code === "23505") {
         // Unique constraint violation
-        return createErrorResponse("User already exists", 409, "USER_EXISTS");
+        return createErrorResponse("User already exists", 409, "A user with this auth_uid already exists");
       }
 
-      return createErrorResponse(`Failed to initialize user: ${error.message}`, 500, "INTERNAL_ERROR");
+      return createErrorResponse("Failed to initialize user", 500, error.message);
     }
 
     if (!data) {
-      return createErrorResponse("Failed to create user", 500, "INTERNAL_ERROR");
+      return createErrorResponse("Failed to create user", 500, "User creation returned no data");
     }
 
     // Log audit entry for user creation
@@ -77,6 +81,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       201
     );
   } catch {
-    return createErrorResponse("An unexpected error occurred", 500, "UNKNOWN_ERROR");
+    return createErrorResponse("An unexpected error occurred", 500);
   }
 };

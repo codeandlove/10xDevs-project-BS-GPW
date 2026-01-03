@@ -1,6 +1,7 @@
 /**
  * API Response Utilities
  * Standard response formatters for API endpoints
+ * Zgodnie z api-plan.md sekcja 5.1
  */
 
 export interface ApiSuccessResponse<T = unknown> {
@@ -9,14 +10,13 @@ export interface ApiSuccessResponse<T = unknown> {
   timestamp: string;
 }
 
+/**
+ * Standard error response format zgodnie z api-plan.md sekcja 5.1
+ */
 export interface ApiErrorResponse {
-  success: false;
-  error: {
-    message: string;
-    code?: string;
-    details?: unknown;
-  };
-  timestamp: string;
+  error: string; // Short error message (required)
+  message?: string; // Detailed explanation (optional)
+  details?: string[]; // Array of validation errors (optional)
 }
 
 /**
@@ -38,17 +38,17 @@ export function createSuccessResponse<T>(data: T, status = 200): Response {
 }
 
 /**
- * Create a standardized error response
+ * Create a standardized error response zgodnie z api-plan.md sekcja 5.1
+ * @param error - Short error message (required)
+ * @param status - HTTP status code (default: 500)
+ * @param message - Detailed explanation (optional)
+ * @param details - Array of validation errors (optional)
  */
-export function createErrorResponse(message: string, status = 500, code?: string, details?: unknown): Response {
+export function createErrorResponse(error: string, status = 500, message?: string, details?: string[]): Response {
   const response: ApiErrorResponse = {
-    success: false,
-    error: {
-      message,
-      code,
-      details,
-    },
-    timestamp: new Date().toISOString(),
+    error,
+    ...(message && { message }),
+    ...(details && { details }),
   };
 
   return new Response(JSON.stringify(response), {
