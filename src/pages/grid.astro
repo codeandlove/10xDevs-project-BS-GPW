@@ -1,0 +1,12 @@
+---
+/**
+ * Grid View - main application view
+ * Displays interactive grid with Black Swan events
+ */
+import Layout from "@/layouts/Layout.astro";
+import { GridPageWrapper } from "@/components/grid/GridPageWrapper";
+---
+
+<Layout title="Grid - Black Swan Grid">
+  <GridPageWrapper client:load />
+</Layout>

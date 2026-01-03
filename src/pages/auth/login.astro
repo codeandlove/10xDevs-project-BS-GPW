@@ -1,0 +1,29 @@
+---
+/**
+ * Login page
+ */
+import Layout from "@/layouts/Layout.astro";
+import { AuthPageWrapper } from "@/components/auth/AuthPageWrapper";
+
+const returnUrl = Astro.url.searchParams.get("returnUrl") || "/grid";
+---
+
+<Layout title="Zaloguj się - Black Swan Grid">
+  <div class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+    <div class="w-full max-w-md">
+      <div class="mb-8 text-center">
+        <a href="/" class="mb-6 inline-flex items-center gap-2">
+          <span class="text-3xl">🦢</span>
+          <span class="text-2xl font-bold">Black Swan Grid</span>
+        </a>
+        <h1 class="mt-6 text-3xl font-bold">Zaloguj się</h1>
+        <p class="mt-2 text-sm text-muted-foreground">
+          Nie masz konta?{" "}
+          <a href="/auth/register" class="font-medium text-primary hover:underline"> Zarejestruj się </a>
+        </p>
+      </div>
+
+      <AuthPageWrapper client:load mode="login" returnUrl={returnUrl} />
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,14 @@
+---
+/**
+ * Full Detail View - Event details page
+ * Displays complete event information with all AI summaries
+ */
+import Layout from "@/layouts/Layout.astro";
+import { EventDetailView } from "@/components/event/EventDetailView";
+
+const { id } = Astro.params;
+---
+
+<Layout title="Szczegóły wydarzenia - Black Swan Grid">
+  <EventDetailView client:load eventId={id} />
+</Layout>
