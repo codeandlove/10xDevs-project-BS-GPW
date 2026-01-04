@@ -111,7 +111,7 @@ export function GridView() {
           />
         }
       >
-        <div className="py-6">
+        <div>
           {error && (
             <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-center">
               <p className="text-sm font-medium text-red-800">Wystąpił błąd podczas ładowania danych</p>

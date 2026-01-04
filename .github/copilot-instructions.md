@@ -4,6 +4,10 @@
 
 1. Whenever you want to run a command in the terminal, don't! Use simple error_tool instead.
 
+## TASK DOCUMENTATION SUMMARY
+
+1. For the task summary at the end of task job, do not create new `*.md` files as documentation, unless the task explicitly requires it.
+
 ## FRONTEND
 
 ### Guidelines for REACT

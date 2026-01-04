@@ -26,7 +26,7 @@ export function EventHeader({ symbol, occurrenceDate, eventType, percentChange }
           <p className="text-sm text-muted-foreground">{dateText}</p>
         </div>
         <div className={`rounded-lg border px-3 py-1 text-center ${colorClass}`}>
-          <div className="text-xs font-medium uppercase opacity-75">{eventType.replace(/_/g, " ")}</div>
+          <div className="text-xs font-medium uppercase opacity-75">{eventType?.replace(/_/g, " ") || "UNKNOWN"}</div>
           <div className="text-lg font-bold">{percentText}</div>
         </div>
       </div>

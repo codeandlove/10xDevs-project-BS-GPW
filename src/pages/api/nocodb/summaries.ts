@@ -71,10 +71,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // [3] Check rate limit
     const rateLimitResult = checkRateLimit(authUid);
     if (!rateLimitResult.allowed) {
+      const retryAfter = rateLimitResult.resetAt ? Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000) : 60;
+
       return new Response(
         JSON.stringify({
           error: "Rate limit exceeded",
-          message: `Too many requests. Please try again in ${rateLimitResult.retryAfter} seconds.`,
+          message: `Too many requests. Please try again in ${retryAfter} seconds.`,
         }),
         {
           status: 429,
@@ -94,9 +96,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
       event_type: url.searchParams.get("event_type") || undefined,
     };
 
+    console.log("[Summaries API] Request query params:", queryParams);
+
     let validatedParams;
     try {
       validatedParams = SummariesQuerySchema.parse(queryParams);
+      console.log("[Summaries API] Validated params:", validatedParams);
     } catch (error) {
       if (error instanceof ZodError) {
         return new Response(

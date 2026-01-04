@@ -26,7 +26,7 @@ function AppLayoutContent({ children, header, showSubscriptionBanner = true }: A
     <div className="min-h-screen bg-background">
       {header}
       {showSubscriptionBanner && profile && <SubscriptionBanner profile={profile} onUpgrade={handleUpgrade} />}
-      <main className="container mx-auto">{children}</main>
+      <main>{children}</main>
       <ToastContainer />
     </div>
   );

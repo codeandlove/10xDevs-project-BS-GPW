@@ -39,8 +39,17 @@ export const GridQuerySchema = z.object({
 
 /**
  * Event ID path parameter schema
+ * NocoDB może używać różnych formatów ID: liczby, UUID, rec_xxx, etc.
  */
-export const EventIdSchema = z.string().startsWith("rec_", "Invalid NocoDB record ID format");
+export const EventIdSchema = z
+  .string()
+  .min(1, "Event ID is required")
+  .refine(
+    (val) => {
+      return val.length > 0 && val.length < 100;
+    },
+    { message: "Invalid event ID format" }
+  );
 
 /**
  * Summaries query parameters schema

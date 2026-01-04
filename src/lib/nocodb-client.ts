@@ -13,9 +13,17 @@ import type {
 /**
  * NocoDB API configuration
  */
-const NOCODB_API_URL = import.meta.env.NOCODB_API_URL || "https://api.nocodb.com";
+const NOCODB_API_URL = import.meta.env.NOCODB_API_URL;
 const NOCODB_API_TOKEN = import.meta.env.NOCODB_API_TOKEN;
-const NOCODB_TIMEOUT = 5000; // 5 seconds
+const NOCODB_TIMEOUT = 3000; // 3 seconds (zgodnie z planem)
+
+// Walidacja wymaganych zmiennych środowiskowych
+if (!NOCODB_API_URL) {
+  throw new Error("NOCODB_API_URL environment variable is required");
+}
+if (!NOCODB_API_TOKEN) {
+  throw new Error("NOCODB_API_TOKEN environment variable is required");
+}
 
 /**
  * NocoDB table IDs (from environment)
@@ -56,10 +64,17 @@ export class NocoDBQueryBuilder {
    * @param field - Field name
    * @param operator - Comparison operator
    * @param value - Value to compare
+   * @param dateType - For date fields, specify 'exactDate' to use exact date comparison
    */
-  where(field: string, operator: string, value: string | number): this {
+  where(field: string, operator: string, value: string | number, dateType?: "exactDate"): this {
     const encodedValue = encodeURIComponent(String(value));
-    this.filters.push(`(${field},${operator},${encodedValue})`);
+    if (dateType === "exactDate") {
+      // NocoDB date filter format: (field,operator,exactDate,value)
+      this.filters.push(`(${field},${operator},exactDate,${encodedValue})`);
+    } else {
+      // Standard filter format: (field,operator,value)
+      this.filters.push(`(${field},${operator},${encodedValue})`);
+    }
     return this;
   }
 
@@ -105,8 +120,11 @@ export class NocoDBQueryBuilder {
   build(): string {
     const params = new URLSearchParams();
 
+    // NocoDB API: Multiple filters with AND logic
+    // Format: where=(field1,op1,value1)~and(field2,op2,value2)
     if (this.filters.length > 0) {
-      params.set("where", this.filters.join("~and"));
+      const whereClause = this.filters.join("~and");
+      params.set("where", whereClause);
     }
 
     if (this.sortBy) {
@@ -157,16 +175,15 @@ export class NocoDBClient {
       clearTimeout(timeout);
 
       if (!response.ok) {
-        const errorText = await response.text();
         throw new NocoDBError(`NocoDB API error: ${response.statusText}`, response.status, "NOCODB_API_ERROR");
       }
 
       return await response.json();
-    } catch (error) {
+    } catch (error: unknown) {
       clearTimeout(timeout);
 
       // Retry on network errors
-      if (retries > 0 && (error instanceof TypeError || error.name === "AbortError")) {
+      if (retries > 0 && (error instanceof TypeError || (error as Error).name === "AbortError")) {
         console.warn(`[NocoDB] Request failed, retrying... (${retries} attempts left)`);
         await new Promise((resolve) => setTimeout(resolve, 500)); // 500ms delay
         return this.request<T>(endpoint, options, retries - 1);
@@ -176,7 +193,7 @@ export class NocoDBClient {
         throw error;
       }
 
-      if (error.name === "AbortError") {
+      if ((error as Error).name === "AbortError") {
         throw new NocoDBError("NocoDB request timeout", 504, "TIMEOUT");
       }
 
@@ -190,6 +207,11 @@ export class NocoDBClient {
   async queryRecords<T>(tableId: string, queryBuilder: NocoDBQueryBuilder): Promise<NocoDBResponse<T>> {
     const queryString = queryBuilder.build();
     const endpoint = `/api/v2/tables/${tableId}/records?${queryString}`;
+
+    console.log("[NocoDB Client] Query records:");
+    console.log("  Table ID:", tableId);
+    console.log("  Endpoint:", endpoint);
+    console.log("  Base URL:", this.baseUrl);
 
     return this.request<NocoDBResponse<T>>(endpoint);
   }

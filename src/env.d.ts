@@ -15,6 +15,11 @@ interface ImportMetaEnv {
   readonly PUBLIC_SUPABASE_URL: string;
   readonly PUBLIC_SUPABASE_ANON_KEY: string;
   readonly SUPABASE_SERVICE_ROLE_KEY?: string;
+  readonly NOCODB_API_URL: string;
+  readonly NOCODB_API_TOKEN: string;
+  readonly NOCODB_TABLE_BLACK_SWANS: string;
+  readonly NOCODB_TABLE_AI_SUMMARY: string;
+  readonly NOCODB_TABLE_HISTORIC_DATA: string;
 }
 
 interface ImportMeta {

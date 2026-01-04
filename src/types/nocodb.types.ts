@@ -82,6 +82,11 @@ export interface AISummary {
     recovery?: number;
     continued_growth?: number;
   };
+  recommended_action?: {
+    action: "BUY" | "SELL" | "HOLD";
+    justification: string;
+  };
+  keywords?: string[];
   source_url?: string;
 }
 
@@ -131,7 +136,7 @@ export interface SummariesResponse {
   occurrence_date: string;
   event_type?: EventType;
   summaries: AISummary[];
-  total_count: number;
+  total_count: number; // Total number of summaries returned
   cached_at: string; // ISO timestamp
 }
 
@@ -143,33 +148,62 @@ export interface SummariesResponse {
  * NocoDB raw event record
  */
 export interface NocoDBEventRecord {
-  Id: string; // NocoDB record ID
+  Id: string | number; // NocoDB record ID
+  CreatedAt?: string;
+  UpdatedAt?: string | null;
   symbol: string;
   occurrence_date: string;
-  event_type: string;
+  last_close?: number;
+  current_close?: number;
   percent_change: number;
+  current_return?: number;
+  threshold?: number;
+  exceedance?: number;
+  type?: string; // Field name in NocoDB (maps to event_type)
+  // Legacy field names for backwards compatibility
+  event_type?: string;
   open?: number;
   high?: number;
   low?: number;
   close?: number;
   volume?: number;
-  CreatedAt?: string;
-  UpdatedAt?: string;
 }
 
 /**
  * NocoDB raw summary record
  */
 export interface NocoDBSummaryRecord {
-  Id: string;
+  Id: string | number;
+  CreatedAt?: string;
+  UpdatedAt?: string | null;
   symbol: string;
   occurrence_date: string;
-  summary: string;
-  article_sentiment: string;
+  source?: string; // source URL
+  response?: {
+    summary: string;
+    article_sentiment: string;
+    event_type: string; // Event type from response (always present)
+    identified_causes?: string[];
+    predicted_trend_probability?: {
+      further_decline?: number;
+      recovery?: number;
+      continued_growth?: number;
+    };
+    recommended_action?: {
+      action: string; // "BUY" | "SELL" | "HOLD"
+      justification: string;
+    };
+    keywords?: string[];
+    source_article_url?: string;
+  };
+  date?: string; // Alternative date field
+  // Legacy fields (for backwards compatibility)
+  summary?: string;
+  article_sentiment?: string;
   identified_causes?: string; // JSON string
   predicted_trend_probability?: string; // JSON string
   source_url?: string;
-  created_at: string;
+  created_at?: string;
 }
 
 /**

@@ -52,10 +52,10 @@ function calculateDateRange(endDateStr: string, range: DateRange): { startDate: 
  */
 function transformToMinimal(record: NocoDBEventRecord, hasSummary: boolean): BlackSwanEventMinimal {
   return {
-    id: record.Id,
+    id: String(record.Id),
     symbol: record.symbol,
     occurrence_date: record.occurrence_date,
-    event_type: record.event_type as EventType,
+    event_type: (record.type || record.event_type || "VOLATILITY_UP") as EventType,
     percent_change: record.percent_change,
     has_summary: hasSummary,
   };
@@ -65,32 +65,75 @@ function transformToMinimal(record: NocoDBEventRecord, hasSummary: boolean): Bla
  * Transform NocoDB summary record to DTO
  */
 function transformSummary(record: NocoDBSummaryRecord): AISummary {
+  // NocoDB returns data in 'response' object or as direct fields
+  const data = record.response || record;
+
   let identifiedCauses: string[] = [];
-  if (record.identified_causes) {
-    try {
-      identifiedCauses = JSON.parse(record.identified_causes);
-    } catch {
-      identifiedCauses = [];
+  if (data.identified_causes) {
+    if (Array.isArray(data.identified_causes)) {
+      identifiedCauses = data.identified_causes;
+    } else {
+      try {
+        identifiedCauses = JSON.parse(data.identified_causes as string);
+      } catch {
+        identifiedCauses = [];
+      }
     }
   }
 
   let predictedTrendProbability = {};
-  if (record.predicted_trend_probability) {
-    try {
-      predictedTrendProbability = JSON.parse(record.predicted_trend_probability);
-    } catch {
-      predictedTrendProbability = {};
+  if (data.predicted_trend_probability) {
+    if (typeof data.predicted_trend_probability === "object" && !Array.isArray(data.predicted_trend_probability)) {
+      predictedTrendProbability = data.predicted_trend_probability;
+    } else {
+      try {
+        predictedTrendProbability = JSON.parse(data.predicted_trend_probability as string);
+      } catch {
+        predictedTrendProbability = {};
+      }
     }
   }
 
+  // Map sentiment from Polish to English
+  let sentiment: "positive" | "negative" | "neutral" = "neutral";
+  const sentimentValue = data.article_sentiment?.toLowerCase();
+  if (sentimentValue === "pozytywny" || sentimentValue === "positive") {
+    sentiment = "positive";
+  } else if (sentimentValue === "negatywny" || sentimentValue === "negative") {
+    sentiment = "negative";
+  }
+
+  // Use CreatedAt, created_at, or date field for timestamp
+  const dateField = record.CreatedAt || record.created_at || record.date || new Date().toISOString();
+
+  // Get source URL - prioritize response.source_article_url, then record.source, then record.source_url
+  const sourceUrl = record.response?.source_article_url || record.source || record.source_url;
+
+  // Map recommended_action
+  let recommendedAction: { action: "BUY" | "SELL" | "HOLD"; justification: string } | undefined;
+  if (data.recommended_action) {
+    const action = data.recommended_action.action?.toUpperCase();
+    if (action === "BUY" || action === "SELL" || action === "HOLD") {
+      recommendedAction = {
+        action: action as "BUY" | "SELL" | "HOLD",
+        justification: data.recommended_action.justification || "",
+      };
+    }
+  }
+
+  // Get keywords
+  const keywords = data.keywords || record.response?.keywords;
+
   return {
-    id: record.Id,
-    date: record.created_at,
-    summary: record.summary,
-    article_sentiment: record.article_sentiment as "positive" | "negative" | "neutral",
+    id: String(record.Id),
+    date: dateField,
+    summary: data.summary || "",
+    article_sentiment: sentiment,
     identified_causes: identifiedCauses,
     predicted_trend_probability: predictedTrendProbability,
-    source_url: record.source_url,
+    recommended_action: recommendedAction,
+    keywords: keywords,
+    source_url: sourceUrl,
   };
 }
 
@@ -122,31 +165,60 @@ export class NocoDBService {
     const endDateStr = endDate || new Date().toISOString().split("T")[0];
     const { startDate, endDate: calculatedEndDate } = calculateDateRange(endDateStr, range);
 
-    // Build query
+    // Build query with date filters using exactDate for NocoDB Date fields
     const queryBuilder = new NocoDBQueryBuilder()
-      .where("occurrence_date", "gte", startDate)
-      .where("occurrence_date", "lte", calculatedEndDate)
-      .sort("occurrence_date", true) // DESC
-      .limit(1000);
+      .where("occurrence_date", "gte", startDate, "exactDate")
+      .where("occurrence_date", "lte", calculatedEndDate, "exactDate")
+      .sort("occurrence_date", true) // DESC - newest first
+      .limit(1000); // Increased limit for date range queries
 
     // Add symbols filter if provided
     if (symbols && symbols.length > 0) {
       queryBuilder.whereIn("symbol", symbols);
     }
 
-    // Fetch events
-    const eventsResponse = await this.client.queryRecords<NocoDBEventRecord>(NOCODB_TABLES.BLACK_SWANS, queryBuilder);
+    // Fetch events with date filtering
+    let eventsResponse;
+    let needsMemoryFiltering = false;
+
+    try {
+      eventsResponse = await this.client.queryRecords<NocoDBEventRecord>(NOCODB_TABLES.BLACK_SWANS, queryBuilder);
+    } catch (error) {
+      // If NocoDB returns 422 (field name issue), fallback to fetching all and filtering in memory
+      if (error && typeof error === "object" && "statusCode" in error && error.statusCode === 422) {
+        console.warn("[NocoDB Service] Date filtering failed with 422, falling back to memory filtering");
+        needsMemoryFiltering = true;
+
+        // Fetch without date filters
+        const fallbackQuery = new NocoDBQueryBuilder().sort("occurrence_date", true).limit(10000); // Large limit to get all recent events
+
+        if (symbols && symbols.length > 0) {
+          fallbackQuery.whereIn("symbol", symbols);
+        }
+
+        eventsResponse = await this.client.queryRecords<NocoDBEventRecord>(NOCODB_TABLES.BLACK_SWANS, fallbackQuery);
+      } else {
+        throw error;
+      }
+    }
+
+    // Filter by date in memory if NocoDB filtering failed
+    let filteredEvents = eventsResponse.list;
+    if (needsMemoryFiltering) {
+      filteredEvents = eventsResponse.list.filter((event) => {
+        return event.occurrence_date >= startDate && event.occurrence_date <= calculatedEndDate;
+      });
+    }
 
     // Check which events have summaries
-    const eventIds = eventsResponse.list.map((e) => e.Id);
     const summariesMap = new Map<string, boolean>();
 
-    if (eventIds.length > 0) {
+    if (filteredEvents.length > 0) {
       // Query summaries for these events
       const summariesQuery = new NocoDBQueryBuilder().limit(1000);
 
       // Build OR conditions for each event (symbol + occurrence_date)
-      for (const event of eventsResponse.list) {
+      for (const event of filteredEvents) {
         summariesMap.set(`${event.symbol}_${event.occurrence_date}`, false);
       }
 
@@ -159,13 +231,14 @@ export class NocoDBService {
           const key = `${summary.symbol}_${summary.occurrence_date}`;
           summariesMap.set(key, true);
         }
-      } catch {
+      } catch (error) {
+        console.error("[NocoDB Service] Error fetching summaries for grid:", error);
         // If summaries query fails, continue without summary flags
       }
     }
 
     // Transform to DTOs
-    const events: BlackSwanEventMinimal[] = eventsResponse.list.map((record) => {
+    const events: BlackSwanEventMinimal[] = filteredEvents.map((record) => {
       const key = `${record.symbol}_${record.occurrence_date}`;
       const hasSummary = summariesMap.get(key) || false;
       return transformToMinimal(record, hasSummary);
@@ -192,22 +265,26 @@ export class NocoDBService {
     const eventRecord = await this.client.getRecord<NocoDBEventRecord>(NOCODB_TABLES.BLACK_SWANS, eventId);
 
     // Fetch first AI summary
-    const summariesQuery = new NocoDBQueryBuilder()
-      .where("symbol", "eq", eventRecord.symbol)
-      .where("occurrence_date", "eq", eventRecord.occurrence_date)
-      .sort("created_at", false) // ASC - get first (oldest)
-      .limit(1);
+    // Note: Filtering only by symbol due to NocoDB field name issues
+    // occurrence_date filter causes 422 error
+    const summariesQuery = new NocoDBQueryBuilder().where("symbol", "eq", eventRecord.symbol).limit(10); // Get up to 10 to find matching date
 
     let firstSummary: AISummary | undefined;
+    let matchingSummaryRecord: NocoDBSummaryRecord | undefined;
     try {
       const summariesResponse = await this.client.queryRecords<NocoDBSummaryRecord>(
         NOCODB_TABLES.AI_SUMMARY,
         summariesQuery
       );
-      if (summariesResponse.list.length > 0) {
-        firstSummary = transformSummary(summariesResponse.list[0]);
+
+      // Filter by occurrence_date in memory (since NocoDB filter causes 422)
+      matchingSummaryRecord = summariesResponse.list.find((s) => s.occurrence_date === eventRecord.occurrence_date);
+
+      if (matchingSummaryRecord) {
+        firstSummary = transformSummary(matchingSummaryRecord);
       }
-    } catch {
+    } catch (error) {
+      console.error("[NocoDB Service] Error fetching summaries:", error);
       // Continue without summary
     }
 
@@ -218,8 +295,8 @@ export class NocoDBService {
 
     const historicQuery = new NocoDBQueryBuilder()
       .where("symbol", "eq", eventRecord.symbol)
-      .where("date", "gte", historicStartDate.toISOString().split("T")[0])
-      .where("date", "lt", eventRecord.occurrence_date)
+      .where("date", "gte", historicStartDate.toISOString().split("T")[0], "exactDate")
+      .where("date", "lt", eventRecord.occurrence_date, "exactDate")
       .sort("date", false) // ASC
       .limit(100);
 
@@ -235,15 +312,19 @@ export class NocoDBService {
     }
 
     const detailedEvent: BlackSwanEventDetailed = {
-      id: eventRecord.Id,
+      id: String(eventRecord.Id),
       symbol: eventRecord.symbol,
       occurrence_date: eventRecord.occurrence_date,
-      event_type: eventRecord.event_type as EventType,
+      // Use type field from NocoDB, fallback to event_type, then summary's event_type
+      event_type: (eventRecord.type ||
+        eventRecord.event_type ||
+        matchingSummaryRecord?.response?.event_type ||
+        "VOLATILITY_UP") as EventType,
       percent_change: eventRecord.percent_change,
-      open: eventRecord.open || 0,
+      open: eventRecord.open || eventRecord.last_close || 0,
       high: eventRecord.high || 0,
       low: eventRecord.low || 0,
-      close: eventRecord.close || 0,
+      close: eventRecord.close || eventRecord.current_close || 0,
       volume: eventRecord.volume || 0,
       first_summary: firstSummary,
       historic_data: historicData,
@@ -259,18 +340,19 @@ export class NocoDBService {
    * Get all AI summaries for a specific event
    */
   async getEventSummaries(symbol: string, occurrenceDate: string, eventType?: EventType): Promise<SummariesResponse> {
-    const queryBuilder = new NocoDBQueryBuilder()
-      .where("symbol", "eq", symbol)
-      .where("occurrence_date", "eq", occurrenceDate)
-      .sort("created_at", false) // ASC - oldest first
-      .limit(100);
+    // Note: Filtering only by symbol due to NocoDB field name issues
+    // occurrence_date filter causes 422 error - will filter in memory
+    const queryBuilder = new NocoDBQueryBuilder().where("symbol", "eq", symbol).limit(100); // No sorting - avoid field name issues
 
     const summariesResponse = await this.client.queryRecords<NocoDBSummaryRecord>(
       NOCODB_TABLES.AI_SUMMARY,
       queryBuilder
     );
 
-    const summaries: AISummary[] = summariesResponse.list.map((record) => transformSummary(record));
+    // Filter by occurrence_date in memory (since NocoDB filter causes 422)
+    const filteredSummaries = summariesResponse.list.filter((record) => record.occurrence_date === occurrenceDate);
+
+    const summaries: AISummary[] = filteredSummaries.map((record) => transformSummary(record));
 
     return {
       symbol,

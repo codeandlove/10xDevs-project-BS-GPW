@@ -5,7 +5,7 @@
 
 import type { AISummary } from "@/types/nocodb.types";
 import { getSentimentColor, getSentimentLabel, formatDate } from "@/lib/ui-utils";
-import { TrendingUp, TrendingDown, Minus, ExternalLink } from "lucide-react";
+import { TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SummaryCardProps {
@@ -80,6 +80,46 @@ export function SummaryCard({ summary, showFullDetails = true }: SummaryCardProp
                 color="bg-blue-500"
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Recommended Action */}
+      {showFullDetails && summary.recommended_action && (
+        <div>
+          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Rekomendowana akcja</h3>
+          <div className="rounded-lg border bg-muted/50 p-3">
+            <div className="mb-2 flex items-center gap-2">
+              <span
+                className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ${
+                  summary.recommended_action.action === "BUY"
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    : summary.recommended_action.action === "SELL"
+                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                }`}
+              >
+                {summary.recommended_action.action}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">{summary.recommended_action.justification}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Keywords */}
+      {showFullDetails && summary.keywords && summary.keywords.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Słowa kluczowe</h3>
+          <div className="flex flex-wrap gap-2">
+            {summary.keywords.map((keyword, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+              >
+                {keyword}
+              </span>
+            ))}
           </div>
         </div>
       )}
