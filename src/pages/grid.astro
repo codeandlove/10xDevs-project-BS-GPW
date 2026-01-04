@@ -5,8 +5,20 @@
  */
 import Layout from "@/layouts/Layout.astro";
 import { GridPageWrapper } from "@/components/grid/GridPageWrapper";
+
+// Extract URL params on server-side (Astro has access to Astro.url)
+const range = Astro.url.searchParams.get("range") || "week";
+const symbols = Astro.url.searchParams.get("symbols") || "";
+const eventTypes = Astro.url.searchParams.get("eventTypes") || "";
+const eventId = Astro.url.searchParams.get("eventId") || "";
 ---
 
 <Layout title="Grid - Black Swan Grid">
-  <GridPageWrapper client:load />
+  <GridPageWrapper
+    client:load
+    initialRange={range}
+    initialSymbols={symbols}
+    initialEventTypes={eventTypes}
+    initialEventId={eventId}
+  />
 </Layout>

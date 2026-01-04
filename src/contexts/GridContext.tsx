@@ -17,6 +17,11 @@ interface GridContextValue {
   clearFilters: () => void;
 }
 
+interface GridProviderProps {
+  children: ReactNode;
+  initialState?: Partial<GridState>;
+}
+
 const GridContext = createContext<GridContextValue | undefined>(undefined);
 
 /**
@@ -75,8 +80,16 @@ function updateUrlParams(state: Partial<GridState>): void {
   window.history.pushState({}, "", newUrl);
 }
 
-export function GridProvider({ children }: { children: ReactNode }) {
-  const [gridState, setGridState] = useState<GridState>(getInitialStateFromUrl);
+export function GridProvider({ children, initialState }: GridProviderProps) {
+  // Use initialState from props (passed from Astro server-side) or default
+  const [gridState, setGridState] = useState<GridState>(() => {
+    const defaultState: GridState = {
+      range: "week",
+      symbols: [],
+      eventTypes: [],
+    };
+    return { ...defaultState, ...initialState };
+  });
 
   // Update URL when state changes
   useEffect(() => {

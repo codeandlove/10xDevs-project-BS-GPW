@@ -18,23 +18,24 @@ const ranges: { value: DateRange; label: string }[] = [
 export function RangeSelector({ value, onChange }: RangeSelectorProps) {
   return (
     <div className="flex items-center gap-1 rounded-md border bg-background p-1">
-      {ranges.map((range) => (
-        <button
-          key={range.value}
-          onClick={() => onChange(range.value)}
-          className={`
-            rounded px-3 py-1.5 text-sm font-medium transition-colors
-            ${
-              value === range.value
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      {ranges.map((range) => {
+        const isSelected = value === range.value;
+
+        return (
+          <button
+            key={range.value}
+            onClick={() => onChange(range.value)}
+            className={
+              isSelected
+                ? "rounded px-3 py-1.5 text-sm font-medium transition-colors bg-primary text-primary-foreground"
+                : "rounded px-3 py-1.5 text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
             }
-          `}
-          aria-pressed={value === range.value}
-        >
-          {range.label}
-        </button>
-      ))}
+            aria-pressed={isSelected}
+          >
+            {range.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
