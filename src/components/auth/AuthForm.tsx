@@ -59,7 +59,7 @@ export function AuthForm({ mode, returnUrl = "/grid" }: AuthFormProps) {
 
         if (data.user) {
           // Initialize user with trial
-          await fetch("/api/users/initialize", {
+          const initResponse = await fetch("/api/users/initialize", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -67,6 +67,11 @@ export function AuthForm({ mode, returnUrl = "/grid" }: AuthFormProps) {
               email: data.user.email,
             }),
           });
+
+          if (!initResponse.ok) {
+            const errorData = await initResponse.json().catch(() => ({ error: "Unknown error" }));
+            throw new Error(errorData.error || errorData.message || "Failed to initialize user profile");
+          }
 
           toast.success("Konto utworzone!", "Witaj w Black Swan Grid. Twój 7-dniowy trial właśnie się rozpoczął.");
 
