@@ -8,7 +8,6 @@ import { useState, useEffect } from "react";
 import { SummarySidebar } from "./SummarySidebar";
 import { SummaryDrawer } from "./SummaryDrawer";
 import { fetchEventDetails } from "@/lib/api-service";
-import { useClientCache } from "@/hooks/useClientCache";
 import type { EventDetailsResponse } from "@/types/nocodb.types";
 
 interface SummaryViewProps {
@@ -18,6 +17,9 @@ interface SummaryViewProps {
 
 export function SummaryView({ eventId, onClose }: SummaryViewProps) {
   const [isMobile, setIsMobile] = useState(false);
+  const [event, setEvent] = useState<EventDetailsResponse["event"] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -30,23 +32,71 @@ export function SummaryView({ eventId, onClose }: SummaryViewProps) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Cache key for event details (per PRD section 8.1)
-  // Format: gpw:cache:v1:black_swans|id=<id>
-  const cacheKey = eventId ? `gpw:cache:v1:black_swans|id=${eventId}` : "";
+  // Fetch event details with caching when eventId changes
+  useEffect(() => {
+    if (!eventId) {
+      setEvent(null);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
 
-  // Fetch event details with caching
-  const {
-    data: eventResponse,
-    isLoading,
-    error,
-    revalidate,
-  } = useClientCache<EventDetailsResponse>(cacheKey, () => fetchEventDetails(eventId || ""), {
-    ttl: 10 * 60 * 1000, // 10 minutes (longer than grid because events don't change often)
-    staleWhileRevalidate: true,
-    retry: 3,
-  });
+    const loadEvent = async () => {
+      setIsLoading(true);
+      setError(null);
 
-  const event = eventResponse?.event || null;
+      try {
+        // Check cache first
+        const cacheKey = `gpw:cache:v1:black_swans|id=${eventId}`;
+        const cached = localStorage.getItem(cacheKey);
+
+        if (cached) {
+          const cacheEntry = JSON.parse(cached);
+          const isStale = Date.now() - cacheEntry.timestamp > cacheEntry.ttl;
+
+          // Use cached data immediately
+          setEvent(cacheEntry.data.event);
+          setIsLoading(false);
+
+          // Revalidate in background if stale
+          if (isStale) {
+            const response = await fetchEventDetails(eventId);
+            setEvent(response.event);
+            // Update cache
+            localStorage.setItem(
+              cacheKey,
+              JSON.stringify({
+                data: response,
+                timestamp: Date.now(),
+                ttl: 10 * 60 * 1000,
+                lastAccessed: Date.now(),
+              })
+            );
+          }
+        } else {
+          // No cache - fetch fresh
+          const response = await fetchEventDetails(eventId);
+          setEvent(response.event);
+          setIsLoading(false);
+          // Save to cache
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              data: response,
+              timestamp: Date.now(),
+              ttl: 10 * 60 * 1000,
+              lastAccessed: Date.now(),
+            })
+          );
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error("Failed to fetch event details"));
+        setIsLoading(false);
+      }
+    };
+
+    loadEvent();
+  }, [eventId]);
 
   const handleViewMore = () => {
     // Navigate to full detail view
@@ -54,7 +104,35 @@ export function SummaryView({ eventId, onClose }: SummaryViewProps) {
   };
 
   const handleRetry = () => {
-    revalidate();
+    // Force reload by clearing cache and re-fetching
+    if (eventId) {
+      const cacheKey = `gpw:cache:v1:black_swans|id=${eventId}`;
+      localStorage.removeItem(cacheKey);
+
+      // Trigger re-fetch
+      setIsLoading(true);
+      setError(null);
+
+      fetchEventDetails(eventId)
+        .then((response) => {
+          setEvent(response.event);
+          setIsLoading(false);
+          // Save to cache
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              data: response,
+              timestamp: Date.now(),
+              ttl: 10 * 60 * 1000,
+              lastAccessed: Date.now(),
+            })
+          );
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err : new Error("Failed to fetch event details"));
+          setIsLoading(false);
+        });
+    }
   };
 
   if (!eventId) return null;

@@ -249,3 +249,25 @@ export function clearAllCache(): void {
     console.error("Failed to clear localStorage:", error);
   }
 }
+
+/**
+ * Clear grid cache but preserve user preferences
+ * Used on logout to remove sensitive data while keeping UI preferences
+ */
+export function clearGridCache(): void {
+  memoryCache.clear();
+  try {
+    const keys = Object.keys(localStorage);
+    keys.forEach((key) => {
+      // Clear cache data (grid events, event details, summaries)
+      if (key.startsWith("gpw:cache:v1:")) {
+        localStorage.removeItem(key);
+      }
+
+      // Do NOT clear preferences - preserve for better UX on re-login
+      // Preserved keys: gpw:preferences:symbols, gpw:preferences:range, etc.
+    });
+  } catch (error) {
+    console.error("Failed to clear grid cache:", error);
+  }
+}

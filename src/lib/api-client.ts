@@ -49,11 +49,22 @@ async function fetchWithRetry(url: string, options: FetchOptions = {}): Promise<
       // Handle non-OK responses
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new APIError(
+        const apiError = new APIError(
           errorData.message || `HTTP ${response.status}: ${response.statusText}`,
           response.status,
           errorData.code
         );
+
+        // Handle 401 Unauthorized - clear cache and redirect to login
+        if (response.status === 401) {
+          // Dynamic import to avoid circular dependency
+          import("@/hooks/useClientCache").then(({ clearGridCache }) => {
+            clearGridCache();
+            window.location.href = "/auth/login";
+          });
+        }
+
+        throw apiError;
       }
 
       return response;

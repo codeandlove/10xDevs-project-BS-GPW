@@ -7,6 +7,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { User, Session } from "@supabase/supabase-js";
 import { supabaseClient } from "@/db/supabase.client";
 import { apiClient } from "@/lib/api-client";
+import { clearGridCache } from "@/hooks/useClientCache";
 import type { UserProfileDTO } from "@/types/types";
 
 interface AuthContextValue {
@@ -52,6 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setProfile(null);
     setSession(null);
+
+    // Clear cached grid data but preserve user preferences (GDPR-ready)
+    // Removes cache: gpw:cache:v1:* (events, summaries, details)
+    // Preserves: gpw:preferences:* (symbols, range selections)
+    clearGridCache();
   };
 
   // Initialize auth state

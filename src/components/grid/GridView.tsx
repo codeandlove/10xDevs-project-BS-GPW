@@ -92,15 +92,18 @@ export function GridView() {
     [setEventId]
   );
 
-  // Handle summary close - use history.back() if URL has eventId
+  // Handle summary close - close immediately then history.back()
   const handleCloseSummary = useCallback(() => {
+    // Close sidebar immediately (don't wait for popstate)
+    setEventId(undefined);
+
+    // Clean up URL if it has eventId param
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has("eventId")) {
-      // URL contains eventId - use history.back() to restore grid state
-      window.history.back();
-    } else {
-      // No eventId in URL - just close
-      setEventId(undefined);
+      // Remove eventId from URL without triggering popstate
+      urlParams.delete("eventId");
+      const newUrl = urlParams.toString() ? `?${urlParams.toString()}` : window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
     }
   }, [setEventId]);
 
