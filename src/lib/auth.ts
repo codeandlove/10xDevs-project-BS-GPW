@@ -32,6 +32,39 @@ export async function getAuthUid(request: Request, supabase: SupabaseClient): Pr
 }
 
 /**
+ * Ekstraktuje auth_uid i token z tokenu sesji Supabase.
+ * @param request - Request object z Astro
+ * @param supabase - Supabase client z locals
+ * @returns { authUid, token } lub null jeśli brak autoryzacji
+ */
+export async function getAuthUidAndToken(
+  request: Request,
+  supabase: SupabaseClient
+): Promise<{ authUid: string; token: string } | null> {
+  try {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return null;
+    }
+
+    const token = authHeader.substring(7);
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data?.user) {
+      return null;
+    }
+
+    return {
+      authUid: data.user.id,
+      token,
+    };
+  } catch (err) {
+    console.error("Error extracting auth UID and token:", err);
+    return null;
+  }
+}
+
+/**
  * Sprawdza czy użytkownik ma aktywną subskrypcję
  * Zgodnie z api-plan.md sekcja 4.1: Authorization Helpers
  * @param profile - Profil użytkownika

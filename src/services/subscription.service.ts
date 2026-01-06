@@ -7,7 +7,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../db/database.types";
 import { stripe } from "../lib/stripe";
 import { AuditService } from "./audit.service";
-import { SubscriptionError, StripeError, NoCustomerError, UserNotFoundError, DatabaseError } from "../lib/errors";
+import { SubscriptionError, StripeError, UserNotFoundError, DatabaseError } from "../lib/errors";
 import type {
   SubscriptionStatusDTO,
   CheckoutSessionDTO,
@@ -54,7 +54,7 @@ export class SubscriptionService {
 
       if (error) {
         console.error("Database error in getSubscriptionStatus:", error);
-        throw new DatabaseError("Failed to fetch user subscription", error);
+        throw new DatabaseError("Failed to fetch user subscription");
       }
 
       if (!data) {
@@ -112,7 +112,7 @@ export class SubscriptionService {
 
     if (error) {
       console.error("Database error in getUserProfile:", error);
-      throw new DatabaseError("Failed to fetch user profile", error);
+      throw new DatabaseError("Failed to fetch user profile");
     }
 
     if (!data) {
@@ -125,9 +125,10 @@ export class SubscriptionService {
   /**
    * Create or retrieve Stripe customer for user
    * @param authUid - User's auth_uid
+   * @param token - Optional JWT token for getting user email
    * @returns Stripe customer ID
    */
-  async createOrGetStripeCustomer(authUid: string): Promise<string> {
+  async createOrGetStripeCustomer(authUid: string, token?: string): Promise<string> {
     try {
       // Get user profile
       const user = await this.getUserProfile(authUid);
@@ -137,17 +138,27 @@ export class SubscriptionService {
         return user.stripe_customer_id;
       }
 
-      // Get email from Supabase Auth
-      const { data: authUser, error: authError } = await this.supabase.auth.admin.getUserById(authUid);
+      // Get current user from session (contains email)
+      // If token provided, use it; otherwise try without token (fallback)
+      const { data: sessionData, error: sessionError } = token
+        ? await this.supabase.auth.getUser(token)
+        : await this.supabase.auth.getUser();
 
-      if (authError || !authUser?.user?.email) {
-        console.error("Failed to get user email:", authError);
+      if (sessionError || !sessionData?.user?.email) {
+        console.error("Failed to get user from session:", sessionError);
         throw new DatabaseError("Failed to get user email for Stripe customer");
       }
 
+      // Verify that session user matches requested user
+      if (sessionData.user.id !== authUid) {
+        throw new DatabaseError("Session user mismatch");
+      }
+
+      // ...existing code for create customer, update, audit...
+
       // Create Stripe customer
       const customer = await stripe.customers.create({
-        email: authUser.user.email,
+        email: sessionData.user.email,
         metadata: {
           auth_uid: authUid,
         },
@@ -196,16 +207,18 @@ export class SubscriptionService {
   /**
    * Create Stripe Checkout session for subscription
    * @param authUid - User's auth_uid
+   * @param token - JWT token for getting user email
    * @param params - Checkout session parameters
    * @returns Checkout session URL and ID
    */
   async createCheckoutSession(
     authUid: string,
+    token: string,
     params: Omit<CheckoutSessionParams, "customer_id">
   ): Promise<CheckoutSessionDTO> {
     try {
-      // Get or create Stripe customer
-      const customerId = await this.createOrGetStripeCustomer(authUid);
+      // Get or create Stripe customer - pass token
+      const customerId = await this.createOrGetStripeCustomer(authUid, token);
 
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
@@ -259,25 +272,22 @@ export class SubscriptionService {
   /**
    * Create Stripe Customer Portal session
    * @param authUid - User's auth_uid
+   * @param token - JWT token for getting user email
    * @param params - Portal session parameters
    * @returns Portal session URL
    */
   async createPortalSession(
     authUid: string,
+    token: string,
     params: Omit<PortalSessionParams, "customer_id">
   ): Promise<PortalSessionDTO> {
     try {
-      // Get user profile
-      const user = await this.getUserProfile(authUid);
-
-      // Check if user has Stripe customer
-      if (!user.stripe_customer_id) {
-        throw new NoCustomerError();
-      }
+      // Get or create Stripe customer (same as checkout) - pass token
+      const customerId = await this.createOrGetStripeCustomer(authUid, token);
 
       // Create portal session
       const session = await stripe.billingPortal.sessions.create({
-        customer: user.stripe_customer_id,
+        customer: customerId,
         return_url: params.return_url,
       });
 

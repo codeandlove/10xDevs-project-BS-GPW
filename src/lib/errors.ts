@@ -11,7 +11,7 @@ export class SubscriptionError extends Error {
     message: string,
     public code: string,
     public statusCode: number,
-    public details?: unknown
+    public details?: string[] // Zgodnie z api-plan.md sekcja 5.1
   ) {
     super(message);
     this.name = "SubscriptionError";
@@ -23,7 +23,7 @@ export class SubscriptionError extends Error {
  * Validation error (400 Bad Request)
  */
 export class ValidationError extends SubscriptionError {
-  constructor(message: string, details?: unknown) {
+  constructor(message: string, details?: string[]) {
     super(message, "VALIDATION_ERROR", 400, details);
     this.name = "ValidationError";
   }
@@ -43,7 +43,7 @@ export class InvalidUrlError extends SubscriptionError {
  * Stripe API error (500 Internal Server Error)
  */
 export class StripeError extends SubscriptionError {
-  constructor(message: string, details?: unknown) {
+  constructor(message: string, details?: string[]) {
     super(message, "STRIPE_ERROR", 500, details);
     this.name = "StripeError";
   }
@@ -73,7 +73,7 @@ export class UserNotFoundError extends SubscriptionError {
  * Database error (500 Internal Server Error)
  */
 export class DatabaseError extends SubscriptionError {
-  constructor(message: string, details?: unknown) {
+  constructor(message: string, details?: string[]) {
     super(message, "DATABASE_ERROR", 500, details);
     this.name = "DatabaseError";
   }

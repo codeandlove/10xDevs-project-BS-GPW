@@ -19,12 +19,12 @@ export function ManageSubscriptionButton({ onError }: ManageSubscriptionButtonPr
     setIsLoading(true);
 
     try {
-      const data = await apiClient.post<{ url?: string }>("/api/subscriptions/create-portal", {
+      const data = await apiClient.post<{ portal_url?: string }>("/api/subscriptions/create-portal", {
         return_url: window.location.href,
       });
 
-      if (data.url) {
-        window.location.href = data.url;
+      if (data.portal_url) {
+        window.location.href = data.portal_url;
       } else {
         throw new Error("No portal URL returned");
       }

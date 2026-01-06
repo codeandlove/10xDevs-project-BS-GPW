@@ -94,7 +94,9 @@ export const apiClient = {
         ...options?.headers,
       },
     });
-    return response.json();
+    const json = await response.json();
+    // Extract data from success response format: { success: true, data: T, timestamp: string }
+    return json.data ?? json;
   },
 
   /**
@@ -110,7 +112,9 @@ export const apiClient = {
       },
       body: data ? JSON.stringify(data) : undefined,
     });
-    return response.json();
+    const json = await response.json();
+    // Extract data from success response format: { success: true, data: T, timestamp: string }
+    return json.data ?? json;
   },
 
   /**
@@ -126,7 +130,9 @@ export const apiClient = {
       },
       body: data ? JSON.stringify(data) : undefined,
     });
-    return response.json();
+    const json = await response.json();
+    // Extract data from success response format: { success: true, data: T, timestamp: string }
+    return json.data ?? json;
   },
 
   /**
@@ -141,7 +147,9 @@ export const apiClient = {
         ...options?.headers,
       },
     });
-    return response.json();
+    const json = await response.json();
+    // Extract data from success response format: { success: true, data: T, timestamp: string }
+    return json.data ?? json;
   },
 };
 

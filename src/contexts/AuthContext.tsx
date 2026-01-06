@@ -30,8 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch user profile from API
   const fetchProfile = async () => {
     try {
-      const response = await apiClient.get<{ success: boolean; data: { user: UserProfileDTO } }>("/api/users/me");
-      setProfile(response.data?.user || null);
+      // apiClient.get extracts data from { success, data, timestamp }
+      // API returns { user: UserProfileDTO } in data
+      const data = await apiClient.get<{ user: UserProfileDTO }>("/api/users/me");
+      setProfile(data.user || null);
     } catch {
       // Silent fail - profile will remain null
     }

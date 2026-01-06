@@ -7,8 +7,8 @@
 
 import type { APIRoute } from "astro";
 import { SubscriptionService } from "@/services/subscription.service";
-import { getAuthUid } from "@/lib/auth";
-import { createSuccessResponse, createErrorResponse } from "@/lib/api-utils";
+import { getAuthUidAndToken } from "@/lib/auth";
+import { createSuccessResponse, createErrorResponse, zodErrorsToArray } from "@/lib/api-utils";
 import { CreateCheckoutSchema } from "@/lib/subscription-validation";
 import { isAllowedUrl } from "@/config/allowed-domains";
 import { SubscriptionError, InvalidUrlError } from "@/lib/errors";
@@ -31,10 +31,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     // [1] Authentication
-    const authUid = await getAuthUid(request, supabase);
-    if (!authUid) {
+    const auth = await getAuthUidAndToken(request, supabase);
+    if (!auth) {
       return createErrorResponse("Unauthorized", 401, "UNAUTHORIZED");
     }
+
+    const { authUid, token } = auth;
 
     // [2] Parse request body
     let body: unknown;
@@ -47,7 +49,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // [3] Validate with Zod schema
     const validation = CreateCheckoutSchema.safeParse(body);
     if (!validation.success) {
-      return createErrorResponse("Validation failed", 400, "VALIDATION_ERROR", validation.error.flatten().fieldErrors);
+      return createErrorResponse(
+        "Validation failed",
+        400,
+        "VALIDATION_ERROR",
+        zodErrorsToArray(validation.error.flatten().fieldErrors)
+      );
     }
 
     const { price_id, success_url, cancel_url } = validation.data;
@@ -61,9 +68,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       throw new InvalidUrlError("cancel_url is not in the allowed domains list");
     }
 
-    // [5] Business logic
+    // [5] Business logic - pass token to service
     const subscriptionService = new SubscriptionService(supabase);
-    const result = await subscriptionService.createCheckoutSession(authUid, {
+    const result = await subscriptionService.createCheckoutSession(authUid, token, {
       price_id,
       success_url,
       cancel_url,
