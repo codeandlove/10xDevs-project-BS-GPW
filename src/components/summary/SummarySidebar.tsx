@@ -1,9 +1,10 @@
 /**
  * Summary Sidebar Component (Desktop)
  * Right-side sidebar (33% width) displaying event details with AI summary
+ * Includes focus management per ui-plan.md
  */
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,9 +19,44 @@ interface SummarySidebarProps {
   error?: Error | null;
   onClose: () => void;
   onViewMore?: () => void;
+  onRetry?: () => void;
 }
 
-export function SummarySidebar({ event, isLoading, error, onClose, onViewMore }: SummarySidebarProps) {
+export function SummarySidebar({ event, isLoading, error, onClose, onViewMore, onRetry }: SummarySidebarProps) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Focus management - initial focus on close button
+  useEffect(() => {
+    if (closeButtonRef.current) {
+      closeButtonRef.current.focus();
+    }
+  }, []);
+
+  // Focus trap - keep focus within sidebar
+  useEffect(() => {
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !sidebarRef.current) return;
+
+      const focusableElements = sidebarRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleTab);
+    return () => document.removeEventListener("keydown", handleTab);
+  }, []);
+
   // Handle ESC key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -63,13 +99,17 @@ export function SummarySidebar({ event, isLoading, error, onClose, onViewMore }:
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" aria-hidden="true" />
 
       {/* Sidebar */}
-      <div className="relative z-10 w-full max-w-md overflow-y-auto bg-white shadow-2xl" onClick={handleSidebarClick}>
+      <div
+        ref={sidebarRef}
+        className="relative z-10 w-full max-w-md overflow-y-auto bg-white shadow-2xl"
+        onClick={handleSidebarClick}
+      >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4">
           <h2 id="sidebar-title" className="text-lg font-semibold">
             Szczegóły wydarzenia
           </h2>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Zamknij">
+          <Button ref={closeButtonRef} variant="ghost" size="icon" onClick={onClose} aria-label="Zamknij">
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -82,9 +122,16 @@ export function SummarySidebar({ event, isLoading, error, onClose, onViewMore }:
             <div className="text-center">
               <p className="mb-2 font-medium text-destructive">Nie udało się załadować danych</p>
               <p className="text-sm text-muted-foreground">{error.message}</p>
-              <Button onClick={onClose} className="mt-4" variant="outline">
-                Zamknij
-              </Button>
+              <div className="mt-4 flex gap-2 justify-center">
+                {onRetry && (
+                  <Button onClick={onRetry} variant="default">
+                    Spróbuj ponownie
+                  </Button>
+                )}
+                <Button onClick={onClose} variant="outline">
+                  Zamknij
+                </Button>
+              </div>
             </div>
           ) : event ? (
             <div className="space-y-6">

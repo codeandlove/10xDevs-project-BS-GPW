@@ -3,7 +3,7 @@
  * Manages grid state, filters, and data fetching
  */
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import { useClientCache } from "@/hooks/useClientCache";
 import { useGrid } from "@/contexts/GridContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -15,7 +15,6 @@ import { TickerFilter } from "./TickerFilter";
 import { EventTypeFilter } from "./EventTypeFilter";
 import { SortOptions } from "./SortOptions";
 import { ClearFiltersButton } from "./ClearFiltersButton";
-import { BasicGrid } from "./BasicGrid";
 import { VirtualizedGrid } from "./VirtualizedGrid";
 import { GridSkeleton } from "@/components/ui/Skeleton";
 import { SummaryView } from "@/components/summary/SummaryView";
@@ -25,13 +24,24 @@ import type { EventType } from "@/types/nocodb.types";
 // Available symbols for filter
 const AVAILABLE_SYMBOLS = ["CPD", "PKN", "PKO", "PZU", "KGH", "JSW", "LPP", "ALE"];
 
-// Threshold for using virtualized grid
-const VIRTUALIZATION_THRESHOLD = 100;
-
 export function GridView() {
   const { gridState, setRange, setSymbols, setEventTypes, setSort, setEventId, clearFilters } = useGrid();
 
-  // Cache key based on range and symbols
+  // Listen for browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state?.eventId) {
+        setEventId(event.state.eventId);
+      } else {
+        setEventId(undefined);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [setEventId]);
+
+  // Cache key based on range and symbols (per PRD section 8.1)
   const cacheKey = `cache:grid:${gridState.range}:${gridState.symbols.join(",")}`;
 
   // Fetch data with caching - now using real API
@@ -72,17 +82,26 @@ export function GridView() {
     return count;
   }, [gridState.symbols, gridState.eventTypes, gridState.sortField]);
 
-  // Handle cell click
+  // Handle cell click - add to history
   const handleCellClick = useCallback(
     (eventId: string) => {
       setEventId(eventId);
+      // Push state to history for back navigation
+      window.history.pushState({ eventId }, "", `?eventId=${eventId}`);
     },
     [setEventId]
   );
 
-  // Handle summary close
+  // Handle summary close - use history.back() if URL has eventId
   const handleCloseSummary = useCallback(() => {
-    setEventId(undefined);
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("eventId")) {
+      // URL contains eventId - use history.back() to restore grid state
+      window.history.back();
+    } else {
+      // No eventId in URL - just close
+      setEventId(undefined);
+    }
   }, [setEventId]);
 
   return (
@@ -116,28 +135,24 @@ export function GridView() {
             <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-center">
               <p className="text-sm font-medium text-red-800">Wystąpił błąd podczas ładowania danych</p>
               <p className="mt-1 text-xs text-red-600">{error.message}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-3 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              >
+                Spróbuj ponownie
+              </button>
             </div>
           )}
 
           {isLoading ? (
             <GridSkeleton />
           ) : events.length > 0 ? (
-            // Use VirtualizedGrid for large datasets, BasicGrid for small ones
-            events.length >= VIRTUALIZATION_THRESHOLD ? (
-              <VirtualizedGrid
-                events={events}
-                range={gridState.range}
-                onCellClick={handleCellClick}
-                selectedEventId={gridState.eventId}
-              />
-            ) : (
-              <BasicGrid
-                events={events}
-                range={gridState.range}
-                onCellClick={handleCellClick}
-                selectedEventId={gridState.eventId}
-              />
-            )
+            <VirtualizedGrid
+              events={events}
+              range={gridState.range}
+              onCellClick={handleCellClick}
+              selectedEventId={gridState.eventId}
+            />
           ) : (
             <div className="flex h-[400px] items-center justify-center">
               <div className="text-center">

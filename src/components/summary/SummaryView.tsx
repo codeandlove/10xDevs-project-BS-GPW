@@ -1,13 +1,15 @@
 /**
  * Summary View - Responsive wrapper
  * Automatically switches between Sidebar (desktop) and Drawer (mobile)
+ * Uses cache for event details per PRD section 8
  */
 
 import { useState, useEffect } from "react";
 import { SummarySidebar } from "./SummarySidebar";
 import { SummaryDrawer } from "./SummaryDrawer";
 import { fetchEventDetails } from "@/lib/api-service";
-import type { BlackSwanEventDetailed } from "@/types/nocodb.types";
+import { useClientCache } from "@/hooks/useClientCache";
+import type { EventDetailsResponse } from "@/types/nocodb.types";
 
 interface SummaryViewProps {
   eventId: string | null;
@@ -16,9 +18,6 @@ interface SummaryViewProps {
 
 export function SummaryView({ eventId, onClose }: SummaryViewProps) {
   const [isMobile, setIsMobile] = useState(false);
-  const [event, setEvent] = useState<BlackSwanEventDetailed | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
 
   // Check if mobile on mount and resize
   useEffect(() => {
@@ -31,41 +30,52 @@ export function SummaryView({ eventId, onClose }: SummaryViewProps) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Fetch event details
-  useEffect(() => {
-    if (!eventId) {
-      setEvent(null);
-      return;
-    }
+  // Cache key for event details (per PRD section 8.1)
+  // Format: gpw:cache:v1:black_swans|id=<id>
+  const cacheKey = eventId ? `gpw:cache:v1:black_swans|id=${eventId}` : "";
 
-    const fetchEvent = async () => {
-      setIsLoading(true);
-      setError(null);
+  // Fetch event details with caching
+  const {
+    data: eventResponse,
+    isLoading,
+    error,
+    revalidate,
+  } = useClientCache<EventDetailsResponse>(cacheKey, () => fetchEventDetails(eventId || ""), {
+    ttl: 10 * 60 * 1000, // 10 minutes (longer than grid because events don't change often)
+    staleWhileRevalidate: true,
+    retry: 3,
+  });
 
-      try {
-        // Use real API
-        const response = await fetchEventDetails(eventId);
-        setEvent(response.event);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to fetch event details"));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEvent();
-  }, [eventId]);
+  const event = eventResponse?.event || null;
 
   const handleViewMore = () => {
     // Navigate to full detail view
     window.location.href = `/event/${eventId}`;
   };
 
+  const handleRetry = () => {
+    revalidate();
+  };
+
   if (!eventId) return null;
 
   return isMobile ? (
-    <SummaryDrawer event={event} isLoading={isLoading} error={error} onClose={onClose} onViewMore={handleViewMore} />
+    <SummaryDrawer
+      event={event}
+      isLoading={isLoading}
+      error={error}
+      onClose={onClose}
+      onViewMore={handleViewMore}
+      onRetry={handleRetry}
+    />
   ) : (
-    <SummarySidebar event={event} isLoading={isLoading} error={error} onClose={onClose} onViewMore={handleViewMore} />
+    <SummarySidebar
+      event={event}
+      isLoading={isLoading}
+      error={error}
+      onClose={onClose}
+      onViewMore={handleViewMore}
+      onRetry={handleRetry}
+    />
   );
 }

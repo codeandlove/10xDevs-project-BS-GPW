@@ -1,6 +1,7 @@
 /**
  * Custom hook for client-side caching
  * Strategy: localStorage + in-memory with stale-while-revalidate
+ * Eviction: LRU with maxEntries = 200 (per PRD section 8.2)
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -9,7 +10,8 @@ import type { CacheEntry, CacheOptions } from "@/types/ui.types";
 // In-memory cache
 const memoryCache = new Map<string, CacheEntry<any>>();
 
-// Default cache options
+// Cache configuration (per PRD section 8.2)
+const MAX_CACHE_ENTRIES = 200; // Maximum number of entries
 const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
 const DEFAULT_OPTIONS: CacheOptions = {
   ttl: DEFAULT_TTL,
@@ -18,12 +20,41 @@ const DEFAULT_OPTIONS: CacheOptions = {
 };
 
 /**
+ * Evict oldest entry if cache is full (LRU policy)
+ */
+function evictIfNeeded(): void {
+  if (memoryCache.size >= MAX_CACHE_ENTRIES) {
+    // Find entry with oldest lastAccessed (LRU)
+    let oldestKey: string | null = null;
+    let oldestTime = Infinity;
+
+    for (const [key, entry] of memoryCache.entries()) {
+      if (entry.lastAccessed < oldestTime) {
+        oldestTime = entry.lastAccessed;
+        oldestKey = key;
+      }
+    }
+
+    if (oldestKey) {
+      memoryCache.delete(oldestKey);
+      try {
+        localStorage.removeItem(oldestKey);
+      } catch (error) {
+        console.error("Failed to remove from localStorage:", error);
+      }
+    }
+  }
+}
+
+/**
  * Get data from cache (in-memory first, then localStorage)
  */
 function getFromCache<T>(key: string): CacheEntry<T> | null {
   // Try in-memory cache first
   const memEntry = memoryCache.get(key);
   if (memEntry) {
+    // Update lastAccessed for LRU
+    memEntry.lastAccessed = Date.now();
     return memEntry;
   }
 
@@ -32,6 +63,8 @@ function getFromCache<T>(key: string): CacheEntry<T> | null {
     const stored = localStorage.getItem(key);
     if (stored) {
       const entry: CacheEntry<T> = JSON.parse(stored);
+      // Update lastAccessed
+      entry.lastAccessed = Date.now();
       // Store in memory cache for faster access
       memoryCache.set(key, entry);
       return entry;
@@ -47,11 +80,16 @@ function getFromCache<T>(key: string): CacheEntry<T> | null {
  * Set data in cache (both in-memory and localStorage)
  */
 function setInCache<T>(key: string, data: T, ttl: number): void {
+  const now = Date.now();
   const entry: CacheEntry<T> = {
     data,
-    timestamp: Date.now(),
+    timestamp: now,
     ttl,
+    lastAccessed: now,
   };
+
+  // Evict if needed before adding new entry
+  evictIfNeeded();
 
   // Store in memory
   memoryCache.set(key, entry);
@@ -200,10 +238,10 @@ export function invalidateCache(key: string): void {
 export function clearAllCache(): void {
   memoryCache.clear();
   try {
-    // Clear only cache keys (preserve other localStorage data)
+    // Clear only cache keys with PRD prefix: gpw:cache:v1:
     const keys = Object.keys(localStorage);
     keys.forEach((key) => {
-      if (key.startsWith("cache:")) {
+      if (key.startsWith("gpw:cache:v1:")) {
         localStorage.removeItem(key);
       }
     });

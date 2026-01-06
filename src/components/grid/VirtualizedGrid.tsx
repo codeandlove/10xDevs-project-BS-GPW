@@ -1,9 +1,10 @@
 /**
  * Virtualized Grid Component
  * Uses @tanstack/react-virtual for efficient rendering of large datasets
+ * Includes keyboard navigation support (Arrow keys, Enter, Escape)
  */
 
-import { useRef, useMemo, useCallback } from "react";
+import { useRef, useMemo, useCallback, useState, useEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { BlackSwanEventMinimal, DateRange } from "@/types/nocodb.types";
 import { GridCell } from "./GridCell";
@@ -18,6 +19,9 @@ interface VirtualizedGridProps {
 
 export function VirtualizedGrid({ events, range, onCellClick, selectedEventId }: VirtualizedGridProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard navigation state
+  const [focusedCell, setFocusedCell] = useState<{ symbolIndex: number; dateIndex: number } | null>(null);
 
   // Group events by symbol and date
   const { symbols, dates, eventsBySymbolAndDate } = useMemo(() => {
@@ -60,6 +64,71 @@ export function VirtualizedGrid({ events, range, onCellClick, selectedEventId }:
       return eventsBySymbolAndDate.get(`${symbol}-${date}`);
     },
     [eventsBySymbolAndDate]
+  );
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!focusedCell) return;
+
+      const { symbolIndex, dateIndex } = focusedCell;
+      let newSymbolIndex = symbolIndex;
+      let newDateIndex = dateIndex;
+
+      switch (e.key) {
+        case "ArrowUp":
+          e.preventDefault();
+          newSymbolIndex = Math.max(0, symbolIndex - 1);
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          newSymbolIndex = Math.min(symbols.length - 1, symbolIndex + 1);
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          newDateIndex = Math.max(0, dateIndex - 1);
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          newDateIndex = Math.min(dates.length - 1, dateIndex + 1);
+          break;
+        case "Enter": {
+          e.preventDefault();
+          // Open sidebar for focused cell
+          const symbol = symbols[symbolIndex];
+          const date = dates[dateIndex];
+          const event = getEvent(symbol, date);
+          if (event?.id) {
+            onCellClick(event.id);
+          }
+          return;
+        }
+        case "Escape":
+          e.preventDefault();
+          // Clear focus
+          setFocusedCell(null);
+          return;
+      }
+
+      if (newSymbolIndex !== symbolIndex || newDateIndex !== dateIndex) {
+        setFocusedCell({ symbolIndex: newSymbolIndex, dateIndex: newDateIndex });
+        // Scroll to new focused cell
+        rowVirtualizer.scrollToIndex(newSymbolIndex, { align: "center" });
+        columnVirtualizer.scrollToIndex(newDateIndex, { align: "center" });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [focusedCell, symbols, dates, getEvent, onCellClick, rowVirtualizer, columnVirtualizer]);
+
+  // Handle cell click - also set keyboard focus
+  const handleCellClickWithFocus = useCallback(
+    (eventId: string, symbolIndex: number, dateIndex: number) => {
+      setFocusedCell({ symbolIndex, dateIndex });
+      onCellClick(eventId);
+    },
+    [onCellClick]
   );
 
   return (
@@ -132,11 +201,14 @@ export function VirtualizedGrid({ events, range, onCellClick, selectedEventId }:
                   {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
                     const date = dates[virtualColumn.index];
                     const event = getEvent(symbol, date);
+                    const symbolIndex = virtualRow.index;
+                    const dateIndex = virtualColumn.index;
+                    const isFocused = focusedCell?.symbolIndex === symbolIndex && focusedCell?.dateIndex === dateIndex;
 
                     return (
                       <div
                         key={virtualColumn.key}
-                        className="absolute left-0 top-0 h-full"
+                        className={`absolute left-0 top-0 h-full ${isFocused ? "ring-2 ring-blue-500 ring-offset-1" : ""}`}
                         style={{
                           width: `${virtualColumn.size}px`,
                           transform: `translateX(${virtualColumn.start}px)`,
@@ -151,7 +223,7 @@ export function VirtualizedGrid({ events, range, onCellClick, selectedEventId }:
                             percentChange: event?.percent_change,
                             hasSummary: !!event,
                           }}
-                          onClick={event ? () => onCellClick(event.id) : undefined}
+                          onClick={event ? () => handleCellClickWithFocus(event.id, symbolIndex, dateIndex) : undefined}
                           isSelected={event?.id === selectedEventId}
                         />
                       </div>

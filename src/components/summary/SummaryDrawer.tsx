@@ -1,6 +1,7 @@
 /**
  * Summary Drawer Component (Mobile)
  * Bottom drawer (70% height) with swipe-to-dismiss for mobile devices
+ * Includes focus management per ui-plan.md
  */
 
 import { useEffect, useCallback, useRef } from "react";
@@ -18,13 +19,46 @@ interface SummaryDrawerProps {
   error?: Error | null;
   onClose: () => void;
   onViewMore?: () => void;
+  onRetry?: () => void;
 }
 
-export function SummaryDrawer({ event, isLoading, error, onClose, onViewMore }: SummaryDrawerProps) {
+export function SummaryDrawer({ event, isLoading, error, onClose, onViewMore, onRetry }: SummaryDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const startY = useRef<number>(0);
   const currentY = useRef<number>(0);
   const isDragging = useRef<boolean>(false);
+
+  // Focus management - initial focus on close button
+  useEffect(() => {
+    if (closeButtonRef.current) {
+      closeButtonRef.current.focus();
+    }
+  }, []);
+
+  // Focus trap
+  useEffect(() => {
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !drawerRef.current) return;
+
+      const focusableElements = drawerRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleTab);
+    return () => document.removeEventListener("keydown", handleTab);
+  }, []);
 
   // Handle ESC key
   useEffect(() => {
@@ -121,7 +155,7 @@ export function SummaryDrawer({ event, isLoading, error, onClose, onViewMore }: 
           <h2 id="drawer-title" className="font-semibold">
             Szczegóły wydarzenia
           </h2>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Zamknij">
+          <Button ref={closeButtonRef} variant="ghost" size="icon" onClick={onClose} aria-label="Zamknij">
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -134,9 +168,16 @@ export function SummaryDrawer({ event, isLoading, error, onClose, onViewMore }: 
             <div className="text-center">
               <p className="mb-2 font-medium text-destructive">Nie udało się załadować danych</p>
               <p className="text-sm text-muted-foreground">{error.message}</p>
-              <Button onClick={onClose} className="mt-4" variant="outline" size="sm">
-                Zamknij
-              </Button>
+              <div className="mt-4 flex gap-2 justify-center">
+                {onRetry && (
+                  <Button onClick={onRetry} variant="default" size="sm">
+                    Spróbuj ponownie
+                  </Button>
+                )}
+                <Button onClick={onClose} variant="outline" size="sm">
+                  Zamknij
+                </Button>
+              </div>
             </div>
           ) : event ? (
             <div className="space-y-4">
