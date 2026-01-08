@@ -4,7 +4,7 @@
  * Per test-plan.md section 3.1 - Critical cache functionality
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { clearGridCache, clearAllCache } from "@/hooks/useClientCache";
 
 describe("Cache Utils - clearGridCache", () => {
