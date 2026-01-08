@@ -2,11 +2,13 @@
 
 ## WORKAROUND FOR COPILOT COMMAND Run_in_terminal OUTPUT BUG
 
-1. Whenever you want to run a command in the terminal, don't! Use simple error_tool instead.
+1. Whenever you want to run a command in the terminal, don't!.
+2. don't use terminal at all.
 
 ## TASK DOCUMENTATION SUMMARY
 
 1. For the task summary at the end of task job, do not create new `*.md` files as documentation, unless the task explicitly requires it.
+2. No more any new MD files in docs after any job run finished.
 
 ## FRONTEND
 

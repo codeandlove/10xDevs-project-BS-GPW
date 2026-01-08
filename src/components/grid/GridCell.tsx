@@ -15,6 +15,9 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
         className="flex h-full min-h-[60px] items-center justify-center border border-gray-200 bg-gray-50/50"
         role="gridcell"
         aria-label={`${data.symbol} ${data.date} - brak zdarzenia`}
+        data-symbol={data.symbol}
+        data-date={data.date}
+        data-has-event="false"
       >
         <span className="text-xs text-gray-400">-</span>
       </div>
@@ -35,6 +38,10 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
         `}
         role="gridcell"
         aria-label={`${data.symbol} ${data.date} ${data.eventType} ${percentText}`}
+        data-symbol={data.symbol}
+        data-date={data.date}
+        data-has-event="true"
+        data-event-id={data.eventId || undefined}
       >
         <span className="text-xs font-semibold">{data.symbol}</span>
         <span className="text-lg font-bold">{percentText}</span>
@@ -62,6 +69,10 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
       aria-label={`${data.symbol} ${data.date} ${data.eventType} ${percentText}`}
       aria-pressed={isSelected}
       tabIndex={0}
+      data-symbol={data.symbol}
+      data-date={data.date}
+      data-has-event="true"
+      data-event-id={data.eventId || undefined}
     >
       <span className="text-xs font-semibold">{data.symbol}</span>
       <span className="text-lg font-bold">{percentText}</span>

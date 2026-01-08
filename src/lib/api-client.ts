@@ -23,11 +23,31 @@ class APIError extends Error {
 }
 
 /**
+ * Convert relative URL to absolute URL for testing environment
+ */
+function normalizeUrl(url: string): string {
+  // If URL is already absolute, return as is
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+
+  // In test environment, prepend base URL
+  if (typeof window !== "undefined" && import.meta.env?.MODE === "test") {
+    return `http://localhost:3000${url}`;
+  }
+
+  return url;
+}
+
+/**
  * Enhanced fetch with error handling and retry
  */
 async function fetchWithRetry(url: string, options: FetchOptions = {}): Promise<Response> {
   const { retry = 3, retryDelay = 1000, skipAuth = false, ...fetchOptions } = options;
   let lastError: Error | null = null;
+
+  // Normalize URL for test environment
+  const normalizedUrl = normalizeUrl(url);
 
   // Automatically add Authorization header if not skipped
   if (!skipAuth) {
@@ -44,16 +64,17 @@ async function fetchWithRetry(url: string, options: FetchOptions = {}): Promise<
 
   for (let attempt = 0; attempt <= retry; attempt++) {
     try {
-      const response = await fetch(url, fetchOptions);
+      const response = await fetch(normalizedUrl, fetchOptions);
 
       // Handle non-OK responses
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const apiError = new APIError(
-          errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-          response.status,
-          errorData.code
-        );
+        // Extract message from either errorData.message or errorData.error.message
+        const errorMessage =
+          errorData.message || errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+        const errorCode = errorData.code || errorData.error?.code;
+
+        const apiError = new APIError(errorMessage, response.status, errorCode);
 
         // Handle 401 Unauthorized - clear cache and redirect to login
         if (response.status === 401) {

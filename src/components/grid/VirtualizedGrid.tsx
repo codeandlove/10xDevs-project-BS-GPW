@@ -132,11 +132,11 @@ export function VirtualizedGrid({ events, range, onCellClick, selectedEventId }:
   );
 
   return (
-    <div className="w-full overflow-hidden rounded-lg border">
+    <div className="w-full overflow-hidden rounded-lg border" role="grid" aria-label="Black Swan Events Grid">
       {/* Header row with dates (sticky) */}
-      <div className="sticky top-0 z-20 flex border-b bg-white">
+      <div className="sticky top-0 z-20 flex border-b bg-white" role="row">
         {/* Top-left corner (empty cell for symbol column) */}
-        <div className="sticky left-0 z-30 w-32 shrink-0 border-r bg-gray-50 px-4 py-3">
+        <div className="sticky left-0 z-30 w-32 shrink-0 border-r bg-gray-50 px-4 py-3" role="columnheader">
           <span className="text-sm font-semibold text-gray-700">Symbol</span>
         </div>
 
@@ -152,6 +152,7 @@ export function VirtualizedGrid({ events, range, onCellClick, selectedEventId }:
             return (
               <div
                 key={virtualColumn.key}
+                role="columnheader"
                 className="absolute left-0 top-0 flex h-full items-center justify-center border-r px-4 py-3"
                 style={{
                   width: `${virtualColumn.size}px`,
@@ -180,6 +181,7 @@ export function VirtualizedGrid({ events, range, onCellClick, selectedEventId }:
             return (
               <div
                 key={virtualRow.key}
+                role="row"
                 className="absolute left-0 top-0 flex w-full"
                 style={{
                   height: `${virtualRow.size}px`,

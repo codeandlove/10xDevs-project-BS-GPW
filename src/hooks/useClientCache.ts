@@ -238,10 +238,10 @@ export function invalidateCache(key: string): void {
 export function clearAllCache(): void {
   memoryCache.clear();
   try {
-    // Clear only cache keys with PRD prefix: gpw:cache:v1:
+    // Clear all cache keys (format: "cache:...")
     const keys = Object.keys(localStorage);
     keys.forEach((key) => {
-      if (key.startsWith("gpw:cache:v1:")) {
+      if (key.startsWith("cache:")) {
         localStorage.removeItem(key);
       }
     });
@@ -260,7 +260,8 @@ export function clearGridCache(): void {
     const keys = Object.keys(localStorage);
     keys.forEach((key) => {
       // Clear cache data (grid events, event details, summaries)
-      if (key.startsWith("gpw:cache:v1:")) {
+      // Keys format: "cache:grid:...", "cache:event:...", etc.
+      if (key.startsWith("cache:")) {
         localStorage.removeItem(key);
       }
 

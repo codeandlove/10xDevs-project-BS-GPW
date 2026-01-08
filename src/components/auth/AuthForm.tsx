@@ -82,7 +82,7 @@ export function AuthForm({ mode, returnUrl = "/grid" }: AuthFormProps) {
         }
       } else {
         // Login existing user
-        const { data, error: signInError } = await supabaseClient.auth.signInWithPassword({
+        const { error: signInError } = await supabaseClient.auth.signInWithPassword({
           email,
           password,
         });
@@ -96,9 +96,8 @@ export function AuthForm({ mode, returnUrl = "/grid" }: AuthFormProps) {
           window.location.href = returnUrl;
         }, 1000);
       }
-    } catch (err: any) {
-      console.error("Auth error:", err);
-      const errorMessage = err.message || "Wystąpił błąd podczas uwierzytelniania";
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Wystąpił błąd podczas uwierzytelniania";
       setError(errorMessage);
       toast.error("Błąd uwierzytelniania", errorMessage);
     } finally {
@@ -116,6 +115,7 @@ export function AuthForm({ mode, returnUrl = "/grid" }: AuthFormProps) {
           </label>
           <input
             id="email"
+            name="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -143,6 +143,7 @@ export function AuthForm({ mode, returnUrl = "/grid" }: AuthFormProps) {
           </label>
           <input
             id="password"
+            name="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

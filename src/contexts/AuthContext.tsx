@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
 
     // Clear cached grid data but preserve user preferences (GDPR-ready)
-    // Removes cache: gpw:cache:v1:* (events, summaries, details)
+    // Removes cache: cache:grid:*, cache:event:*, cache:summary:* (events, summaries, details)
     // Preserves: gpw:preferences:* (symbols, range selections)
     clearGridCache();
   };

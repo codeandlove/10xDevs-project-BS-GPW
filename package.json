@@ -9,7 +9,15 @@
     "astro": "astro",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "vitest",
+    "test:unit": "vitest run",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:setup": "tsx e2e/setup/create-test-users.ts"
   },
   "dependencies": {
     "@astrojs/node": "^9.5.1",
@@ -18,6 +26,7 @@
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.87.1",
     "@tailwindcss/vite": "^4.1.13",
     "@tanstack/react-virtual": "^3.13.14",
@@ -40,12 +49,21 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@eslint/compat": "1.2.7",
     "@eslint/js": "9.23.0",
+    "@playwright/test": "^1.49.1",
     "@tanstack/react-router": "^1.144.0",
     "@tanstack/router-devtools": "^1.144.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
     "@typescript-eslint/eslint-plugin": "8.28.0",
     "@typescript-eslint/parser": "8.28.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/ui": "^2.1.8",
+    "dotenv": "^17.2.3",
     "eslint": "9.23.0",
     "eslint-config-prettier": "10.1.1",
     "eslint-import-resolver-typescript": "4.2.5",
@@ -56,10 +74,15 @@
     "eslint-plugin-react": "7.37.4",
     "eslint-plugin-react-compiler": "19.0.0-beta-aeaed83-20250323",
     "eslint-plugin-react-hooks": "5.2.0",
+    "happy-dom": "^16.6.0",
     "husky": "9.1.7",
     "lint-staged": "15.5.0",
+    "msw": "^2.8.0",
     "prettier-plugin-astro": "0.14.1",
-    "typescript-eslint": "8.28.0"
+    "tsx": "^4.21.0",
+    "typescript-eslint": "8.28.0",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^2.1.8"
   },
   "lint-staged": {
     "*.{ts,tsx,astro}": [
