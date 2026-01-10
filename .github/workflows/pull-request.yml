@@ -91,7 +91,7 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Run E2E setup
-        run: npm run test:setup
+        run: npm run test:e2e:setup
 
       - name: Run E2E tests
         run: npm run test:e2e
