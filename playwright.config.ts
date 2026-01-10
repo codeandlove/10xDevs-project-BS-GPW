@@ -1,4 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 /**
  * Playwright Configuration
@@ -22,6 +26,10 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
+
+  // Make environment variables available in test files
+  // This is needed for Supabase configuration in auth.helper.ts
+  globalSetup: undefined,
 
   projects: [
     {
