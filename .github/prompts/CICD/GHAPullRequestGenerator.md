@@ -1,6 +1,6 @@
 Jesteś specjalistą GitHub Actions w stacku {{@tech-stack.md}} oraz {{@package.json}}
 
-Utwórz scenariusz "pull-request.yml" na podstawie {{@github-action-helper.md}} dla workflow GitHub Actions, który będzie uruchamiany przy każdym pull requeście do głównej gałęzi (main/master).
+Utwórz scenariusz "pull-request.yml" na podstawie {{@github-action-helper.md}} dla workflow GitHub Actions, który będzie uruchamiany przy każdym pull requeście do głównej gałęzi (master).
 
 Workflow:
 Scenariusz "pull-request.yml" powinien działać następująco:

@@ -1,0 +1,161 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload unit test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-coverage
+          path: coverage/
+          retention-days: 30
+
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    environment: integration
+
+    env:
+      PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+      PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      NOCODB_API_URL: ${{ secrets.NOCODB_API_URL }}
+      NOCODB_API_TOKEN: ${{ secrets.NOCODB_API_TOKEN }}
+      NOCODB_BASE_ID: ${{ secrets.NOCODB_BASE_ID }}
+      NOCODB_TABLE_BLACK_SWANS: ${{ secrets.NOCODB_TABLE_BLACK_SWANS }}
+      NOCODB_TABLE_AI_SUMMARY: ${{ secrets.NOCODB_TABLE_AI_SUMMARY }}
+      NOCODB_TABLE_HISTORIC_DATA: ${{ secrets.NOCODB_TABLE_HISTORIC_DATA }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload E2E test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  status-comment:
+    name: PR Status Comment
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test, e2e-test]
+    if: always()
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Check job statuses
+        id: check-status
+        run: |
+          if [[ "${{ needs.lint.result }}" == "success" && "${{ needs.unit-test.result }}" == "success" && "${{ needs.e2e-test.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "emoji=✅" >> $GITHUB_OUTPUT
+            echo "message=All checks passed successfully!" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+            echo "message=Some checks failed. Please review the results." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const statusEmoji = '${{ steps.check-status.outputs.emoji }}';
+            const statusMessage = '${{ steps.check-status.outputs.message }}';
+            const lintStatus = '${{ needs.lint.result }}';
+            const unitTestStatus = '${{ needs.unit-test.result }}';
+            const e2eTestStatus = '${{ needs.e2e-test.result }}';
+            
+            const getStatusEmoji = (status) => {
+              if (status === 'success') return '✅';
+              if (status === 'failure') return '❌';
+              if (status === 'cancelled') return '⚠️';
+              return '⏭️';
+            };
+            
+            const comment = `## ${statusEmoji} Pull Request Status
+            
+            ${statusMessage}
+            
+            ### Job Results:
+            - **Lint**: ${getStatusEmoji(lintStatus)} \`${lintStatus}\`
+            - **Unit Tests**: ${getStatusEmoji(unitTestStatus)} \`${unitTestStatus}\`
+            - **E2E Tests**: ${getStatusEmoji(e2eTestStatus)} \`${e2eTestStatus}\`
+            
+            ---
+            *Workflow run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
