@@ -14,7 +14,23 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],
-      exclude: ["node_modules/", "src/test/", "**/*.d.ts", "**/*.config.*", "**/mockData", "dist", ".astro"],
+      exclude: [
+        "node_modules/",
+        "src/test/",
+        "**/*.d.ts",
+        "**/*.config.*",
+        "**/mockData",
+        "dist",
+        ".astro",
+        // Exclude files tested by E2E (Playwright)
+        "src/pages/**", // Astro pages and API endpoints
+        "src/components/**", // React components
+        "src/layouts/**", // Astro layouts
+        "src/contexts/**", // React contexts (require browser environment)
+        "src/hooks/**", // React hooks (require browser environment)
+        "src/middleware/**", // Astro middleware
+        "e2e/**", // E2E tests themselves
+      ],
       all: true,
       thresholds: {
         lines: 70,
