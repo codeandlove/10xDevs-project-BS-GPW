@@ -71,7 +71,7 @@ test.describe("Middleware Guard - After Login Redirect", () => {
 
     // Navigate to /grid
     await page.goto("/grid");
-    
+
     // Should stay on /grid
     await expect(page).toHaveURL("/grid");
   });
@@ -84,7 +84,7 @@ test.describe("Middleware Guard - After Login Redirect", () => {
     });
 
     await page.goto("/grid");
-    
+
     // Should redirect to /grid
     await expect(page).toHaveURL("/grid");
   });
@@ -106,12 +106,12 @@ test.describe("Middleware Guard - Expired Subscription", () => {
     // Currently middleware might redirect to login instead of 403
     // Skip this test for now as it depends on middleware implementation
     test.skip();
-    
+
     // Mock API to return expired subscription status
     await page.route("**/api/users/me", (route) => {
       route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify({
           success: true,
           data: {
@@ -140,11 +140,11 @@ test.describe("Middleware Guard - Expired Subscription", () => {
   test("TC-AUTH-002: Allow access with active trial", async ({ page }) => {
     // Setup grid mocks
     await setupNocoDBMocks(page);
-    
+
     await page.route("**/api/users/me", (route) => {
       route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify({
           success: true,
           data: {
@@ -167,11 +167,11 @@ test.describe("Middleware Guard - Expired Subscription", () => {
   test("TC-AUTH-002: Allow access with active subscription", async ({ page }) => {
     // Setup grid mocks
     await setupNocoDBMocks(page);
-    
+
     await page.route("**/api/users/me", (route) => {
       route.fulfill({
         status: 200,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify({
           success: true,
           data: {
@@ -217,20 +217,20 @@ test.describe.skip("Cache Cleanup on Logout - GDPR Compliance", () => {
   // 2. UI login form doesn't redirect properly in test environment
   // 3. These are more suitable as manual/integration tests
   // TODO: Re-enable when auth flow is stabilized or create separate test suite
-  
+
   test.beforeEach(async ({ page }) => {
     // Login via UI to properly initialize AuthContext
     await page.goto("/auth/login");
     await page.fill('[name="email"]', "test@example.com");
     await page.fill('[name="password"]', "Test123!@#");
     await page.click('button[type="submit"]');
-    
+
     // Wait for redirect to grid
     await expect(page).toHaveURL("/grid", { timeout: 10000 });
-    
+
     // Setup grid mocks AFTER login
     await setupNocoDBMocks(page);
-    
+
     // Reload to apply mocks
     await page.reload();
     await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
@@ -240,7 +240,7 @@ test.describe.skip("Cache Cleanup on Logout - GDPR Compliance", () => {
   test("TC-CACHE-001: Clear cache data on logout", async ({ page }) => {
     // Wait for grid to be fully loaded
     await page.waitForTimeout(2000);
-    
+
     // Verify if cache exists before logout (may not be implemented yet)
     const cacheKeysBefore = await page.evaluate(() => {
       return Object.keys(localStorage).filter((k) => k.includes("cache") || k.includes("gpw"));
@@ -252,15 +252,15 @@ test.describe.skip("Cache Cleanup on Logout - GDPR Compliance", () => {
     // Open account menu -> Moje konto -> Wyloguj się
     await page.click('[aria-label="User menu"]');
     await page.waitForTimeout(500);
-    
+
     await page.click("text=Moje konto");
     await page.waitForTimeout(1000);
-    
+
     // Modal should be visible
     await expect(page.locator('[role="dialog"]')).toBeVisible({ timeout: 10000 });
-    
+
     // Click logout button in modal
-    await page.getByRole('button', { name: /Wyloguj się/i }).click();
+    await page.getByRole("button", { name: /Wyloguj się/i }).click();
 
     // Should redirect to landing page
     await expect(page).toHaveURL("/", { timeout: 10000 });
@@ -280,17 +280,17 @@ test.describe.skip("Cache Cleanup on Logout - GDPR Compliance", () => {
 
   test("TC-CACHE-001: Preserve user preferences on logout", async ({ page }) => {
     // Open filter and set preferences (using proper selectors)
-    await page.getByRole('button', { name: /Filter by ticker|Tickery/i }).click();
+    await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
     await page.waitForTimeout(500);
-    
+
     await page.locator('label:has-text("CPD") input[type="checkbox"]').check();
     await page.locator('div[class*="fixed inset-0"]').click();
     await page.waitForTimeout(1000);
 
     // Verify preferences saved (check localStorage or URL)
     const currentUrl = page.url();
-    const hasSymbolsParam = currentUrl.includes('symbols=');
-    
+    const hasSymbolsParam = currentUrl.includes("symbols=");
+
     // Preferences may be in URL or localStorage
     if (!hasSymbolsParam) {
       // If not in URL, just verify localStorage exists
@@ -304,11 +304,11 @@ test.describe.skip("Cache Cleanup on Logout - GDPR Compliance", () => {
     await expect(page.locator('[aria-label="User menu"]')).toBeVisible({ timeout: 10000 });
     await page.click('[aria-label="User menu"]');
     await page.waitForTimeout(500);
-    
+
     await page.click("text=Moje konto");
     await page.waitForTimeout(1000);
-    
-    await page.getByRole('button', { name: /Wyloguj się/i }).click();
+
+    await page.getByRole("button", { name: /Wyloguj się/i }).click();
     await expect(page).toHaveURL("/", { timeout: 10000 });
 
     // Test passes - preferences handling tested
@@ -325,11 +325,11 @@ test.describe.skip("Cache Cleanup on Logout - GDPR Compliance", () => {
     await expect(page.locator('[aria-label="User menu"]')).toBeVisible({ timeout: 10000 });
     await page.click('[aria-label="User menu"]');
     await page.waitForTimeout(500);
-    
+
     await page.click("text=Moje konto");
     await page.waitForTimeout(1000);
-    
-    await page.getByRole('button', { name: /Wyloguj się/i }).click();
+
+    await page.getByRole("button", { name: /Wyloguj się/i }).click();
     await expect(page).toHaveURL("/", { timeout: 10000 });
 
     // Clear cookies to simulate different user
@@ -337,13 +337,13 @@ test.describe.skip("Cache Cleanup on Logout - GDPR Compliance", () => {
 
     // Setup mocks for User B
     await setupNocoDBMocks(page);
-    
+
     // User B logs in via API
     await loginViaAPI(page, {
       email: "userb@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     await expect(page.locator('[role="grid"]')).toBeVisible();
 
@@ -361,7 +361,7 @@ test.describe("API 401 Handling - Auto Logout", () => {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     await expect(page).toHaveURL("/grid");
 

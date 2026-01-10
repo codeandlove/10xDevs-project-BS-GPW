@@ -12,13 +12,13 @@ test.describe("Summary View - Opening Sidebar", () => {
   test.beforeEach(async ({ page }) => {
     // Setup API mocks FIRST
     await setupNocoDBMocks(page);
-    
+
     // Login via API
     await loginViaAPI(page, {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
   });
@@ -104,13 +104,13 @@ test.describe("Summary View - Closing Sidebar", () => {
   test.beforeEach(async ({ page }) => {
     // Setup API mocks
     await setupNocoDBMocks(page);
-    
+
     // Login via API
     await loginViaAPI(page, {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
 
@@ -180,13 +180,13 @@ test.describe("Summary View - Focus Management", () => {
   test.beforeEach(async ({ page }) => {
     // Setup API mocks
     await setupNocoDBMocks(page);
-    
+
     // Login via API
     await loginViaAPI(page, {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
 
     const eventCell = page.locator('[data-has-event="true"]').first();
@@ -250,7 +250,7 @@ test.describe("Summary View - Cache for Event Details", () => {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     await expect(page.locator('[role="grid"]')).toBeVisible();
 
@@ -307,15 +307,15 @@ test.describe("Summary View - Cache for Event Details", () => {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     // Mock grid API normally but events API with error
     await setupNocoDBMocks(page);
-    
+
     // Mock API to return error for event details
     await page.route("**/api/nocodb/events/*", (route) => {
       route.fulfill({
         status: 500,
-        contentType: 'application/json',
+        contentType: "application/json",
         body: JSON.stringify({ success: false, error: { message: "Server error" } }),
       });
     });
@@ -345,7 +345,7 @@ test.describe("Summary View - History API", () => {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     const eventCell = page.locator('[data-has-event="true"]').first();
 
@@ -371,7 +371,7 @@ test.describe("Summary View - History API", () => {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     const eventCell = page.locator('[data-has-event="true"]').first();
 
@@ -405,7 +405,7 @@ test.describe("Summary View - Mobile Drawer", () => {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     const eventCell = page.locator('[data-has-event="true"]').first();
 

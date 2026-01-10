@@ -52,7 +52,7 @@ export const mockEventDetails = {
   percent_change: 8.5,
   volume_change: 2.3,
   description: "Q4 earnings beat expectations",
-  price_before: 45.20,
+  price_before: 45.2,
   price_after: 49.04,
   volume_before: 125000,
   volume_after: 287500,

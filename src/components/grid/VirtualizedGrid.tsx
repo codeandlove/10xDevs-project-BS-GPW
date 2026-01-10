@@ -217,14 +217,22 @@ export function VirtualizedGrid({ events, range, onCellClick, selectedEventId }:
                         }}
                       >
                         <GridCell
-                          data={{
-                            symbol,
-                            date,
-                            eventId: event?.id ?? null,
-                            eventType: event?.event_type,
-                            percentChange: event?.percent_change,
-                            hasSummary: !!event,
-                          }}
+                          data={
+                            event
+                              ? {
+                                  eventId: event.id,
+                                  symbol,
+                                  date,
+                                  eventType: event.event_type,
+                                  percentChange: event.percent_change,
+                                  hasSummary: true,
+                                }
+                              : {
+                                  eventId: null,
+                                  symbol,
+                                  date,
+                                }
+                          }
                           onClick={event ? () => handleCellClickWithFocus(event.id, symbolIndex, dateIndex) : undefined}
                           isSelected={event?.id === selectedEventId}
                         />

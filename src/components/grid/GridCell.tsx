@@ -7,9 +7,8 @@ import type { GridCellProps } from "@/types/ui.types";
 import { getEventTypeColor, formatPercentChange } from "@/lib/ui-utils";
 
 export const GridCell = memo(function GridCell({ data, onClick, isSelected = false }: GridCellProps) {
-  const isEmpty = !data.eventId;
-
-  if (isEmpty) {
+  // Type narrowing: if eventId is null, it's GridCellEmpty
+  if (data.eventId === null) {
     return (
       <div
         className="flex h-full min-h-[60px] items-center justify-center border border-gray-200 bg-gray-50/50"
@@ -24,8 +23,9 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
     );
   }
 
-  const colorClass = getEventTypeColor(data.eventType!);
-  const percentText = formatPercentChange(data.percentChange!);
+  // TypeScript now knows data is GridCellWithEvent
+  const colorClass = getEventTypeColor(data.eventType);
+  const percentText = formatPercentChange(data.percentChange);
 
   // If no onClick, render as div
   if (!onClick) {
@@ -67,7 +67,6 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
       `}
       role="gridcell"
       aria-label={`${data.symbol} ${data.date} ${data.eventType} ${percentText}`}
-      aria-pressed={isSelected}
       tabIndex={0}
       data-symbol={data.symbol}
       data-date={data.date}

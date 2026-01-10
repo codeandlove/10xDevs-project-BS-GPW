@@ -53,7 +53,6 @@ export class SubscriptionService {
         .single();
 
       if (error) {
-        console.error("Database error in getSubscriptionStatus:", error);
         throw new DatabaseError("Failed to fetch user subscription");
       }
 
@@ -75,7 +74,6 @@ export class SubscriptionService {
       if (error instanceof SubscriptionError) {
         throw error;
       }
-      console.error("Unexpected error in getSubscriptionStatus:", error);
       throw new SubscriptionError("Failed to get subscription status", "UNKNOWN_ERROR", 500);
     }
   }
@@ -111,7 +109,6 @@ export class SubscriptionService {
       .single();
 
     if (error) {
-      console.error("Database error in getUserProfile:", error);
       throw new DatabaseError("Failed to fetch user profile");
     }
 
@@ -145,7 +142,6 @@ export class SubscriptionService {
         : await this.supabase.auth.getUser();
 
       if (sessionError || !sessionData?.user?.email) {
-        console.error("Failed to get user from session:", sessionError);
         throw new DatabaseError("Failed to get user email for Stripe customer");
       }
 
@@ -174,7 +170,6 @@ export class SubscriptionService {
         .eq("auth_uid", authUid);
 
       if (updateError) {
-        console.error("Failed to update user with stripe_customer_id:", updateError);
         throw new DatabaseError("Failed to save Stripe customer ID");
       }
 
@@ -195,11 +190,9 @@ export class SubscriptionService {
       if (error instanceof Error && "type" in error) {
         // Stripe error
         const stripeError = error as StripeErrorType;
-        console.error("Stripe API error in createOrGetStripeCustomer:", error);
         throw new StripeError("Failed to create Stripe customer", stripeError.message);
       }
 
-      console.error("Unexpected error in createOrGetStripeCustomer:", error);
       throw new SubscriptionError("Failed to create customer", "UNKNOWN_ERROR", 500);
     }
   }
@@ -256,15 +249,9 @@ export class SubscriptionService {
       if (error instanceof Error && "type" in error) {
         // Stripe error
         const stripeError = error as StripeErrorType;
-        console.error("Stripe API error in createCheckoutSession:", {
-          type: stripeError.type,
-          message: stripeError.message,
-          code: stripeError.code,
-        });
         throw new StripeError("Failed to create checkout session", stripeError.message || "Unknown Stripe error");
       }
 
-      console.error("Unexpected error in createCheckoutSession:", error);
       throw new SubscriptionError("Failed to create checkout session", "UNKNOWN_ERROR", 500);
     }
   }
@@ -302,15 +289,9 @@ export class SubscriptionService {
       if (error instanceof Error && "type" in error) {
         // Stripe error
         const stripeError = error as StripeErrorType;
-        console.error("Stripe API error in createPortalSession:", {
-          type: stripeError.type,
-          message: stripeError.message,
-          code: stripeError.code,
-        });
         throw new StripeError("Failed to create portal session", stripeError.message || "Unknown Stripe error");
       }
 
-      console.error("Unexpected error in createPortalSession:", error);
       throw new SubscriptionError("Failed to create portal session", "UNKNOWN_ERROR", 500);
     }
   }

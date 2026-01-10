@@ -10,15 +10,29 @@ import type { UserProfileDTO } from "./types";
 // ============================================
 
 /**
- * Grid cell data structure
+ * Grid cell data structure - discriminated union for type safety
  */
-export interface GridCellData {
-  eventId: string | null;
+export type GridCellData = GridCellEmpty | GridCellWithEvent;
+
+/**
+ * Empty grid cell (no event)
+ */
+export interface GridCellEmpty {
+  eventId: null;
   symbol: string;
   date: string; // YYYY-MM-DD
-  eventType?: EventType;
-  percentChange?: number;
-  hasSummary?: boolean;
+}
+
+/**
+ * Grid cell with event data
+ */
+export interface GridCellWithEvent {
+  eventId: string;
+  symbol: string;
+  date: string; // YYYY-MM-DD
+  eventType: EventType;
+  percentChange: number;
+  hasSummary: boolean;
 }
 
 /**

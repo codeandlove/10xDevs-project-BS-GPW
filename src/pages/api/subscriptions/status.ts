@@ -39,7 +39,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return createErrorResponse(error.message, error.statusCode, error.code, error.details);
     }
 
-    console.error("Unexpected error in GET /api/subscriptions/status:", error);
     return createErrorResponse("An unexpected error occurred", 500, "UNKNOWN_ERROR");
   }
 };

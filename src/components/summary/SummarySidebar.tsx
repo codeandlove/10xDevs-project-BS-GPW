@@ -88,9 +88,15 @@ export function SummarySidebar({ event, isLoading, error, onClose, onViewMore, o
   if (!event && !isLoading) return null;
 
   return createPortal(
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Dialog wrapper with proper keyboard support (ESC to close)
     <div
       className="fixed inset-0 z-50 flex items-stretch justify-end"
       onClick={handleOverlayClick}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          onClose();
+        }
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="sidebar-title"
@@ -99,10 +105,12 @@ export function SummarySidebar({ event, isLoading, error, onClose, onViewMore, o
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" aria-hidden="true" />
 
       {/* Sidebar */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Sidebar content stops propagation, has keyboard support via wrapper */}
       <div
         ref={sidebarRef}
         className="relative z-10 w-full max-w-md overflow-y-auto bg-white shadow-2xl"
         onClick={handleSidebarClick}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4">

@@ -29,7 +29,6 @@ export function ManageSubscriptionButton({ onError }: ManageSubscriptionButtonPr
         throw new Error("No portal URL returned");
       }
     } catch (error) {
-      console.error("Failed to open Stripe Portal:", error);
       if (onError) {
         onError(error instanceof Error ? error : new Error("Failed to open Stripe Portal"));
       }

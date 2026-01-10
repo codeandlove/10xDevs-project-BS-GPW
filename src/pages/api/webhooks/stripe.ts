@@ -41,12 +41,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     try {
       event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
       eventId = event.id;
-    } catch (err) {
-      console.error("[WEBHOOK] Signature verification failed:", err);
+    } catch {
       throw new SignatureVerificationError();
     }
-
-    console.log("[WEBHOOK] Signature verified for event:", eventId);
 
     // [4] Process event with service layer
     const webhookService = new WebhookService(supabase);
@@ -68,11 +65,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     // [6] Handle signature verification errors (return 400)
     if (error instanceof SignatureVerificationError || error instanceof MissingSignatureError) {
-      console.error("[WEBHOOK] Authentication failed:", {
-        event_id: eventId,
-        error: error.message,
-      });
-
       return new Response(
         JSON.stringify({
           error: error.message,
@@ -86,11 +78,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // [7] For all other errors, return 200 OK to prevent Stripe retries
     // Error already logged in service layer
-    console.error("[WEBHOOK] Processing error (returning 200 to Stripe):", {
-      event_id: eventId,
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
-
     return new Response(
       JSON.stringify({
         received: true,

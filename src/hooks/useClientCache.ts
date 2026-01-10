@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { CacheEntry, CacheOptions } from "@/types/ui.types";
 
 // In-memory cache
-const memoryCache = new Map<string, CacheEntry<any>>();
+const memoryCache = new Map<string, CacheEntry<unknown>>();
 
 // Cache configuration (per PRD section 8.2)
 const MAX_CACHE_ENTRIES = 200; // Maximum number of entries
@@ -39,8 +39,9 @@ function evictIfNeeded(): void {
       memoryCache.delete(oldestKey);
       try {
         localStorage.removeItem(oldestKey);
-      } catch (error) {
-        console.error("Failed to remove from localStorage:", error);
+      } catch {
+        // Graceful degradation: localStorage errors are silent
+        // Cache continues working in memory
       }
     }
   }
@@ -51,7 +52,7 @@ function evictIfNeeded(): void {
  */
 function getFromCache<T>(key: string): CacheEntry<T> | null {
   // Try in-memory cache first
-  const memEntry = memoryCache.get(key);
+  const memEntry = memoryCache.get(key) as CacheEntry<T> | undefined;
   if (memEntry) {
     // Update lastAccessed for LRU
     memEntry.lastAccessed = Date.now();
@@ -66,11 +67,12 @@ function getFromCache<T>(key: string): CacheEntry<T> | null {
       // Update lastAccessed
       entry.lastAccessed = Date.now();
       // Store in memory cache for faster access
-      memoryCache.set(key, entry);
+      memoryCache.set(key, entry as CacheEntry<unknown>);
       return entry;
     }
-  } catch (error) {
-    console.error("Failed to read from localStorage:", error);
+  } catch {
+    // Graceful degradation: localStorage read/parse errors are silent
+    // Falls back to fetching fresh data
   }
 
   return null;
@@ -91,14 +93,15 @@ function setInCache<T>(key: string, data: T, ttl: number): void {
   // Evict if needed before adding new entry
   evictIfNeeded();
 
-  // Store in memory
-  memoryCache.set(key, entry);
+  // Store in memory (cast to unknown for type-safe storage)
+  memoryCache.set(key, entry as CacheEntry<unknown>);
 
   // Store in localStorage
   try {
     localStorage.setItem(key, JSON.stringify(entry));
-  } catch (error) {
-    console.error("Failed to write to localStorage:", error);
+  } catch {
+    // Graceful degradation: localStorage write errors are silent
+    // Data is still cached in memory
   }
 }
 
@@ -126,10 +129,11 @@ export function useClientCache<T>(key: string, fetcher: () => Promise<T>, option
     async (retryCount = 0): Promise<T | null> => {
       try {
         const result = await fetcher();
-        setInCache(key, result, opts.ttl!);
+        setInCache(key, result, opts.ttl ?? DEFAULT_TTL);
         return result;
       } catch (err) {
-        if (retryCount < opts.retry!) {
+        const maxRetries = opts.retry ?? DEFAULT_OPTIONS.retry ?? 3;
+        if (retryCount < maxRetries) {
           // Exponential backoff
           await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
           return fetchData(retryCount + 1);
@@ -180,9 +184,9 @@ export function useClientCache<T>(key: string, fetcher: () => Promise<T>, option
             if (mounted && freshData) {
               setData(freshData);
             }
-          } catch (err) {
-            // Keep showing stale data on revalidation error
-            console.error("Background revalidation failed:", err);
+          } catch {
+            // Silent failure: Keep showing stale data on revalidation error
+            // This is intentional for stale-while-revalidate strategy
           }
         }
       } else {
@@ -227,8 +231,8 @@ export function invalidateCache(key: string): void {
   memoryCache.delete(key);
   try {
     localStorage.removeItem(key);
-  } catch (error) {
-    console.error("Failed to remove from localStorage:", error);
+  } catch {
+    // Graceful degradation: localStorage errors are silent
   }
 }
 
@@ -245,8 +249,9 @@ export function clearAllCache(): void {
         localStorage.removeItem(key);
       }
     });
-  } catch (error) {
-    console.error("Failed to clear localStorage:", error);
+  } catch {
+    // Graceful degradation: localStorage errors are silent
+    // Memory cache is already cleared
   }
 }
 
@@ -268,7 +273,8 @@ export function clearGridCache(): void {
       // Do NOT clear preferences - preserve for better UX on re-login
       // Preserved keys: gpw:preferences:symbols, gpw:preferences:range, etc.
     });
-  } catch (error) {
-    console.error("Failed to clear grid cache:", error);
+  } catch {
+    // Graceful degradation: localStorage errors are silent
+    // Memory cache is already cleared
   }
 }

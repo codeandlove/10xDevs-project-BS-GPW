@@ -11,11 +11,12 @@ export interface LoginOptions {
 
 export async function loginViaAPI(page: Page, { email, password }: LoginOptions) {
   const supabaseUrl = "http://127.0.0.1:54321";
-  const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+  const supabaseAnonKey =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
 
   const response = await page.request.post(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
     headers: {
-      "apikey": supabaseAnonKey,
+      apikey: supabaseAnonKey,
       "Content-Type": "application/json",
     },
     data: { email, password },
@@ -27,10 +28,10 @@ export async function loginViaAPI(page: Page, { email, password }: LoginOptions)
   }
 
   const authData = await response.json();
-  
+
   // Set auth tokens in localStorage AND cookies
   await page.goto("/");
-  
+
   // Set in localStorage (for client-side Supabase client)
   await page.evaluate((data) => {
     const authToken = {
@@ -43,7 +44,7 @@ export async function loginViaAPI(page: Page, { email, password }: LoginOptions)
     };
     localStorage.setItem("sb-127.0.0.1:54321-auth-token", JSON.stringify(authToken));
   }, authData);
-  
+
   // Set cookies for server-side middleware
   await page.context().addCookies([
     {

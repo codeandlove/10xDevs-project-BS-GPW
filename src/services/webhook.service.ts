@@ -34,17 +34,10 @@ export class WebhookService {
    * @returns Processing result with success status
    */
   async processEvent(event: Stripe.Event): Promise<ProcessEventResult> {
-    console.log("[WEBHOOK] Received event:", {
-      id: event.id,
-      type: event.type,
-      created: new Date(event.created * 1000).toISOString(),
-    });
-
     try {
       // [1] Check if event already processed (idempotency)
       const alreadyProcessed = await this.checkEventExists(event.id);
       if (alreadyProcessed) {
-        console.log("[WEBHOOK] Event already processed:", event.id);
         return {
           success: true,
           already_processed: true,
@@ -57,7 +50,6 @@ export class WebhookService {
 
       // [3] Check if event type is supported
       if (!SUPPORTED_EVENTS.includes(event.type as WebhookEventType)) {
-        console.log("[WEBHOOK] Ignoring unsupported event type:", event.type);
         await this.markEventProcessed(event.id);
         return {
           success: true,
@@ -71,12 +63,6 @@ export class WebhookService {
       // [5] Mark as processed
       await this.markEventProcessed(event.id, result.user_id);
 
-      console.log("[WEBHOOK] Event processed successfully:", {
-        event_id: event.id,
-        user_id: result.user_id,
-        changes_applied: result.changes_applied,
-      });
-
       return {
         success: true,
         ...result,
@@ -85,11 +71,6 @@ export class WebhookService {
       // [6] Mark as failed
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       await this.markEventFailed(event.id, errorMessage);
-
-      console.error("[WEBHOOK] Event processing failed:", {
-        event_id: event.id,
-        error: errorMessage,
-      });
 
       throw new EventProcessingError(errorMessage);
     }
@@ -109,7 +90,6 @@ export class WebhookService {
 
     if (error && error.code !== "PGRST116") {
       // PGRST116 = not found (expected)
-      console.error("[WEBHOOK] Error checking event existence:", error);
     }
 
     return !!data;
@@ -130,7 +110,6 @@ export class WebhookService {
 
     // Handle duplicate key error (23505) - this is expected for idempotency
     if (error && error.code !== "23505") {
-      console.error("[WEBHOOK] Error logging event:", error);
       throw new WebhookDatabaseError("Failed to log webhook event");
     }
   }
@@ -152,7 +131,7 @@ export class WebhookService {
       .eq("event_id", eventId);
 
     if (error) {
-      console.error("[WEBHOOK] Error marking event as processed:", error);
+      // Silently ignore - marking as processed is not critical
     }
   }
 
@@ -172,7 +151,7 @@ export class WebhookService {
       .eq("event_id", eventId);
 
     if (error) {
-      console.error("[WEBHOOK] Error marking event as failed:", error);
+      // Silently ignore - marking as failed is not critical
     }
   }
 
@@ -199,7 +178,6 @@ export class WebhookService {
         return this.handlePaymentFailed(event);
 
       default:
-        console.log(`[WEBHOOK] Ignoring event type: ${event.type}`);
         return { changes_applied: false };
     }
   }
@@ -210,16 +188,9 @@ export class WebhookService {
   private async handleSubscriptionCreated(event: Stripe.Event): Promise<Omit<ProcessEventResult, "success">> {
     const subscription = event.data.object as Stripe.Subscription;
 
-    console.log("[WEBHOOK] Processing subscription.created:", {
-      subscription_id: subscription.id,
-      customer: subscription.customer,
-      status: subscription.status,
-    });
-
     // Find user by customer ID
     const user = await this.findUserByCustomer(subscription.customer as string);
     if (!user) {
-      console.warn(`[WEBHOOK] User not found for customer: ${subscription.customer}`);
       return { changes_applied: false };
     }
 
@@ -256,15 +227,8 @@ export class WebhookService {
   private async handleSubscriptionUpdated(event: Stripe.Event): Promise<Omit<ProcessEventResult, "success">> {
     const subscription = event.data.object as Stripe.Subscription;
 
-    console.log("[WEBHOOK] Processing subscription.updated:", {
-      subscription_id: subscription.id,
-      customer: subscription.customer,
-      status: subscription.status,
-    });
-
     const user = await this.findUserByCustomer(subscription.customer as string);
     if (!user) {
-      console.warn(`[WEBHOOK] User not found for customer: ${subscription.customer}`);
       return { changes_applied: false };
     }
 
@@ -315,14 +279,8 @@ export class WebhookService {
   private async handleSubscriptionDeleted(event: Stripe.Event): Promise<Omit<ProcessEventResult, "success">> {
     const subscription = event.data.object as Stripe.Subscription;
 
-    console.log("[WEBHOOK] Processing subscription.deleted:", {
-      subscription_id: subscription.id,
-      customer: subscription.customer,
-    });
-
     const user = await this.findUserByCustomer(subscription.customer as string);
     if (!user) {
-      console.warn(`[WEBHOOK] User not found for customer: ${subscription.customer}`);
       return { changes_applied: false };
     }
 
@@ -353,20 +311,12 @@ export class WebhookService {
   private async handlePaymentSucceeded(event: Stripe.Event): Promise<Omit<ProcessEventResult, "success">> {
     const invoice = event.data.object as Stripe.Invoice;
 
-    console.log("[WEBHOOK] Processing payment.succeeded:", {
-      invoice_id: invoice.id,
-      customer: invoice.customer,
-      subscription: invoice.subscription,
-    });
-
     if (!invoice.subscription) {
-      console.log("[WEBHOOK] Invoice not linked to subscription, ignoring");
       return { changes_applied: false };
     }
 
     const user = await this.findUserByCustomer(invoice.customer as string);
     if (!user) {
-      console.warn(`[WEBHOOK] User not found for customer: ${invoice.customer}`);
       return { changes_applied: false };
     }
 
@@ -396,20 +346,12 @@ export class WebhookService {
   private async handlePaymentFailed(event: Stripe.Event): Promise<Omit<ProcessEventResult, "success">> {
     const invoice = event.data.object as Stripe.Invoice;
 
-    console.log("[WEBHOOK] Processing payment.failed:", {
-      invoice_id: invoice.id,
-      customer: invoice.customer,
-      subscription: invoice.subscription,
-    });
-
     if (!invoice.subscription) {
-      console.log("[WEBHOOK] Invoice not linked to subscription, ignoring");
       return { changes_applied: false };
     }
 
     const user = await this.findUserByCustomer(invoice.customer as string);
     if (!user) {
-      console.warn(`[WEBHOOK] User not found for customer: ${invoice.customer}`);
       return { changes_applied: false };
     }
 
@@ -448,7 +390,6 @@ export class WebhookService {
         // Not found
         return null;
       }
-      console.error("[WEBHOOK] Error finding user by customer:", error);
       throw new WebhookDatabaseError("Failed to find user");
     }
 
@@ -472,7 +413,6 @@ export class WebhookService {
     const { error: updateError } = await this.supabase.from("app_users").update(newState).eq("auth_uid", authUid);
 
     if (updateError) {
-      console.error("[WEBHOOK] Error updating user:", updateError);
       throw new WebhookDatabaseError("Failed to update user");
     }
 
@@ -486,15 +426,7 @@ export class WebhookService {
     });
 
     if (auditError) {
-      console.error("[WEBHOOK] Error logging audit:", auditError);
       // Don't throw - audit is not critical
     }
-
-    console.log("[WEBHOOK] Updated user:", {
-      auth_uid: authUid,
-      change_type: changeType,
-      old_status: previousState.subscription_status,
-      new_status: newState.subscription_status,
-    });
   }
 }

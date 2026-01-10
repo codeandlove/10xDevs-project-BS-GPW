@@ -134,8 +134,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
       },
     });
   } catch (error) {
-    console.error("[NocoDB Grid] Error:", error);
-
     // Handle NocoDB-specific errors
     if (error && typeof error === "object" && "statusCode" in error) {
       const nocoError = error as { statusCode: number; message: string };

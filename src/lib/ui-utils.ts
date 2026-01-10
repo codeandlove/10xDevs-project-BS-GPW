@@ -219,6 +219,7 @@ export function getSubscriptionStatusColor(status: string): string {
 /**
  * Debounce function
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Generic function type requires any for flexibility
 export function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   return (...args: Parameters<T>) => {
@@ -230,6 +231,7 @@ export function debounce<T extends (...args: any[]) => any>(func: T, wait: numbe
 /**
  * Throttle function
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Generic function type requires any for flexibility
 export function throttle<T extends (...args: any[]) => any>(func: T, limit: number): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
   return (...args: Parameters<T>) => {

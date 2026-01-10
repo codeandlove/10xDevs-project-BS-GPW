@@ -105,7 +105,7 @@ export async function mockAuth(page: Page, user: MockUser) {
 /**
  * Mock login action - intercepts Supabase auth and simulates successful login
  */
-export async function mockLoginFlow(page: Page, email: string, password: string) {
+export async function mockLoginFlow(page: Page, email: string) {
   const user = Object.values(MOCK_USERS).find((u) => u.email === email) || MOCK_USERS.active;
 
   // Intercept Supabase auth API calls

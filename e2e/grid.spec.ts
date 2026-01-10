@@ -12,7 +12,7 @@ test.describe("Grid View - Basic Rendering", () => {
   test.beforeEach(async ({ page }) => {
     // Setup API mocks FIRST (before login)
     await setupNocoDBMocks(page);
-    
+
     // Then login
     await loginViaAPI(page, {
       email: "test@example.com",
@@ -35,7 +35,7 @@ test.describe("Grid View - Basic Rendering", () => {
     expect(loadTime).toBeLessThan(5000); // Relaxed for E2E environment
 
     // Verify default range is week (button should have aria-pressed="true")
-    await expect(page.getByRole('button', { name: 'Tydzień' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole("button", { name: "Tydzień" })).toHaveAttribute("aria-pressed", "true");
 
     // Verify grid has data
     const cells = page.locator('[role="gridcell"]');
@@ -45,9 +45,8 @@ test.describe("Grid View - Basic Rendering", () => {
   test("TC-GRID-001: Grid shows skeleton loaders during fetch", async ({ page }) => {
     await page.goto("/grid");
 
-    // Skeleton should appear briefly
-    const skeleton = page.locator('[data-testid="grid-skeleton"]');
-    // Note: This may be flaky if load is too fast with mocks
+    // Skeleton should appear briefly (commented out as it may be flaky with mocks)
+    // const skeleton = page.locator('[data-testid="grid-skeleton"]');
     // await expect(skeleton).toBeVisible({ timeout: 100 });
 
     // Grid should replace skeleton
@@ -79,7 +78,7 @@ test.describe("Grid View - Basic Rendering", () => {
   test("TC-GRID-001: Empty state shown when no events", async ({ page }) => {
     // Setup empty grid mock
     await setupEmptyGridMock(page);
-    
+
     // Navigate to grid
     await page.goto("/grid");
 
@@ -92,20 +91,20 @@ test.describe("Grid View - Range Selection", () => {
   test.beforeEach(async ({ page }) => {
     // Setup API mocks
     await setupNocoDBMocks(page);
-    
+
     // Login via API
     await loginViaAPI(page, {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
   });
 
   test("TC-GRID-002: Change range to month", async ({ page }) => {
     // Click month button (by text label)
-    await page.getByRole('button', { name: 'Miesiąc' }).click();
+    await page.getByRole("button", { name: "Miesiąc" }).click();
 
     // Wait for grid to reload
     await expect(page.locator('[role="grid"]')).toBeVisible();
@@ -114,19 +113,19 @@ test.describe("Grid View - Range Selection", () => {
     await expect(page).toHaveURL(/range=month/);
 
     // Verify active range (button should have aria-pressed="true")
-    await expect(page.getByRole('button', { name: 'Miesiąc' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole("button", { name: "Miesiąc" })).toHaveAttribute("aria-pressed", "true");
   });
 
   test("TC-GRID-002: Change range to quarter", async ({ page }) => {
-    await page.getByRole('button', { name: 'Kwartał' }).click();
+    await page.getByRole("button", { name: "Kwartał" }).click();
 
     await expect(page).toHaveURL(/range=quarter/);
-    await expect(page.getByRole('button', { name: 'Kwartał' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole("button", { name: "Kwartał" })).toHaveAttribute("aria-pressed", "true");
   });
 
   test("TC-GRID-002: Range persists on page reload", async ({ page }) => {
     // Set range to month
-    await page.getByRole('button', { name: 'Miesiąc' }).click();
+    await page.getByRole("button", { name: "Miesiąc" }).click();
     await expect(page).toHaveURL(/range=month/);
 
     // Reload page
@@ -134,7 +133,7 @@ test.describe("Grid View - Range Selection", () => {
 
     // Range should still be month
     await expect(page).toHaveURL(/range=month/);
-    await expect(page.getByRole('button', { name: 'Miesiąc' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole("button", { name: "Miesiąc" })).toHaveAttribute("aria-pressed", "true");
   });
 });
 
@@ -142,20 +141,20 @@ test.describe("Grid View - Ticker Filtering", () => {
   test.beforeEach(async ({ page }) => {
     // Setup API mocks
     await setupNocoDBMocks(page);
-    
+
     // Login via API
     await loginViaAPI(page, {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
   });
 
   test("TC-GRID-003: Filter by single ticker", async ({ page }) => {
     // Open ticker filter (aria-label="Filter by ticker")
-    await page.getByRole('button', { name: /Filter by ticker|Tickery/i }).click();
+    await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
 
     // Wait for dropdown to be visible
     await page.waitForTimeout(300);
@@ -166,19 +165,19 @@ test.describe("Grid View - Ticker Filtering", () => {
 
     // Close dropdown by clicking outside (on overlay)
     await page.locator('div[class*="fixed inset-0"]').click();
-    
+
     // Wait for filter to apply
     await page.waitForTimeout(500);
 
     // Verify URL updated with symbols param
     await expect(page).toHaveURL(/symbols=/);
-    
+
     // Verify the filter badge shows 1 selected
-    await expect(page.getByRole('button', { name: /Filter by ticker|Tickery/i })).toContainText('1');
+    await expect(page.getByRole("button", { name: /Filter by ticker|Tickery/i })).toContainText("1");
   });
 
   test("TC-GRID-003: Filter by multiple tickers", async ({ page }) => {
-    await page.getByRole('button', { name: /Filter by ticker|Tickery/i }).click();
+    await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
     await page.waitForTimeout(300);
 
     // Select CPD and PKN
@@ -191,20 +190,20 @@ test.describe("Grid View - Ticker Filtering", () => {
 
     // Verify URL contains symbols param
     await expect(page).toHaveURL(/symbols=/);
-    
+
     // Verify the filter badge shows 2 selected
-    await expect(page.getByRole('button', { name: /Filter by ticker|Tickery/i })).toContainText('2');
+    await expect(page.getByRole("button", { name: /Filter by ticker|Tickery/i })).toContainText("2");
   });
 
   test("TC-GRID-003: Filters saved in localStorage", async ({ page }) => {
-    await page.getByRole('button', { name: /Filter by ticker|Tickery/i }).click();
+    await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
     await page.waitForTimeout(300);
-    
+
     await page.locator('label:has-text("CPD") input[type="checkbox"]').check();
-    
+
     // Wait for state to update
     await page.waitForTimeout(500);
-    
+
     // Close dropdown
     await page.locator('div[class*="fixed inset-0"]').click();
     await page.waitForTimeout(500);
@@ -220,36 +219,36 @@ test.describe("Grid View - Ticker Filtering", () => {
 
   test("TC-GRID-003: Clear all filters", async ({ page }) => {
     // Apply some filters first
-    await page.getByRole('button', { name: /Filter by ticker|Tickery/i }).click();
+    await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
     await page.waitForTimeout(300);
-    
+
     await page.locator('label:has-text("CPD") input[type="checkbox"]').check();
     await page.waitForTimeout(500);
-    
+
     // Close dropdown and verify filter applied
     await page.locator('div[class*="fixed inset-0"]').click();
     await page.waitForTimeout(500);
-    
+
     // Verify badge shows 1
-    await expect(page.getByRole('button', { name: /Filter by ticker|Tickery/i })).toContainText('1');
+    await expect(page.getByRole("button", { name: /Filter by ticker|Tickery/i })).toContainText("1");
 
     // Clear filters using the "Wyczyść" button inside dropdown (exact match, first one)
-    await page.getByRole('button', { name: /Filter by ticker|Tickery/i }).click();
+    await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
     await page.waitForTimeout(300);
-    
+
     // Get the clear button inside the dropdown (size="sm" variant)
-    const clearButton = page.getByRole('button', { name: 'Wyczyść', exact: true }).first();
+    const clearButton = page.getByRole("button", { name: "Wyczyść", exact: true }).first();
     await expect(clearButton).toBeVisible();
     await clearButton.click();
     await page.waitForTimeout(300);
-    
+
     // Close dropdown
     await page.locator('div[class*="fixed inset-0"]').click();
     await page.waitForTimeout(500);
 
     // Badge should not show 1 anymore
-    const buttonText = await page.getByRole('button', { name: /Filter by ticker|Tickery/i }).textContent();
-    expect(buttonText).not.toContain('1');
+    const buttonText = await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).textContent();
+    expect(buttonText).not.toContain("1");
   });
 });
 
@@ -257,13 +256,13 @@ test.describe("Grid View - Keyboard Navigation", () => {
   test.beforeEach(async ({ page }) => {
     // Setup API mocks
     await setupNocoDBMocks(page);
-    
+
     // Login via API
     await loginViaAPI(page, {
       email: "test@example.com",
       password: "Test123!@#",
     });
-    
+
     await page.goto("/grid");
     await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
   });
@@ -271,13 +270,13 @@ test.describe("Grid View - Keyboard Navigation", () => {
   test("TC-GRID-004: Navigate with arrow keys", async ({ page }) => {
     // Find and click on first event cell to give it focus
     const firstEventCell = page.locator('[data-has-event="true"]').first();
-    
+
     if ((await firstEventCell.count()) > 0) {
       await firstEventCell.click();
-      
+
       // Press arrow down
       await page.keyboard.press("ArrowDown");
-      
+
       // Just verify no errors occurred
       // (Keyboard navigation implementation depends on grid component)
       await page.waitForTimeout(500);
@@ -330,10 +329,10 @@ test.describe("Grid View - Error Handling", () => {
       // Let auth pass, then fail data fetch
       await route.fulfill({
         status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ 
-          success: false, 
-          error: { message: "Test error message" } 
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: false,
+          error: { message: "Test error message" },
         }),
       });
     });
@@ -345,7 +344,7 @@ test.describe("Grid View - Error Handling", () => {
 
     // Check if error message appears - look for any error-related text
     const pageContent = await page.content();
-    
+
     // Should either show error or still show grid (if error boundary catches it differently)
     // For now, just verify page loads without crashing
     expect(pageContent).toBeTruthy();
@@ -356,7 +355,7 @@ test.describe("Grid View - Cache Behavior", () => {
   test.beforeEach(async ({ page }) => {
     // Setup API mocks
     await setupNocoDBMocks(page);
-    
+
     // Login via API
     await loginViaAPI(page, {
       email: "test@example.com",
@@ -376,12 +375,10 @@ test.describe("Grid View - Cache Behavior", () => {
     const allKeys = await page.evaluate(() => {
       return Object.keys(localStorage);
     });
-    
+
     // Look for any cache-related keys
-    const hasCacheKey = allKeys.some(key => 
-      key.includes('cache') || key.includes('gpw')
-    );
-    
+    const hasCacheKey = allKeys.some((key) => key.includes("cache") || key.includes("gpw"));
+
     // If no cache implementation yet, test will check that page loads fast
     if (hasCacheKey) {
       expect(hasCacheKey).toBeTruthy();

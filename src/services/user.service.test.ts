@@ -24,7 +24,7 @@ const createMockSupabaseClient = () => {
   mockSelect.mockReturnValue({ eq: mockEq, single: mockSingle, is: mockIs });
   mockInsert.mockReturnValue({ select: mockSelect, single: mockSingle });
   mockUpdate.mockReturnValue({ eq: mockEq, select: mockSelect });
-  
+
   return {
     from: vi.fn(() => ({
       select: mockSelect,
