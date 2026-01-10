@@ -149,3 +149,16 @@ If you'd like, I can now:
 - generate a short executive summary for README top (1-2 paragraphs),
 - add a `.env.example` template with recommended keys,
 - create a CONTRIBUTING.md or an initial Playwright test scaffold.
+
+## GHActions Workflow
+The GitHub Actions workflow for pull requests is defined in `.github/workflows/pull-request.yml`. It includes the following jobs:
+- Linting the codebase
+- Running unit tests and end-to-end tests in parallel
+- Posting a status comment on the pull request if all previous jobs pass
+- The end-to-end tests job sets up the "integration" environment and fetches browsers as per `playwright.config.ts`. Coverage reports are collected for both unit and end-to-end tests.
+- The workflow is triggered on pull requests to the `master` branch.
+- Make sure to check the workflow file for detailed configuration and steps.
+- Feel free to modify or extend the workflow as needed for your development process.
+- This setup ensures code quality and functionality before merging changes into the main branch.
+- For more details, refer to the `.github/workflows/pull-request.yml` file in the repository.
+- Happy coding!
