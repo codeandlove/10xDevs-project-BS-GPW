@@ -183,10 +183,9 @@ export class NocoDBService {
 
     try {
       eventsResponse = await this.client.queryRecords<NocoDBEventRecord>(NOCODB_TABLES.BLACK_SWANS, queryBuilder);
-    } catch (error) {
+    } catch {
       // If NocoDB returns 422 (field name issue), fallback to fetching all and filtering in memory
       if (error && typeof error === "object" && "statusCode" in error && error.statusCode === 422) {
-        console.warn("[NocoDB Service] Date filtering failed with 422, falling back to memory filtering");
         needsMemoryFiltering = true;
 
         // Fetch without date filters
@@ -231,8 +230,7 @@ export class NocoDBService {
           const key = `${summary.symbol}_${summary.occurrence_date}`;
           summariesMap.set(key, true);
         }
-      } catch (error) {
-        console.error("[NocoDB Service] Error fetching summaries for grid:", error);
+      } catch {
         // If summaries query fails, continue without summary flags
       }
     }
@@ -283,8 +281,7 @@ export class NocoDBService {
       if (matchingSummaryRecord) {
         firstSummary = transformSummary(matchingSummaryRecord);
       }
-    } catch (error) {
-      console.error("[NocoDB Service] Error fetching summaries:", error);
+    } catch {
       // Continue without summary
     }
 

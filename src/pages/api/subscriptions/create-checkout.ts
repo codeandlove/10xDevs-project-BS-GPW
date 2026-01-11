@@ -84,7 +84,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return createErrorResponse(error.message, error.statusCode, error.code, error.details);
     }
 
-    console.error("Unexpected error in POST /api/subscriptions/create-checkout:", error);
     return createErrorResponse("An unexpected error occurred", 500, "UNKNOWN_ERROR");
   }
 };

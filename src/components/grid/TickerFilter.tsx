@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Filter, X } from "lucide-react";
+import { Filter } from "lucide-react";
 
 interface TickerFilterProps {
   symbols: string[];
@@ -38,7 +38,18 @@ export function TickerFilter({ symbols, selected, onChange }: TickerFilterProps)
       {isOpen && (
         <>
           {/* Overlay */}
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setIsOpen(false);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label="Zamknij filtr"
+          />
 
           {/* Dropdown */}
           <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-md border bg-white p-4 shadow-lg">

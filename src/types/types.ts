@@ -100,3 +100,9 @@ export type {
   EventDetailsResponse,
   SummariesResponse,
 } from "./nocodb.types";
+
+// ============================================
+// UI Types
+// ============================================
+
+export type { GridCellData, GridCellEmpty, GridCellWithEvent, GridState, GridCellProps } from "./ui.types";

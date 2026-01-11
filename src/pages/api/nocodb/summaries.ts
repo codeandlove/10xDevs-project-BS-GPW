@@ -96,12 +96,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
       event_type: url.searchParams.get("event_type") || undefined,
     };
 
-    console.log("[Summaries API] Request query params:", queryParams);
-
     let validatedParams;
     try {
       validatedParams = SummariesQuerySchema.parse(queryParams);
-      console.log("[Summaries API] Validated params:", validatedParams);
     } catch (error) {
       if (error instanceof ZodError) {
         return new Response(
@@ -137,8 +134,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
       },
     });
   } catch (error) {
-    console.error("[NocoDB Summaries] Error:", error);
-
     // Handle NocoDB-specific errors
     if (error && typeof error === "object" && "statusCode" in error) {
       const nocoError = error as { statusCode: number; message: string };

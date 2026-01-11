@@ -4,6 +4,9 @@
  * Per test-plan.md section 3.2
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// ^ Test mocks require any for flexibility
+
 import { describe, it, expect, beforeEach, vi, beforeAll } from "vitest";
 
 // Set mock environment variables BEFORE any imports

@@ -25,7 +25,7 @@ export async function mockGridAPI(page: Page) {
 /**
  * Mock event details API
  */
-export async function mockEventDetailsAPI(page: Page, eventId: string = "rec_test_001") {
+export async function mockEventDetailsAPI(page: Page, eventId = "rec_test_001") {
   await page.route(`**/api/nocodb/events/${eventId}`, async (route) => {
     await route.fulfill({
       status: 200,

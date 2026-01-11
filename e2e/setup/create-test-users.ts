@@ -15,11 +15,10 @@ const __dirname = dirname(__filename);
 const envPath = join(__dirname, "../../.env");
 config({ path: envPath });
 
-const supabaseUrl = process.env.PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("❌ Missing Supabase credentials in .env");
   process.exit(1);
 }
 
@@ -65,8 +64,6 @@ const TEST_USERS: TestUser[] = [
 ];
 
 async function createTestUser(user: TestUser) {
-  console.log(`\n📝 Processing user: ${user.email}`);
-
   // Try to get existing user by email
   const { data: existingUsers } = await supabase.auth.admin.listUsers();
   const existingUser = existingUsers?.users.find((u) => u.email === user.email);
@@ -74,7 +71,6 @@ async function createTestUser(user: TestUser) {
   let authUid: string;
 
   if (existingUser) {
-    console.log(`   ✓ User already exists in auth`);
     authUid = existingUser.id;
   } else {
     // Create auth user
@@ -85,12 +81,10 @@ async function createTestUser(user: TestUser) {
     });
 
     if (createError || !newUser?.user) {
-      console.error(`   ❌ Failed to create auth user:`, createError);
       return false;
     }
 
     authUid = newUser.user.id;
-    console.log(`   ✓ Created auth user`);
   }
 
   // Check if app_user exists
@@ -102,7 +96,6 @@ async function createTestUser(user: TestUser) {
 
   if (fetchError && fetchError.code !== "PGRST116") {
     // PGRST116 = not found (which is ok)
-    console.error(`   ❌ Error checking app_users:`, fetchError);
     return false;
   }
 
@@ -118,11 +111,8 @@ async function createTestUser(user: TestUser) {
       .eq("auth_uid", authUid);
 
     if (updateError) {
-      console.error(`   ❌ Failed to update app_user:`, updateError);
       return false;
     }
-
-    console.log(`   ✓ Updated app_user with subscription status: ${user.subscription_status}`);
   } else {
     // Create new app_user
     const { error: insertError } = await supabase.from("app_users").insert({
@@ -134,55 +124,34 @@ async function createTestUser(user: TestUser) {
     });
 
     if (insertError) {
-      console.error(`   ❌ Failed to create app_user:`, insertError);
       return false;
     }
-
-    console.log(`   ✓ Created app_user with subscription status: ${user.subscription_status}`);
   }
 
   return true;
 }
 
 async function main() {
-  console.log("🧪 Setting up E2E test users...\n");
-
-  let successCount = 0;
   let failCount = 0;
 
   for (const user of TEST_USERS) {
     const success = await createTestUser(user);
-    if (success) {
-      successCount++;
-    } else {
+    if (!success) {
       failCount++;
     }
   }
 
-  console.log("\n" + "=".repeat(50));
-  console.log(`✅ Successfully set up: ${successCount} users`);
-  if (failCount > 0) {
-    console.log(`❌ Failed: ${failCount} users`);
-  }
-  console.log("=".repeat(50));
-
-  console.log("\n📋 Test credentials:");
-  console.log("─".repeat(50));
   TEST_USERS.forEach((user) => {
-    console.log(`${user.email} / ${user.password}`);
-    console.log(`  Status: ${user.subscription_status}`);
     if (user.trial_expires_at) {
-      console.log(`  Trial expires: ${user.trial_expires_at}`);
+      // Trial user configured
     }
   });
-  console.log("─".repeat(50));
 
   if (failCount > 0) {
     process.exit(1);
   }
 }
 
-main().catch((error) => {
-  console.error("❌ Setup failed:", error);
+main().catch(() => {
   process.exit(1);
 });

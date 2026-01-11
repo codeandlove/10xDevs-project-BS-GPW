@@ -38,7 +38,6 @@ export class AuditService {
 
     if (error) {
       // Log error but don't fail the main operation
-      console.error("Failed to log audit entry:", error);
     }
 
     return { data, error };
@@ -59,7 +58,6 @@ export class AuditService {
       .limit(limit);
 
     if (error) {
-      console.error("Error fetching audit history:", error);
       return { data: [], error };
     }
 

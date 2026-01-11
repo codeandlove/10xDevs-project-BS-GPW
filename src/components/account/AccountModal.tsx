@@ -54,9 +54,15 @@ export function AccountModal({ onClose }: AccountModalProps) {
   };
 
   return createPortal(
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Dialog wrapper with proper keyboard support (ESC to close)
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={handleOverlayClick}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          onClose();
+        }
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
@@ -65,9 +71,11 @@ export function AccountModal({ onClose }: AccountModalProps) {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
 
       {/* Modal */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Modal content stops propagation, has keyboard support via wrapper */}
       <div
         className="relative z-10 w-full max-w-md overflow-hidden rounded-lg bg-white shadow-2xl"
         onClick={handleModalClick}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">

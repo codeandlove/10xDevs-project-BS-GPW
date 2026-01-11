@@ -25,8 +25,7 @@ export async function getAuthUid(request: Request, supabase: SupabaseClient): Pr
     }
 
     return data.user.id;
-  } catch (err) {
-    console.error("Error extracting auth UID:", err);
+  } catch {
     return null;
   }
 }
@@ -58,8 +57,7 @@ export async function getAuthUidAndToken(
       authUid: data.user.id,
       token,
     };
-  } catch (err) {
-    console.error("Error extracting auth UID and token:", err);
+  } catch {
     return null;
   }
 }

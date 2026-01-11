@@ -125,9 +125,15 @@ export function SummaryDrawer({ event, isLoading, error, onClose, onViewMore, on
   if (!event && !isLoading) return null;
 
   return createPortal(
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Dialog wrapper with proper keyboard support (ESC to close)
     <div
       className="fixed inset-0 z-50 flex items-end"
       onClick={handleOverlayClick}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          onClose();
+        }
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="drawer-title"
@@ -136,11 +142,13 @@ export function SummaryDrawer({ event, isLoading, error, onClose, onViewMore, on
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
 
       {/* Drawer */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Drawer content stops propagation, has keyboard support via wrapper and touch gestures */}
       <div
         ref={drawerRef}
         className="relative z-10 w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl transition-transform"
         style={{ maxHeight: "70vh" }}
         onClick={handleDrawerClick}
+        onKeyDown={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

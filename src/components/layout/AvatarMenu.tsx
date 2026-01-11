@@ -44,7 +44,18 @@ export function AvatarMenu() {
         {isOpen && (
           <>
             {/* Overlay */}
-            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setIsOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setIsOpen(false);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Zamknij menu"
+            />
 
             {/* Dropdown */}
             <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-md border bg-white p-2 shadow-lg">

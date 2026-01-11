@@ -4,6 +4,9 @@
  * Per test-plan.md section 3.1 - Service Layer
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// ^ Test mocks require any for flexible builder pattern
+
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { WebhookService } from "./webhook.service";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -113,13 +116,11 @@ const setupEventProcessingMocks = (
   } = {}
 ) => {
   const builder = (mockSupabase.from as any)();
-  
+
   // Mock: checkEventExists - select().eq().single()
   mockSupabase._mockEq.mockReturnValueOnce(builder);
   mockSupabase._mockSingle.mockResolvedValueOnce(
-    options.eventExists
-      ? { data: { id: 1 }, error: null }
-      : { data: null, error: { code: "PGRST116" } }
+    options.eventExists ? { data: { id: 1 }, error: null } : { data: null, error: { code: "PGRST116" } }
   );
 
   if (!options.eventExists) {
@@ -135,7 +136,9 @@ const setupEventProcessingMocks = (
 
     // Mock: Update user subscription - update().eq() [TERMINAL]
     mockSupabase._mockEq.mockResolvedValueOnce(
-      options.updateUserSuccess !== false ? { data: {}, error: null } : { data: null, error: new Error("Update failed") }
+      options.updateUserSuccess !== false
+        ? { data: {}, error: null }
+        : { data: null, error: new Error("Update failed") }
     );
 
     // Mock: Insert audit log
@@ -143,7 +146,9 @@ const setupEventProcessingMocks = (
 
     // Mock: Mark event as processed - update().eq() [TERMINAL]
     mockSupabase._mockEq.mockResolvedValueOnce(
-      options.markProcessedSuccess !== false ? { data: {}, error: null } : { data: null, error: new Error("Mark failed") }
+      options.markProcessedSuccess !== false
+        ? { data: {}, error: null }
+        : { data: null, error: new Error("Mark failed") }
     );
   }
 };
@@ -235,10 +240,12 @@ describe("WebhookService - Event Processing", () => {
           status: "paid",
           amount_paid: 9900,
           lines: {
-            data: [{
-              period: { end: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 }
-            }]
-          }
+            data: [
+              {
+                period: { end: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 },
+              },
+            ],
+          },
         } as Stripe.Invoice,
       },
       livemode: false,
@@ -296,7 +303,7 @@ describe("WebhookService - Idempotency", () => {
     const event = createMockStripeEvent("customer.subscription.created");
 
     const builder = (mockSupabase.from as any)();
-    
+
     // Mock: Event already exists in database - select().eq().single()
     mockSupabase._mockEq.mockReturnValueOnce(builder);
     mockSupabase._mockSingle.mockResolvedValueOnce({
@@ -321,7 +328,7 @@ describe("WebhookService - Idempotency", () => {
     const event = createMockStripeEvent("customer.subscription.created");
 
     const builder = (mockSupabase.from as any)();
-    
+
     // Mock: checkEventExists - select().eq().single()
     mockSupabase._mockEq.mockReturnValueOnce(builder);
     mockSupabase._mockSingle.mockResolvedValueOnce({ data: null, error: { code: "PGRST116" } });
@@ -366,7 +373,7 @@ describe("WebhookService - Error Handling", () => {
     const event = createMockStripeEvent("customer.created"); // Unsupported type
 
     const builder = (mockSupabase.from as any)();
-    
+
     // Mock: checkEventExists
     mockSupabase._mockEq.mockReturnValueOnce(builder);
     mockSupabase._mockSingle.mockResolvedValueOnce({ data: null, error: { code: "PGRST116" } });
@@ -387,7 +394,7 @@ describe("WebhookService - Error Handling", () => {
     const event = createMockStripeEvent("customer.subscription.created");
 
     const builder = (mockSupabase.from as any)();
-    
+
     // Mock: checkEventExists
     mockSupabase._mockEq.mockReturnValueOnce(builder);
     mockSupabase._mockSingle.mockResolvedValueOnce({ data: null, error: { code: "PGRST116" } });
@@ -398,9 +405,9 @@ describe("WebhookService - Error Handling", () => {
     // Mock: Database error when finding user - select().eq().is().single()
     mockSupabase._mockEq.mockReturnValueOnce(builder);
     mockSupabase._mockIs.mockReturnValueOnce(builder);
-    mockSupabase._mockSingle.mockResolvedValueOnce({ 
-      data: null, 
-      error: { code: "PGRST500", message: "Database connection failed" } 
+    mockSupabase._mockSingle.mockResolvedValueOnce({
+      data: null,
+      error: { code: "PGRST500", message: "Database connection failed" },
     });
 
     // Mock: Mark as failed - update().eq() [TERMINAL]
@@ -417,7 +424,7 @@ describe("WebhookService - Error Handling", () => {
     const event = createMockStripeEvent("customer.subscription.created");
 
     const builder = (mockSupabase.from as any)();
-    
+
     // Mock: checkEventExists
     mockSupabase._mockEq.mockReturnValueOnce(builder);
     mockSupabase._mockSingle.mockResolvedValueOnce({ data: null, error: { code: "PGRST116" } });
@@ -435,7 +442,7 @@ describe("WebhookService - Error Handling", () => {
 
     // Should succeed but with no changes applied
     const result = await service.processEvent(event);
-    
+
     expect(result.success).toBe(true);
     expect(result.changes_applied).toBe(false);
   });
@@ -454,7 +461,7 @@ describe("WebhookService - Database Operations", () => {
     const event = createMockStripeEvent("customer.subscription.created");
 
     const builder = (mockSupabase.from as any)();
-    
+
     // Mock: checkEventExists
     mockSupabase._mockEq.mockReturnValueOnce(builder);
     mockSupabase._mockSingle.mockResolvedValueOnce({ data: null, error: { code: "PGRST116" } });
@@ -473,13 +480,13 @@ describe("WebhookService - Database Operations", () => {
       data: { auth_uid: "user123", subscription_status: "trial" },
       error: null,
     });
-    
+
     // Mock: Update user - update().eq() [TERMINAL]
     mockSupabase._mockEq.mockResolvedValueOnce({ data: {}, error: null });
-    
+
     // Mock: Insert audit log
     mockSupabase._mockInsert.mockResolvedValueOnce({ data: {}, error: null });
-    
+
     // Mock: Mark processed - update().eq() [TERMINAL]
     mockSupabase._mockEq.mockResolvedValueOnce({ data: {}, error: null });
 
@@ -518,7 +525,7 @@ describe("WebhookService - Audit Trail", () => {
     const event = createMockStripeEvent("customer.subscription.created");
 
     const builder = (mockSupabase.from as any)();
-    
+
     // Mock: checkEventExists
     mockSupabase._mockEq.mockReturnValueOnce(builder);
     mockSupabase._mockSingle.mockResolvedValueOnce({ data: null, error: { code: "PGRST116" } });

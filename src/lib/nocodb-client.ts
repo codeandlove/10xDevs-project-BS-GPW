@@ -184,7 +184,6 @@ export class NocoDBClient {
 
       // Retry on network errors
       if (retries > 0 && (error instanceof TypeError || (error as Error).name === "AbortError")) {
-        console.warn(`[NocoDB] Request failed, retrying... (${retries} attempts left)`);
         await new Promise((resolve) => setTimeout(resolve, 500)); // 500ms delay
         return this.request<T>(endpoint, options, retries - 1);
       }
@@ -207,11 +206,6 @@ export class NocoDBClient {
   async queryRecords<T>(tableId: string, queryBuilder: NocoDBQueryBuilder): Promise<NocoDBResponse<T>> {
     const queryString = queryBuilder.build();
     const endpoint = `/api/v2/tables/${tableId}/records?${queryString}`;
-
-    console.log("[NocoDB Client] Query records:");
-    console.log("  Table ID:", tableId);
-    console.log("  Endpoint:", endpoint);
-    console.log("  Base URL:", this.baseUrl);
 
     return this.request<NocoDBResponse<T>>(endpoint);
   }

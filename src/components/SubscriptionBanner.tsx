@@ -6,7 +6,7 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { daysRemaining, getSubscriptionStatusColor } from "@/lib/ui-utils";
+import { daysRemaining } from "@/lib/ui-utils";
 import type { UserProfileDTO } from "@/types/types";
 
 interface SubscriptionBannerProps {

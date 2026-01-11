@@ -48,7 +48,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     if (userError || !user) {
       // User record not found - redirect to login
-      console.error("[Middleware] User record not found:", userError);
       return redirect("/auth/login");
     }
 
