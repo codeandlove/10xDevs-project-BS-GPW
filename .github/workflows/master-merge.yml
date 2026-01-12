@@ -120,7 +120,7 @@ jobs:
     env:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_PASSWORD: ${{ secrets.DEPLOY_SSH_PASSWORD }}
       DEPLOY_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
       DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
       PM2_APP_NAME: ${{ secrets.PM2_APP_NAME }}
@@ -144,15 +144,17 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p ${{ secrets.DEPLOY_SSH_PORT }} -6 -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || \
-          ssh-keyscan -p ${{ secrets.DEPLOY_SSH_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p ${{ secrets.DEPLOY_SSH_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Install sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
 
       - name: Deploy to production server
         run: |
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no" \
+          sshpass -p '${{ secrets.DEPLOY_SSH_PASSWORD }}' rsync -avz --delete \
+            -e "ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no" \
             --exclude node_modules \
             --exclude .git \
             --exclude .env \
@@ -160,25 +162,22 @@ jobs:
 
       - name: Install dependencies on server
         run: |
-          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no \
+          sshpass -p '${{ secrets.DEPLOY_SSH_PASSWORD }}' ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
             "cd ${{ secrets.DEPLOY_PATH }} && npm ci --production"
 
       - name: Restart PM2 application
         run: |
-          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no \
+          sshpass -p '${{ secrets.DEPLOY_SSH_PASSWORD }}' ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
             "pm2 restart ${{ secrets.PM2_APP_NAME }} || pm2 start ${{ secrets.DEPLOY_PATH }}/dist/server/entry.mjs --name ${{ secrets.PM2_APP_NAME }}"
 
       - name: Verify deployment
         run: |
-          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no \
+          sshpass -p '${{ secrets.DEPLOY_SSH_PASSWORD }}' ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
             "pm2 list | grep ${{ secrets.PM2_APP_NAME }}"
 
-      - name: Cleanup SSH
-        if: always()
-        run: rm -f ~/.ssh/deploy_key
 
   deployment-comment:
     name: Deployment Status Comment
