@@ -35,18 +35,21 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 **Główny cel**: Przedstawienie produktu i przekierowanie do logowania/rejestracji dla nowych użytkowników
 
 **Kluczowe informacje**:
+
 - Hero section z opisem produktu
 - Value proposition (szybka identyfikacja anomalii GPW z AI summaries)
 - CTA do rejestracji/logowania
 - Informacja o 7-dniowym trialu
 
 **Kluczowe komponenty**:
+
 - `Hero.astro` - główna sekcja z CTA
 - `Features.astro` - lista kluczowych funkcji
 - `CTAButtons.tsx` - przyciski "Zarejestruj się" / "Zaloguj"
 - `Header.astro` - minimalistyczny header z logo
 
 **UX, dostępność i bezpieczeństwo**:
+
 - Semantyczny HTML (section, header, nav)
 - Kontrasty tekstu zgodne z WCAG AA
 - CTA buttons z min. 44x44px touch targets
@@ -61,17 +64,20 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 **Główny cel**: Uwierzytelnianie użytkowników przez Supabase Auth
 
 **Kluczowe informacje**:
+
 - Email i hasło (lub OAuth - opcjonalne)
 - Informacja o 7-dniowym trialu przy rejestracji
 - Link do odzyskiwania hasła
 - returnUrl dla deep-linkingu po zalogowaniu
 
 **Kluczowe komponenty**:
+
 - `AuthForm.tsx` - formularz logowania/rejestracji (React island)
 - `SupabaseAuthUI.tsx` - wrapper dla Supabase Auth UI
 - `PasswordReset.tsx` - flow odzyskiwania hasła
 
 **UX, dostępność i bezpieczeństwo**:
+
 - Walidacja email i hasła po stronie klienta (Zod)
 - Clear error messages przy nieudanym logowaniu
 - ARIA labels dla pól formularza
@@ -90,6 +96,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 **Główny cel**: Główny widok aplikacji - interaktywny grid z historycznymi anomaliami GPW
 
 **Kluczowe informacje**:
+
 - Grid z osiami: X = daty sesyjne, Y = tickery spółek GPW
 - Kafelki z kolorowaniem wg typu zdarzenia (BLACK_SWAN_UP/DOWN, VOLATILITY_UP/DOWN, BIG_MOVE)
 - Percent_change wyświetlony na kafelku
@@ -99,6 +106,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 - Status subskrypcji w headerze (avatar menu)
 
 **Kluczowe komponenty**:
+
 - `GridLayout.tsx` - layout główny z headerem i gridem
 - `GridHeader.tsx` - logo, range selector, filters, avatar menu
 - `VirtualizedGrid.tsx` - wirtualizowany grid (react-window lub @tanstack/react-virtual)
@@ -109,6 +117,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 - `SubscriptionBanner.tsx` - banner informujący o wygasającym trialu/subskrypcji
 
 **UX, dostępność i bezpieczeństwo**:
+
 - **Responsywność**:
   - Desktop (>1024px): pełny grid, wszystkie dane w komórkach, sidebar 33% szerokości
   - Tablet (768-1023px): grid z mniejszą czcionką, sidebar 40%
@@ -123,6 +132,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 - **Security**: Middleware sprawdza subscription status przed renderem, redirect do payment jeśli brak dostępu
 
 **Stany widoku**:
+
 - Loading (skeleton grid)
 - Loaded (pełne dane)
 - Error (error message + retry button)
@@ -137,6 +147,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 **Główny cel**: Wyświetlenie szczegółów pojedynczego zdarzenia z pierwszym AI summary
 
 **Kluczowe informacje**:
+
 - Symbol, occurrence_date, typ eventu, percent_change
 - Pierwsze AI summary (summary text)
 - Article sentiment, identified causes, predicted trend probability
@@ -146,6 +157,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 - Przycisk "Zobacz więcej summaries" (przejście do Full Detail View)
 
 **Kluczowe komponenty**:
+
 - `SummarySidebar.tsx` (desktop) - sidebar 33% szerokości z prawej strony
 - `SummaryDrawer.tsx` (mobile) - bottom drawer z swipe-to-dismiss
 - `SummaryCard.tsx` - formatowane wyświetlenie AI summary
@@ -156,6 +168,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 - `SourceLink.tsx` - link do artykułu źródłowego
 
 **UX, dostępność i bezpieczeństwo**:
+
 - **Layout**:
   - Desktop: Sidebar po prawej, 33% szerokości, overlay dim 20% opacity na grid
   - Tablet: Sidebar 40% szerokości
@@ -180,6 +193,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 **Główny cel**: Pełny widok wydarzenia z listą wszystkich AI summaries i artykułów
 
 **Kluczowe informacje**:
+
 - Wszystkie informacje z Summary Detail View
 - Lista wszystkich AI summaries (sortowalna po dacie)
 - Każdy summary w rozwijanej sekcji (accordion)
@@ -187,6 +201,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 - Historic data (open, close, high, low, volume)
 
 **Kluczowe komponenty**:
+
 - `EventDetailLayout.tsx` - pełna strona z headerem i breadcrumb
 - `EventHeader.tsx` - reużycie z Summary Detail View
 - `SummaryList.tsx` - lista AI summaries (accordion)
@@ -196,6 +211,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 - `Breadcrumb.tsx` - nawigacja: Grid > Event Detail
 
 **UX, dostępność i bezpieczeństwo**:
+
 - **Layout**: Full-page view, max-width 1200px, centered
 - **Navigation**: Breadcrumb + przycisk "Powrót do gridu"
 - **Accordion**: Pierwszy summary rozwinięty domyślnie, pozostałe collapsed
@@ -217,6 +233,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 **Główny cel**: Wyświetlenie danych użytkownika i statusu subskrypcji
 
 **Kluczowe informacje**:
+
 - Email użytkownika
 - Status subskrypcji (trial/active/expired)
 - Trial expires at (dla trial)
@@ -226,6 +243,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 - Przycisk "Wyloguj"
 
 **Kluczowe komponenty**:
+
 - `AccountModal.tsx` (desktop) - modal centered, 400px szerokości (React Portal)
 - `AccountDrawer.tsx` (mobile) - bottom drawer (React Portal)
 - `UserInfo.tsx` - email + avatar
@@ -234,6 +252,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 - `LogoutButton.tsx` - wylogowanie (Supabase signOut)
 
 **UX, dostępność i bezpieczeństwo**:
+
 - **Layout**:
   - Desktop: Modal centered, 400px width, overlay 40% opacity
   - Mobile: Bottom drawer, 60% wysokości ekranu
@@ -256,16 +275,19 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 **Główny cel**: Inicjacja płatności za subskrypcję przez Stripe Checkout
 
 **Kluczowe informacje**:
+
 - Wybór planu (price_id)
 - Informacje o płatności (Stripe Checkout obsługuje)
 - Success/Cancel URLs
 
 **Kluczowe komponenty**:
+
 - `CheckoutPage.tsx` - strona z wyborem planu (opcjonalne w MVP jeśli tylko 1 plan)
 - `PlanCard.tsx` - karta z planem (cena, features)
 - `CheckoutButton.tsx` - CTA "Wybierz plan" (POST /api/subscriptions/create-checkout → redirect)
 
 **UX, dostępność i bezpieczeństwo**:
+
 - **Flow**: Użytkownik klika "Wybierz plan" → POST do API → redirect do Stripe Checkout → po płatności redirect do success_url
 - **Success URL**: `/checkout/success` - strona potwierdzenia z "Powrót do aplikacji" (Grid View)
 - **Cancel URL**: `/checkout/cancel` - strona anulowania z "Powrót do wyboru planu"
@@ -282,14 +304,17 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 **Główny cel**: Feedback po procesie płatności
 
 **Success Page**:
+
 - Komunikat potwierdzający aktywację subskrypcji
 - CTA "Przejdź do aplikacji" (Grid View)
 
 **Cancel Page**:
+
 - Komunikat informujący o anulowaniu
 - CTA "Wróć do wyboru planu" lub "Kontynuuj z trialem"
 
 **Kluczowe komponenty**:
+
 - `CheckoutSuccess.astro` - statyczna strona z komunikatem
 - `CheckoutCancel.astro` - statyczna strona z komunikatem
 
@@ -302,18 +327,22 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 **Główny cel**: Obsługa błędów i komunikacja z użytkownikiem
 
 **404 (Not Found)**:
+
 - Komunikat "Strona nie znaleziona"
 - CTA "Powrót do strony głównej"
 
 **403 (Forbidden / No Access)**:
+
 - Komunikat "Brak dostępu - wymagana aktywna subskrypcja"
 - CTA "Sprawdź status subskrypcji" (Account Modal) lub "Kup plan"
 
 **500 (Server Error)**:
+
 - Komunikat "Coś poszło nie tak"
 - CTA "Odśwież stronę" lub "Powrót do strony głównej"
 
 **Kluczowe komponenty**:
+
 - `ErrorPage.astro` - reużywalny komponent z dynamicznym komunikatem
 
 ---
@@ -437,6 +466,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 ```
 
 **Desktop z otwartym sidebarrem**:
+
 ```
 ┌─────────────────────────────────────────────────┐
 │ Header                                           │
@@ -450,6 +480,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 ```
 
 **Mobile z otwartym drawerem**:
+
 ```
 ┌────────────────────┐
 │ Header             │
@@ -479,6 +510,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
     - Wyloguj
 
 **Breadcrumb** (tylko w Full Detail View):
+
 - Grid > Event Detail
 - Klik na "Grid" → powrót do Grid View z zachowaniem stanu
 
@@ -493,6 +525,7 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 ### 4.4. History API integration
 
 **Strategia**:
+
 - Każda zmiana widoku (otwarcie sidebaru, zmiana zakresu, filtrów) aktualizuje URL params przez `history.pushState`
 - Przykład: Klik na komórkę → `history.pushState({}, '', '/grid?eventId=123')`
 - Zamknięcie sidebaru → `history.back()` → przywrócenie poprzedniego URL bez eventId
@@ -500,15 +533,16 @@ Black Swan Grid to aplikacja webowa do przeglądania i analizowania historycznyc
 - TanStack Router obsługuje synchronizację URL params z React state
 
 **Implementacja**:
+
 ```typescript
 // Otwieranie sidebaru
 router.navigate({
-  search: { ...currentSearch, eventId: '123' }
+  search: { ...currentSearch, eventId: "123" },
 });
 
 // Zamykanie sidebaru
 router.navigate({
-  search: { ...currentSearch, eventId: undefined }
+  search: { ...currentSearch, eventId: undefined },
 });
 ```
 
@@ -519,18 +553,21 @@ router.navigate({
 ### 5.1. Layout Components
 
 #### `AppLayout.tsx`
+
 - **Opis**: Główny layout aplikacji (authenticated)
 - **Props**: `children: ReactNode`
 - **Zawartość**: Header + main content area
 - **Używany w**: Grid View, Full Detail View
 
 #### `Header.tsx`
+
 - **Opis**: Header z logo, kontrolkami i avatar menu
 - **Props**: `showRangeSelector: boolean`, `showFilters: boolean`
 - **Zawartość**: Logo, RangeSelector, TickerFilter, AvatarMenu
 - **Responsywność**: Na mobile range selector i filtry w hamburger menu
 
 #### `AvatarMenu.tsx`
+
 - **Opis**: Dropdown menu z avatarem użytkownika
 - **Props**: `user: User`
 - **Zawartość**: Avatar button → dropdown (React Portal) → opcje konta
@@ -541,6 +578,7 @@ router.navigate({
 ### 5.2. Grid Components
 
 #### `VirtualizedGrid.tsx`
+
 - **Opis**: Główny grid z wirtualizacją
 - **Props**: `events: Event[]`, `range: Range`, `symbols: string[]`, `onCellClick: (eventId) => void`
 - **Technologia**: react-window (VariableSizeGrid) lub @tanstack/react-virtual
@@ -548,21 +586,24 @@ router.navigate({
 - **Performance**: Memo na komórkach, useCallback dla handlery
 
 #### `GridCell.tsx`
+
 - **Opis**: Pojedyncza komórka gridu
 - **Props**: `event: Event | null`, `onClick: () => void`
-- **Zawartość**: 
+- **Zawartość**:
   - Jeśli event istnieje: kolorowe tło wg event_type, percent_change
   - Jeśli brak eventu: pusta komórka (neutral background)
 - **Stylowanie**: Tailwind classes dla kolorów (bg-red-100, bg-green-100, etc.)
 - **Accessibility**: aria-label, tabindex, keyboard handlers
 
 #### `RangeSelector.tsx`
+
 - **Opis**: Przełącznik zakresu czasowego (tydzień/miesiąc/kwartał)
 - **Props**: `value: Range`, `onChange: (range) => void`
 - **Zawartość**: Segmented control lub dropdown
 - **URL sync**: onChange aktualizuje URL param `?range=week`
 
 #### `TickerFilter.tsx`
+
 - **Opis**: Multi-select dla tickerów
 - **Props**: `symbols: string[]`, `selected: string[]`, `onChange: (selected) => void`
 - **Zawartość**: Dropdown z checkboxami (shadcn/ui DropdownMenu)
@@ -574,6 +615,7 @@ router.navigate({
 ### 5.3. Summary Components
 
 #### `SummarySidebar.tsx` (Desktop)
+
 - **Opis**: Sidebar z prawej strony z AI summary
 - **Props**: `eventId: string`, `onClose: () => void`
 - **Zawartość**: EventHeader, SummaryCard, SourceLink, "Zobacz więcej" button
@@ -582,6 +624,7 @@ router.navigate({
 - **Focus trap**: Keyboard navigation zamknięta w sidebar
 
 #### `SummaryDrawer.tsx` (Mobile)
+
 - **Opis**: Bottom drawer z AI summary
 - **Props**: `eventId: string`, `onClose: () => void`
 - **Zawartość**: Identyczna jak SummarySidebar
@@ -589,23 +632,27 @@ router.navigate({
 - **Gesture**: react-use-gesture dla swipe down to close
 
 #### `SummaryCard.tsx`
+
 - **Opis**: Formatowana karta z AI summary
 - **Props**: `summary: AISummary`
 - **Zawartość**: Summary text, sentiment badge, identified causes (lista), trend probability, recommended action
 - **Stylowanie**: Card z sections, czytelna typografia
 
 #### `EventHeader.tsx`
+
 - **Opis**: Nagłówek wydarzenia
 - **Props**: `event: Event`
 - **Zawartość**: Symbol, occurrence_date, event_type badge, percent_change (large text)
 - **Stylowanie**: Kolorowanie wg event_type
 
 #### `TrendProbabilityChart.tsx`
+
 - **Opis**: Prosty bar chart dla predicted_trend_probability
 - **Props**: `probability: { further_decline: number, recovery: number }`
 - **Zawartość**: Dwa horizontal bars z wartościami % (opcjonalnie biblioteka chart.js lub custom CSS)
 
 #### `RecommendedActionCard.tsx`
+
 - **Opis**: Karta z rekomendowaną akcją
 - **Props**: `action: { action: string, justification: string }`
 - **Zawartość**: Badge z akcją (BUY/SELL/HOLD), justification text
@@ -616,6 +663,7 @@ router.navigate({
 ### 5.4. Account Components
 
 #### `AccountModal.tsx` (Desktop)
+
 - **Opis**: Modal z danymi użytkownika
 - **Props**: `user: User`, `onClose: () => void`
 - **Zawartość**: UserInfo, SubscriptionStatus, ManageSubscriptionButton, LogoutButton
@@ -623,23 +671,27 @@ router.navigate({
 - **Focus trap**: ESC to close
 
 #### `AccountDrawer.tsx` (Mobile)
+
 - **Opis**: Bottom drawer z danymi użytkownika
 - **Props**: Identyczne jak AccountModal
 - **Zawartość**: Identyczna jak AccountModal
 
 #### `UserInfo.tsx`
+
 - **Opis**: Email i avatar użytkownika
 - **Props**: `user: User`
 
 #### `SubscriptionStatus.tsx`
+
 - **Opis**: Status badge i daty
 - **Props**: `subscription: Subscription`
-- **Zawartość**: 
+- **Zawartość**:
   - Trial: "Trial aktywny do [data]" + badge
   - Active: "Subskrypcja aktywna do [data]" + badge
   - Expired: "Subskrypcja wygasła" + CTA "Odnów"
 
 #### `ManageSubscriptionButton.tsx`
+
 - **Opis**: CTA do Stripe Portal
 - **Props**: `onClick: () => void`
 - **Akcja**: POST /api/subscriptions/create-portal → redirect
@@ -649,6 +701,7 @@ router.navigate({
 ### 5.5. Auth Components
 
 #### `AuthForm.tsx`
+
 - **Opis**: Formularz logowania/rejestracji
 - **Props**: `mode: 'login' | 'register'`, `returnUrl?: string`
 - **Zawartość**: Email input, password input, submit button, toggle link (login/register)
@@ -656,6 +709,7 @@ router.navigate({
 - **Accessibility**: Autocomplete attributes, aria-invalid
 
 #### `SupabaseAuthUI.tsx`
+
 - **Opis**: Wrapper dla Supabase Auth UI
 - **Props**: `mode: 'login' | 'register'`, `returnUrl?: string`
 - **Zawartość**: Supabase Auth UI z customizacją stylów (Tailwind)
@@ -665,16 +719,19 @@ router.navigate({
 ### 5.6. UI Utilities
 
 #### `ErrorBoundary.tsx`
+
 - **Opis**: Error boundary dla całej aplikacji lub sekcji (grid)
 - **Props**: `fallback: ReactNode`
 - **Zawartość**: Catch errors → render fallback UI z retry button
 
 #### `Skeleton.tsx`
+
 - **Opis**: Reużywalny skeleton loader
 - **Props**: `width`, `height`, `className`
 - **Stylowanie**: Animated pulse effect (Tailwind)
 
 #### `Toast.tsx`
+
 - **Opis**: Toast notifications (success, error, info)
 - **Props**: `message: string`, `type: 'success' | 'error' | 'info'`
 - **Biblioteka**: shadcn/ui toast lub react-hot-toast
@@ -684,9 +741,10 @@ router.navigate({
 ### 5.7. Hooks
 
 #### `useClientCache.ts`
+
 - **Opis**: Custom hook do zarządzania cache (localStorage + in-memory)
 - **API**: `{ data, isLoading, error, revalidate }`
-- **Logika**: 
+- **Logika**:
   1. Odczyt z in-memory cache
   2. Fallback do localStorage
   3. Render data natychmiast
@@ -695,21 +753,25 @@ router.navigate({
 - **Parametry**: `key: string`, `fetcher: () => Promise<T>`, `options: { ttl, retry }`
 
 #### `useAuth.ts`
+
 - **Opis**: Hook do dostępu do user context
 - **API**: `{ user, session, isLoading, signOut }`
 - **Provider**: AuthContext (React Context)
 
 #### `useSubscription.ts`
+
 - **Opis**: Hook do sprawdzania statusu subskrypcji
 - **API**: `{ subscription, hasAccess, isLoading }`
 - **Logika**: Fetch /api/subscriptions/status, cache w context
 
 #### `useGridState.ts`
+
 - **Opis**: Hook do zarządzania stanem gridu (range, filters, scroll position)
 - **API**: `{ range, symbols, setRange, setSymbols, scrollPosition, saveScrollPosition }`
 - **Persistence**: Synchronizacja z URL params (TanStack Router) i localStorage
 
 #### `useKeyboardNavigation.ts`
+
 - **Opis**: Hook do obsługi nawigacji klawiaturowej w gridzie
 - **API**: `{ focusedCell, handleArrowKeys, handleEnter, handleEscape }`
 - **Logika**: Arrow keys → zmiana focusedCell, Enter → otwarcie sidebaru, ESC → zamknięcie
@@ -719,17 +781,20 @@ router.navigate({
 ### 5.8. Context Providers
 
 #### `AuthProvider.tsx`
+
 - **Opis**: Context dla uwierzytelniania
 - **State**: `{ user, session, isLoading }`
 - **Akcje**: `signIn`, `signOut`, `signUp`
 - **Źródło**: Supabase Auth
 
 #### `SubscriptionProvider.tsx`
+
 - **Opis**: Context dla statusu subskrypcji
 - **State**: `{ subscription, hasAccess, isLoading }`
 - **Źródło**: GET /api/subscriptions/status (cached)
 
 #### `GridStateProvider.tsx`
+
 - **Opis**: Context dla stanu gridu (opcjonalny, może być zastąpiony przez TanStack Router state)
 - **State**: `{ range, symbols, scrollPosition }`
 - **Persistence**: URL params + localStorage
@@ -739,25 +804,30 @@ router.navigate({
 ## 6. Mapowanie API do widoków
 
 ### Grid View
+
 - **GET /api/nocodb/grid**: Fetch danych gridu (range, symbols)
 - **Cache key**: `gpw:cache:v1:grid|range=${range}|symbols=${symbols}`
 - **Retry**: 3 próby z exponential backoff
 
 ### Summary Sidebar/Detail
+
 - **GET /api/nocodb/events/:id**: Fetch szczegółów wydarzenia z pierwszym summary
 - **Cache key**: `gpw:cache:v1:black_swans|id=${id}`
 - **Retry**: 3 próby
 
 ### Full Detail View
+
 - **GET /api/nocodb/summaries**: Fetch wszystkich summaries dla wydarzenia
 - **Cache key**: `gpw:cache:v1:summaries|symbol=${symbol}|date=${date}`
 - **Retry**: 3 próby
 
 ### Account Modal
+
 - **GET /api/users/me**: Fetch danych użytkownika i subskrypcji
 - **Cache**: React Context (revalidate on mount)
 
 ### Subscription Management
+
 - **POST /api/subscriptions/create-checkout**: Inicjacja checkout (redirect do Stripe)
 - **POST /api/subscriptions/create-portal**: Otwarcie Stripe Portal (redirect)
 
@@ -768,11 +838,13 @@ router.navigate({
 ### 7.1. Cache structure
 
 **In-memory cache** (priorytet):
+
 ```typescript
 const memoryCache = new Map<string, { data: any; updatedAt: number }>();
 ```
 
 **LocalStorage cache** (fallback + persistence):
+
 ```typescript
 // Klucz: gpw:cache:v1:grid|range=week|symbols=CPD,PKN
 // Wartość: { data: {...}, updatedAt: "2025-12-12T12:00:00Z", updatedAtEpoch: 1702382400000 }
@@ -786,11 +858,11 @@ const memoryCache = new Map<string, { data: any; updatedAt: number }>();
 4. **If miss**: Read from localStorage
 5. **If hit in localStorage**: Parse data, set in memory, return immediately
 6. **Start background fetch**: Call `fetcher()` (always, regardless of cache hit)
-7. **On fetch success**: 
+7. **On fetch success**:
    - Update memory cache
    - Update localStorage
    - Update component state
-8. **On fetch error**: 
+8. **On fetch error**:
    - Retry with exponential backoff (1s, 2s, 4s)
    - After 3 failures: Set `error` state, show retry button
 9. **Eviction**: LRU with maxEntries = 200 (check on every set)
@@ -806,12 +878,14 @@ const memoryCache = new Map<string, { data: any; updatedAt: number }>();
 ## 8. Responsywność i breakpointy
 
 ### Breakpointy (Tailwind defaults)
+
 - **Mobile**: < 640px (sm)
 - **Tablet**: 640px - 1023px (sm - md)
 - **Desktop**: >= 1024px (lg+)
 
 ### Grid responsywność
-- **Desktop (lg+)**: 
+
+- **Desktop (lg+)**:
   - Pełne dane w komórkach (symbol, %, typ)
   - 20-25 wierszy widocznych
   - Sidebar 33% szerokości po prawej
@@ -826,6 +900,7 @@ const memoryCache = new Map<string, { data: any; updatedAt: number }>();
   - Bottom drawer zamiast sidebaru (70% wysokości)
 
 ### Header responsywność
+
 - **Desktop**: Logo | Range | Filters | Avatar (wszystko w jednym wierszu)
 - **Mobile**: Logo | Hamburger | Avatar
   - Range i Filters w hamburger menu (drawer)
@@ -836,7 +911,7 @@ const memoryCache = new Map<string, { data: any; updatedAt: number }>();
 
 ### 9.1. Keyboard Navigation
 
-- **Grid**: 
+- **Grid**:
   - Tab do wejścia w grid
   - Arrow keys (↑↓←→) do poruszania się między komórkami
   - Enter do otwarcia sidebaru dla focused cell
@@ -851,7 +926,7 @@ const memoryCache = new Map<string, { data: any; updatedAt: number }>();
 
 ### 9.2. ARIA Attributes
 
-- **Grid**: 
+- **Grid**:
   - `role="grid"` na kontenerze
   - `role="row"` na wierszach
   - `role="gridcell"` na komórkach
@@ -1059,4 +1134,3 @@ src/
 ---
 
 **Koniec dokumentu architektury UI**
-

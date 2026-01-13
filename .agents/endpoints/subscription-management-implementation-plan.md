@@ -21,6 +21,7 @@ Wszystkie endpointy wymagają autentykacji i pracują w kontekście zalogowanego
 **Autentykacja:** Required (Bearer token z Supabase Auth)
 
 **Parametry:**
+
 - Wymagane: Brak
 - Opcjonalne: Brak
 - Headers: `Authorization: Bearer <token>`
@@ -36,6 +37,7 @@ Wszystkie endpointy wymagają autentykacji i pracują w kontekście zalogowanego
 **Autentykacja:** Required (Bearer token z Supabase Auth)
 
 **Parametry:**
+
 - Wymagane:
   - `price_id` (string) - Stripe Price ID (format: `price_*`)
   - `success_url` (string) - URL przekierowania po sukcesie (musi być z whitelisty domen)
@@ -43,6 +45,7 @@ Wszystkie endpointy wymagają autentykacji i pracują w kontekście zalogowanego
 - Opcjonalne: Brak
 
 **Request Body:**
+
 ```json
 {
   "price_id": "price_1ABC123xyz",
@@ -52,11 +55,12 @@ Wszystkie endpointy wymagają autentykacji i pracują w kontekście zalogowanego
 ```
 
 **Walidacja (Zod Schema):**
+
 ```typescript
 const CreateCheckoutSchema = z.object({
-  price_id: z.string().startsWith('price_', 'Invalid Stripe price ID format'),
-  success_url: z.string().url('Invalid success_url format'),
-  cancel_url: z.string().url('Invalid cancel_url format')
+  price_id: z.string().startsWith("price_", "Invalid Stripe price ID format"),
+  success_url: z.string().url("Invalid success_url format"),
+  cancel_url: z.string().url("Invalid cancel_url format"),
 });
 ```
 
@@ -69,11 +73,13 @@ const CreateCheckoutSchema = z.object({
 **Autentykacja:** Required (Bearer token z Supabase Auth)
 
 **Parametry:**
+
 - Wymagane:
   - `return_url` (string) - URL powrotu z portalu (musi być z whitelisty domen)
 - Opcjonalne: Brak
 
 **Request Body:**
+
 ```json
 {
   "return_url": "https://app.example.com/account"
@@ -81,9 +87,10 @@ const CreateCheckoutSchema = z.object({
 ```
 
 **Walidacja (Zod Schema):**
+
 ```typescript
 const CreatePortalSchema = z.object({
-  return_url: z.string().url('Invalid return_url format')
+  return_url: z.string().url("Invalid return_url format"),
 });
 ```
 
@@ -113,7 +120,7 @@ export interface CreatePortalDTO {
 // src/types/subscription.types.ts
 
 export interface SubscriptionStatusDTO {
-  subscription_status: 'trial' | 'active' | 'past_due' | 'canceled' | 'unpaid';
+  subscription_status: "trial" | "active" | "past_due" | "canceled" | "unpaid";
   trial_expires_at: string | null;
   current_period_end: string | null;
   plan_id: string | null;
@@ -157,6 +164,7 @@ export interface PortalSessionParams {
 ### 3.4. Database Types
 
 Wykorzystuje istniejące typy z `database.types.ts`:
+
 - `Database['public']['Tables']['app_users']['Row']`
 - `Database['public']['Tables']['app_users']['Update']`
 
@@ -167,6 +175,7 @@ Wykorzystuje istniejące typy z `database.types.ts`:
 ### 4.1. GET /api/subscriptions/status
 
 **Sukces (200 OK):**
+
 ```json
 {
   "success": true,
@@ -183,6 +192,7 @@ Wykorzystuje istniejące typy z `database.types.ts`:
 ```
 
 **Błędy:**
+
 - `401 Unauthorized`: Brak lub nieprawidłowy token
   ```json
   {
@@ -200,6 +210,7 @@ Wykorzystuje istniejące typy z `database.types.ts`:
 ### 4.2. POST /api/subscriptions/create-checkout
 
 **Sukces (200 OK):**
+
 ```json
 {
   "success": true,
@@ -212,7 +223,9 @@ Wykorzystuje istniejące typy z `database.types.ts`:
 ```
 
 **Błędy:**
+
 - `400 Bad Request`: Nieprawidłowy price_id lub URL
+
   ```json
   {
     "success": false,
@@ -247,6 +260,7 @@ Wykorzystuje istniejące typy z `database.types.ts`:
 ### 4.3. POST /api/subscriptions/create-portal
 
 **Sukces (200 OK):**
+
 ```json
 {
   "success": true,
@@ -258,6 +272,7 @@ Wykorzystuje istniejące typy z `database.types.ts`:
 ```
 
 **Błędy:**
+
 - `400 Bad Request`: Nieprawidłowy return_url
 - `401 Unauthorized`: Brak autentykacji
 - `404 Not Found`: Brak Stripe customer
@@ -296,6 +311,7 @@ Client Response (200 OK)
 ```
 
 **Interakcje:**
+
 - **Supabase**: Query `app_users` table
 - **Brak wywołań zewnętrznych API**
 
@@ -337,6 +353,7 @@ Client Response (200 OK)
 ```
 
 **Interakcje:**
+
 - **Supabase**: Query + Update `app_users`, Insert `subscription_audit`
 - **Stripe API**: `customers.create()`, `checkout.sessions.create()`
 
@@ -370,6 +387,7 @@ Client Response (200 OK)
 ```
 
 **Interakcje:**
+
 - **Supabase**: Query `app_users`
 - **Stripe API**: `billingPortal.sessions.create()`
 
@@ -389,14 +407,15 @@ Client Response (200 OK)
 - **Zod validation**: Wszystkie request body walidowane przed przetworzeniem
 - **Stripe ID format**: `price_id` musi zaczynać się od `price_`
 - **URL whitelist**: Dozwolone tylko domeny z konfiguracji (np. `https://app.example.com`)
+
   ```typescript
   const ALLOWED_DOMAINS = [
-    'https://app.blackswangrid.com',
-    'http://localhost:4321' // tylko dev
+    "https://app.blackswangrid.com",
+    "http://localhost:4321", // tylko dev
   ];
-  
+
   function isAllowedUrl(url: string): boolean {
-    return ALLOWED_DOMAINS.some(domain => url.startsWith(domain));
+    return ALLOWED_DOMAINS.some((domain) => url.startsWith(domain));
   }
   ```
 
@@ -407,7 +426,7 @@ Client Response (200 OK)
   - `/create-portal`: max 20 req/min per user
 - **XSS Protection**: Sanityzacja URL parametrów (walidacja protokołu https://)
 - **CSRF Protection**: Wykorzystanie Stripe session_id jako token weryfikacyjny
-- **Secrets Management**: 
+- **Secrets Management**:
   - `STRIPE_SECRET_KEY` tylko po stronie serwera (nigdy w client-side code)
   - Używać `import.meta.env.STRIPE_SECRET_KEY` w Astro endpoints
 
@@ -435,45 +454,45 @@ export class SubscriptionError extends Error {
     public details?: unknown
   ) {
     super(message);
-    this.name = 'SubscriptionError';
+    this.name = "SubscriptionError";
   }
 }
 
 // Konkretne typy błędów
 export class ValidationError extends SubscriptionError {
   constructor(message: string, details?: unknown) {
-    super(message, 'VALIDATION_ERROR', 400, details);
+    super(message, "VALIDATION_ERROR", 400, details);
   }
 }
 
 export class StripeError extends SubscriptionError {
   constructor(message: string, details?: unknown) {
-    super(message, 'STRIPE_ERROR', 500, details);
+    super(message, "STRIPE_ERROR", 500, details);
   }
 }
 
 export class NoCustomerError extends SubscriptionError {
   constructor() {
-    super('No subscription found', 'NO_CUSTOMER', 404);
+    super("No subscription found", "NO_CUSTOMER", 404);
   }
 }
 ```
 
 ### 7.2. Scenariusze błędów i kody statusu
 
-| Scenariusz | Status Code | Error Code | Handling |
-|------------|-------------|------------|----------|
-| Brak tokena autoryzacji | 401 | UNAUTHORIZED | Return immediately |
-| Nieprawidłowy token | 401 | UNAUTHORIZED | Return immediately |
-| Nieprawidłowy price_id format | 400 | VALIDATION_ERROR | Zod validation catch |
-| Nieprawidłowy URL format | 400 | VALIDATION_ERROR | Zod validation catch |
-| URL spoza whitelisty | 400 | INVALID_URL | Custom validation |
-| Użytkownik nie znaleziony | 404 | USER_NOT_FOUND | After DB query |
-| Brak Stripe customer (portal) | 404 | NO_CUSTOMER | Before portal creation |
-| Nieprawidłowy price_id (Stripe) | 500 | STRIPE_ERROR | Catch Stripe exception |
-| Błąd Stripe API | 500 | STRIPE_ERROR | Catch Stripe exception |
-| Błąd bazy danych | 500 | DATABASE_ERROR | Catch Supabase error |
-| Nieznany błąd | 500 | UNKNOWN_ERROR | Catch-all handler |
+| Scenariusz                      | Status Code | Error Code       | Handling               |
+| ------------------------------- | ----------- | ---------------- | ---------------------- |
+| Brak tokena autoryzacji         | 401         | UNAUTHORIZED     | Return immediately     |
+| Nieprawidłowy token             | 401         | UNAUTHORIZED     | Return immediately     |
+| Nieprawidłowy price_id format   | 400         | VALIDATION_ERROR | Zod validation catch   |
+| Nieprawidłowy URL format        | 400         | VALIDATION_ERROR | Zod validation catch   |
+| URL spoza whitelisty            | 400         | INVALID_URL      | Custom validation      |
+| Użytkownik nie znaleziony       | 404         | USER_NOT_FOUND   | After DB query         |
+| Brak Stripe customer (portal)   | 404         | NO_CUSTOMER      | Before portal creation |
+| Nieprawidłowy price_id (Stripe) | 500         | STRIPE_ERROR     | Catch Stripe exception |
+| Błąd Stripe API                 | 500         | STRIPE_ERROR     | Catch Stripe exception |
+| Błąd bazy danych                | 500         | DATABASE_ERROR   | Catch Supabase error   |
+| Nieznany błąd                   | 500         | UNKNOWN_ERROR    | Catch-all handler      |
 
 ### 7.3. Error Handling Pattern
 
@@ -498,26 +517,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const validation = CreateCheckoutSchema.safeParse(body);
     if (!validation.success) {
-      return createErrorResponse(
-        "Validation failed",
-        400,
-        "VALIDATION_ERROR",
-        validation.error.flatten()
-      );
+      return createErrorResponse("Validation failed", 400, "VALIDATION_ERROR", validation.error.flatten());
     }
 
     // [3] Business logic (może rzucić SubscriptionError)
     const result = await subscriptionService.createCheckout(authUid, validation.data);
-    
-    return createSuccessResponse(result, 200);
 
+    return createSuccessResponse(result, 200);
   } catch (error) {
     // [4] Error handling
     if (error instanceof SubscriptionError) {
       return createErrorResponse(error.message, error.statusCode, error.code, error.details);
     }
 
-    console.error('Unexpected error:', error);
+    console.error("Unexpected error:", error);
     return createErrorResponse("An unexpected error occurred", 500, "UNKNOWN_ERROR");
   }
 };
@@ -601,17 +614,20 @@ const CACHE_TTL = 60; // seconds
 **Czas: 30 min**
 
 1. **Zainstaluj Stripe SDK**
+
    ```bash
    npm install stripe
    npm install -D @types/stripe
    ```
 
 2. **Zainstaluj Zod** (jeśli nie ma)
+
    ```bash
    npm install zod
    ```
 
 3. **Dodaj zmienne środowiskowe** (`.env`)
+
    ```env
    STRIPE_SECRET_KEY=sk_test_...
    PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
@@ -620,10 +636,10 @@ const CACHE_TTL = 60; // seconds
 
 4. **Utwórz whitelist domen** (`src/config/allowed-domains.ts`)
    ```typescript
-   export const ALLOWED_DOMAINS = 
-     import.meta.env.MODE === 'production'
-       ? ['https://app.blackswangrid.com']
-       : ['http://localhost:4321', 'http://localhost:3000'];
+   export const ALLOWED_DOMAINS =
+     import.meta.env.MODE === "production"
+       ? ["https://app.blackswangrid.com"]
+       : ["http://localhost:4321", "http://localhost:3000"];
    ```
 
 ---
@@ -647,19 +663,20 @@ const CACHE_TTL = 60; // seconds
 **Czas: 30 min**
 
 1. **Utwórz `src/lib/subscription-validation.ts`**
+
    ```typescript
-   import { z } from 'zod';
-   
+   import { z } from "zod";
+
    export const CreateCheckoutSchema = z.object({
-     price_id: z.string().startsWith('price_'),
+     price_id: z.string().startsWith("price_"),
      success_url: z.string().url(),
-     cancel_url: z.string().url()
+     cancel_url: z.string().url(),
    });
-   
+
    export const CreatePortalSchema = z.object({
-     return_url: z.string().url()
+     return_url: z.string().url(),
    });
-   
+
    export function isAllowedUrl(url: string): boolean {
      // Implementation z sekcji 6.2
    }
@@ -676,17 +693,18 @@ const CACHE_TTL = 60; // seconds
 **Czas: 15 min**
 
 1. **Utwórz `src/lib/stripe.ts`**
+
    ```typescript
-   import Stripe from 'stripe';
-   
+   import Stripe from "stripe";
+
    const stripeSecretKey = import.meta.env.STRIPE_SECRET_KEY;
-   
+
    if (!stripeSecretKey) {
-     throw new Error('Missing STRIPE_SECRET_KEY environment variable');
+     throw new Error("Missing STRIPE_SECRET_KEY environment variable");
    }
-   
+
    export const stripe = new Stripe(stripeSecretKey, {
-     apiVersion: '2024-12-18.acacia', // Latest version
+     apiVersion: "2024-12-18.acacia", // Latest version
      typescript: true,
      timeout: 10000, // 10 seconds
    });
@@ -701,8 +719,9 @@ const CACHE_TTL = 60; // seconds
 1. **Utwórz `src/services/subscription.service.ts`**
 
    **Metody do implementacji:**
-   
+
    a. `getSubscriptionStatus(authUid: string): Promise<SubscriptionStatusDTO>`
+
    ```typescript
    async getSubscriptionStatus(authUid: string) {
      const { data } = await this.supabase
@@ -711,61 +730,64 @@ const CACHE_TTL = 60; // seconds
        .eq('auth_uid', authUid)
        .is('deleted_at', null)
        .single();
-     
+
      if (!data) throw new Error('User not found');
-     
+
      const has_access = this.calculateAccess(data);
-     
+
      return { ...data, has_access };
    }
    ```
-   
+
    b. `calculateAccess(user: AppUser): boolean`
+
    ```typescript
    private calculateAccess(user: AppUser): boolean {
      const now = new Date();
      const trialValid = user.trial_expires_at && new Date(user.trial_expires_at) > now;
      const statusActive = ['trial', 'active'].includes(user.subscription_status);
-     
+
      return statusActive || !!trialValid;
    }
    ```
-   
+
    c. `createOrGetStripeCustomer(authUid: string): Promise<string>`
+
    ```typescript
    async createOrGetStripeCustomer(authUid: string) {
      const user = await this.getUserProfile(authUid);
-     
+
      if (user.stripe_customer_id) {
        return user.stripe_customer_id;
      }
-     
+
      // Get email from Supabase Auth
      const { data: authUser } = await this.supabase.auth.admin.getUserById(authUid);
-     
+
      const customer = await stripe.customers.create({
        email: authUser?.user?.email,
        metadata: { auth_uid: authUid }
      });
-     
+
      // Update app_users
      await this.supabase
        .from('app_users')
        .update({ stripe_customer_id: customer.id })
        .eq('auth_uid', authUid);
-     
+
      // Audit log
      await this.auditService.logChange({
        user_id: authUid,
        change_type: 'stripe_customer_created',
        current: { stripe_customer_id: customer.id }
      });
-     
+
      return customer.id;
    }
    ```
-   
+
    d. `createCheckoutSession(params: CheckoutSessionParams): Promise<CheckoutSessionDTO>`
+
    ```typescript
    async createCheckoutSession(params: CheckoutSessionParams) {
      const session = await stripe.checkout.sessions.create({
@@ -780,22 +802,23 @@ const CACHE_TTL = 60; // seconds
          customer_id: params.customer_id
        }
      });
-     
+
      return {
        checkout_url: session.url!,
        session_id: session.id
      };
    }
    ```
-   
+
    e. `createPortalSession(params: PortalSessionParams): Promise<PortalSessionDTO>`
+
    ```typescript
    async createPortalSession(params: PortalSessionParams) {
      const session = await stripe.billingPortal.sessions.create({
        customer: params.customer_id,
        return_url: params.return_url
      });
-     
+
      return {
        portal_url: session.url
      };
@@ -829,6 +852,7 @@ const CACHE_TTL = 60; // seconds
    - Error handling (400, 401, 404, 500)
 
 **Struktura dla każdego endpointu:**
+
 ```typescript
 import type { APIRoute } from 'astro';
 import { SubscriptionService } from '@/services/subscription.service';
@@ -839,24 +863,24 @@ export const prerender = false;
 
 export const [METHOD]: APIRoute = async ({ request, locals }) => {
   const { supabase } = locals;
-  
+
   try {
     // 1. Auth
     const authUid = await getAuthUid(request, supabase);
     if (!authUid) {
       return createErrorResponse('Unauthorized', 401, 'UNAUTHORIZED');
     }
-    
+
     // 2. Validation (POST only)
     // ...
-    
+
     // 3. Business logic
     const service = new SubscriptionService(supabase);
     const result = await service.[method](authUid, ...);
-    
+
     // 4. Response
     return createSuccessResponse(result, 200);
-    
+
   } catch (error) {
     // Error handling
   }
@@ -884,6 +908,7 @@ export const [METHOD]: APIRoute = async ({ request, locals }) => {
 **Czas: 3 godziny**
 
 1. **Setup test environment**
+
    ```bash
    npm install -D vitest @vitest/ui
    npm install -D @supabase/supabase-js
@@ -905,21 +930,22 @@ export const [METHOD]: APIRoute = async ({ request, locals }) => {
    - Test Zod schemas
 
 **Przykład testu:**
-```typescript
-import { describe, it, expect, vi } from 'vitest';
-import { SubscriptionService } from './subscription.service';
 
-describe('SubscriptionService', () => {
-  it('should calculate access correctly for trial user', () => {
+```typescript
+import { describe, it, expect, vi } from "vitest";
+import { SubscriptionService } from "./subscription.service";
+
+describe("SubscriptionService", () => {
+  it("should calculate access correctly for trial user", () => {
     const service = new SubscriptionService(mockSupabase);
     const user = {
-      subscription_status: 'trial',
-      trial_expires_at: new Date(Date.now() + 86400000).toISOString()
+      subscription_status: "trial",
+      trial_expires_at: new Date(Date.now() + 86400000).toISOString(),
     };
-    
-    expect(service['calculateAccess'](user)).toBe(true);
+
+    expect(service["calculateAccess"](user)).toBe(true);
   });
-  
+
   // More tests...
 });
 ```
@@ -987,6 +1013,7 @@ describe('SubscriptionService', () => {
 **Czas: 1 godzina**
 
 1. **Environment variables w production:**
+
    ```bash
    # DigitalOcean App Platform / Docker
    STRIPE_SECRET_KEY=sk_live_...
@@ -1083,4 +1110,3 @@ describe('SubscriptionService', () => {
 ---
 
 **Koniec planu implementacji** 🚀
-

@@ -10,6 +10,7 @@ Scenariusz "pull-request.yml" powinien działać następująco:
 - Finalnie - status-comment (komentarz do PRa o statusie całości)
 
 Dodatkowe uwagi:
+
 - status-comment uruchamia się tylko kiedy poprzedni zestaw 3 przejdzie poprawnie
 - unit-test i e2e-test uruchamiają się równolegle po zakończeniu lintowania z wynikiem pozytywnym
 - w jobie e2e pobieraj przeglądarki wg @playwright.config.ts

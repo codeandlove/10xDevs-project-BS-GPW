@@ -11,7 +11,7 @@
 Błąd podczas hydratacji komponentu GridPageWrapper w przeglądarce:
 
 ```
-[astro-island] Error hydrating /src/components/grid/GridPageWrapper.tsx 
+[astro-island] Error hydrating /src/components/grid/GridPageWrapper.tsx
 Error: supabaseUrl is required.
 ```
 
@@ -43,8 +43,7 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 // Dodano walidację
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
-    "Missing Supabase environment variables. " +
-    "Please check PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY in .env"
+    "Missing Supabase environment variables. " + "Please check PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_ANON_KEY in .env"
   );
 }
 ```
@@ -104,19 +103,20 @@ SUPABASE_SERVICE_ROLE_KEY=eyJxxx... # For server-side operations
 ### Zmienne Środowiskowe w Astro:
 
 1. **`PUBLIC_*`** - Dostępne wszędzie (server + client)
+
    ```typescript
-   import.meta.env.PUBLIC_SUPABASE_URL // ✅ Działa w przeglądarce
+   import.meta.env.PUBLIC_SUPABASE_URL; // ✅ Działa w przeglądarce
    ```
 
 2. **Bez `PUBLIC_`** - Tylko server-side
    ```typescript
-   import.meta.env.SUPABASE_SERVICE_ROLE_KEY // ✅ Tylko server
+   import.meta.env.SUPABASE_SERVICE_ROLE_KEY; // ✅ Tylko server
    ```
 
 ### Bezpieczeństwo:
 
 - ✅ `PUBLIC_SUPABASE_ANON_KEY` - Bezpieczny, przeznaczony do publicznego użycia
-- ❌ `SUPABASE_SERVICE_ROLE_KEY` - NIGDY nie eksponować do klienta (bez PUBLIC_)
+- ❌ `SUPABASE_SERVICE_ROLE_KEY` - NIGDY nie eksponować do klienta (bez PUBLIC\_)
 
 ---
 
@@ -142,12 +142,15 @@ http://localhost:4321/grid
 ## 🎓 Lessons Learned
 
 ### 1. Astro Islands Architecture
+
 Komponenty z `client:load` wykonują się w przeglądarce i potrzebują `PUBLIC_` zmiennych.
 
 ### 2. Environment Variables Naming
+
 Zawsze używaj prefiksu `PUBLIC_` dla zmiennych potrzebnych w przeglądarce.
 
 ### 3. Validation is Important
+
 Dodanie walidacji zmiennych środowiskowych pomaga wykryć błędy wcześniej.
 
 ---
@@ -155,11 +158,13 @@ Dodanie walidacji zmiennych środowiskowych pomaga wykryć błędy wcześniej.
 ## 📝 Related Issues
 
 ### Podobne błędy mogą wystąpić w:
+
 - `AuthContext` (jeśli używa Supabase w client-side)
 - `GridContext` (jeśli używa Supabase w client-side)
 - Inne komponenty z `client:load/visible/idle`
 
 ### Prevention:
+
 ```typescript
 // Pattern dla client-side Supabase
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
@@ -177,11 +182,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 **Status**: ✅ KRYTYCZNY BUG NAPRAWIONY
 
 **Przed**:
+
 - ❌ Grid nie ładował się
 - ❌ Błąd hydratacji w Console
 - ❌ Brak dostępu do Supabase w przeglądarce
 
 **Po**:
+
 - ✅ Grid ładuje się poprawnie
 - ✅ Brak błędów w Console
 - ✅ Supabase działa w przeglądarce
@@ -193,9 +200,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 ## 📚 Documentation
 
 ### Astro Environment Variables:
+
 https://docs.astro.build/en/guides/environment-variables/
 
 ### Supabase Client Setup:
+
 https://supabase.com/docs/reference/javascript/initializing
 
 ---
@@ -218,4 +227,3 @@ npm run dev
 ```
 
 Bez restartu nowe zmienne nie będą załadowane!
-

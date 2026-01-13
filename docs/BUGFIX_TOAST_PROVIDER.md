@@ -8,12 +8,13 @@
 ## 🐛 Problem
 
 **Błąd**:
+
 ```
 Error: useToast must be used within ToastProvider
 ```
 
 **Przyczyna**:
-`AuthForm` używa hooka `useToast()`, ale strony auth (`login.astro` i `register.astro`) **nie były owrapowane** w `ToastProvider`. 
+`AuthForm` używa hooka `useToast()`, ale strony auth (`login.astro` i `register.astro`) **nie były owrapowane** w `ToastProvider`.
 
 **Dodatkowy problem**: W Astro, gdy masz wiele komponentów z `client:load`, każdy z nich jest **osobną wyspą** (island) i **nie współdzielą** React context automatycznie!
 
@@ -24,9 +25,12 @@ Error: useToast must be used within ToastProvider
 Próba owinięcia w osobne wyspy:
 
 ```astro
-<ToastProvider client:load>     <!-- ❌ Osobna wyspa -->
-  <AuthForm client:load />      <!-- ❌ Osobna wyspa -->
-  <ToastContainer client:load />  <!-- ❌ Osobna wyspa -->
+<ToastProvider client:load>
+  <!-- ❌ Osobna wyspa -->
+  <AuthForm client:load />
+  <!-- ❌ Osobna wyspa -->
+  <ToastContainer client:load />
+  <!-- ❌ Osobna wyspa -->
 </ToastProvider>
 ```
 
@@ -58,6 +62,7 @@ export function AuthPageWrapper({ mode, returnUrl }) {
 ### 2. Zaktualizowano strony auth
 
 #### `login.astro`:
+
 ```astro
 ---
 import { AuthPageWrapper } from "@/components/auth/AuthPageWrapper";
@@ -72,6 +77,7 @@ import { AuthPageWrapper } from "@/components/auth/AuthPageWrapper";
 ```
 
 #### `register.astro`:
+
 ```astro
 ---
 import { AuthPageWrapper } from "@/components/auth/AuthPageWrapper";
@@ -122,6 +128,7 @@ Wszystko jest w **jednym React runtime**, więc Context działa!
 ## ✅ Weryfikacja
 
 ### Test 1: Login page
+
 ```bash
 # Otwórz: http://localhost:4321/auth/login
 # Zaloguj się (błędne dane)
@@ -129,6 +136,7 @@ Wszystko jest w **jednym React runtime**, więc Context działa!
 ```
 
 ### Test 2: Register page
+
 ```bash
 # Otwórz: http://localhost:4321/auth/register
 # Zarejestruj nowe konto
@@ -136,6 +144,7 @@ Wszystko jest w **jednym React runtime**, więc Context działa!
 ```
 
 ### Test 3: Grid page (już działało)
+
 ```bash
 # Otwórz: http://localhost:4321/grid
 # ✅ Grid powinien działać normalnie (ma AppLayout z ToastProvider)
@@ -146,9 +155,11 @@ Wszystko jest w **jednym React runtime**, więc Context działa!
 ## 📊 Zmodyfikowane/utworzone pliki
 
 ### ✅ Utworzony:
+
 - `src/components/auth/AuthPageWrapper.tsx` - Wrapper łączący Provider + AuthForm + ToastContainer
 
 ### ✅ Zaktualizowane:
+
 - `src/pages/auth/login.astro` - Używa AuthPageWrapper
 - `src/pages/auth/register.astro` - Używa AuthPageWrapper
 
@@ -161,14 +172,18 @@ Wszystko jest w **jednym React runtime**, więc Context działa!
 **Rozwiązanie**: Stwórz **jeden komponent wrapper**, który zawiera Provider i wszystkie komponenty używające contextu, i użyj **jednego** `client:load` na tym wrapperze.
 
 ### Złe podejście ❌:
+
 ```astro
 <Provider client:load>
-  <Component1 client:load />  <!-- Osobna wyspa! -->
-  <Component2 client:load />  <!-- Osobna wyspa! -->
+  <Component1 client:load />
+  <!-- Osobna wyspa! -->
+  <Component2 client:load />
+  <!-- Osobna wyspa! -->
 </Provider>
 ```
 
 ### Dobre podejście ✅:
+
 ```tsx
 // Wrapper.tsx
 export function Wrapper() {
@@ -182,7 +197,8 @@ export function Wrapper() {
 ```
 
 ```astro
-<Wrapper client:load />  <!-- Jedna wyspa, Context działa! -->
+<Wrapper client:load />
+<!-- Jedna wyspa, Context działa! -->
 ```
 
 ---
@@ -198,4 +214,3 @@ export function Wrapper() {
 **Autor**: AI Bugfix v2  
 **Data**: 2025-12-30  
 **Czas naprawy**: ~5 minut (z poprawką)
-

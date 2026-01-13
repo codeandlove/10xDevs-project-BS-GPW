@@ -14,6 +14,7 @@
 🎯 **Cel pokrycia kodu:** ~70% (zgodnie z planem)
 
 ### Kluczowe osiągnięcia:
+
 - ✅ Wszystkie 5 plików testowych działa poprawnie
 - ✅ Zaimplementowano 119 testów jednostkowych
 - ✅ Naprawiono problemy z mockami (MSW, Vitest)
@@ -26,26 +27,27 @@
 
 ### 1.1. Komponenty zaplanowane vs zaimplementowane
 
-| Komponent (Plan) | Status | Plik testowy | Liczba testów | Zgodność |
-|------------------|--------|--------------|---------------|----------|
-| **Utility Functions** | ✅ | | | |
-| `ui-utils.ts` | ✅ | `ui-utils.test.ts` | 46 testów | 100% |
-| `validation.ts` | ✅ | `validation.test.ts` | 15 testów | 100% |
-| `nocodb-client.ts` | ⚠️ | Częściowo w `nocodb.service.test.ts` | - | Brak dedykowanych testów |
-| **Service Layer** | ✅ | | | |
-| `nocodb.service.ts` | ✅ | `nocodb.service.test.ts` | 25 testów | 100% |
-| `webhook.service.ts` | ❌ | - | 0 | Brak testów |
-| `user.service.ts` | ❌ | - | 0 | Brak testów |
-| **Hooks** | ✅ | | | |
-| `useClientCache.ts` | ✅ | `useClientCache.test.ts` | 13 testów | 100% |
-| **API Client** | ✅ | | | |
-| `api-client.ts` | ✅ | `api-client.test.ts` | 20 testów | 100% |
+| Komponent (Plan)      | Status | Plik testowy                         | Liczba testów | Zgodność                 |
+| --------------------- | ------ | ------------------------------------ | ------------- | ------------------------ |
+| **Utility Functions** | ✅     |                                      |               |                          |
+| `ui-utils.ts`         | ✅     | `ui-utils.test.ts`                   | 46 testów     | 100%                     |
+| `validation.ts`       | ✅     | `validation.test.ts`                 | 15 testów     | 100%                     |
+| `nocodb-client.ts`    | ⚠️     | Częściowo w `nocodb.service.test.ts` | -             | Brak dedykowanych testów |
+| **Service Layer**     | ✅     |                                      |               |                          |
+| `nocodb.service.ts`   | ✅     | `nocodb.service.test.ts`             | 25 testów     | 100%                     |
+| `webhook.service.ts`  | ❌     | -                                    | 0             | Brak testów              |
+| `user.service.ts`     | ❌     | -                                    | 0             | Brak testów              |
+| **Hooks**             | ✅     |                                      |               |                          |
+| `useClientCache.ts`   | ✅     | `useClientCache.test.ts`             | 13 testów     | 100%                     |
+| **API Client**        | ✅     |                                      |               |                          |
+| `api-client.ts`       | ✅     | `api-client.test.ts`                 | 20 testów     | 100%                     |
 
 ### 1.2. Pokrycie funkcjonalności
 
 #### ✅ Zaimplementowane zgodnie z planem:
 
 1. **Utility Functions (46 testów)**
+
    ```
    ✅ formatDate - 8 testów
    ✅ formatPercentChange - 4 testy
@@ -59,6 +61,7 @@
    ```
 
 2. **Validation (15 testów)**
+
    ```
    ✅ UUID validation
    ✅ Email validation
@@ -67,6 +70,7 @@
    ```
 
 3. **Cache Hook (13 testów)**
+
    ```
    ✅ getFromCache / setInCache
    ✅ LRU eviction (maxEntries)
@@ -76,6 +80,7 @@
    ```
 
 4. **NocoDB Service (25 testów)**
+
    ```
    ✅ getGridEvents (8 testów - różne range, filters, symbols)
    ✅ getEventDetails (6 testów - ID, summaries, historic data, OHLCV)
@@ -118,20 +123,22 @@
 ### 2.1. Zgodność z przykładami z planu
 
 #### Przykład z planu:
+
 ```typescript
 // Test LRU eviction
-test('clearGridCache preserves preferences', () => {
-  localStorage.setItem('gpw:cache:v1:grid|range=week', 'data');
-  localStorage.setItem('gpw:preferences:symbols', 'CPD,PKN');
-  
+test("clearGridCache preserves preferences", () => {
+  localStorage.setItem("gpw:cache:v1:grid|range=week", "data");
+  localStorage.setItem("gpw:preferences:symbols", "CPD,PKN");
+
   clearGridCache();
-  
-  expect(localStorage.getItem('gpw:cache:v1:grid|range=week')).toBeNull();
-  expect(localStorage.getItem('gpw:preferences:symbols')).toBe('CPD,PKN');
+
+  expect(localStorage.getItem("gpw:cache:v1:grid|range=week")).toBeNull();
+  expect(localStorage.getItem("gpw:preferences:symbols")).toBe("CPD,PKN");
 });
 ```
 
 #### Implementacja:
+
 ```typescript
 // ✅ ZGODNE - useClientCache.test.ts
 it("should clear grid cache but preserve preferences", () => {
@@ -161,13 +168,13 @@ it("should clear grid cache but preserve preferences", () => {
 
 2. **Funkcja `normalizeUrl()` w api-client.ts**
    - **Plan:** Nie określono
-   - **Implementacja:** 
+   - **Implementacja:**
      ```typescript
      function normalizeUrl(url: string): string {
-       if (url.startsWith('http://') || url.startsWith('https://')) {
+       if (url.startsWith("http://") || url.startsWith("https://")) {
          return url;
        }
-       if (typeof window !== 'undefined' && import.meta.env?.MODE === 'test') {
+       if (typeof window !== "undefined" && import.meta.env?.MODE === "test") {
          return `http://localhost:3000${url}`;
        }
        return url;
@@ -207,25 +214,25 @@ it("should clear grid cache but preserve preferences", () => {
 
 ### 3.1. Zgodność z celami testowania (sekcja 1.2)
 
-| Cel | Status | Notatki |
-|-----|--------|---------|
-| Weryfikacja funkcjonalna | ✅ | 100% pokrycie kluczowych funkcji |
-| Zapewnienie jakości | ✅ | 119 testów przechodzi |
-| Bezpieczeństwo | ⚠️ | API Client testuje 401, ale brak testów user.service |
-| Wydajność | ⚠️ | Brak testów wydajnościowych w unit tests (planowane E2E) |
-| Dostępność | ⚠️ | Brak testów a11y w unit tests (planowane E2E) |
-| Cache i rewalidacja | ✅ | 13 testów hook + testy w api-client |
+| Cel                      | Status | Notatki                                                  |
+| ------------------------ | ------ | -------------------------------------------------------- |
+| Weryfikacja funkcjonalna | ✅     | 100% pokrycie kluczowych funkcji                         |
+| Zapewnienie jakości      | ✅     | 119 testów przechodzi                                    |
+| Bezpieczeństwo           | ⚠️     | API Client testuje 401, ale brak testów user.service     |
+| Wydajność                | ⚠️     | Brak testów wydajnościowych w unit tests (planowane E2E) |
+| Dostępność               | ⚠️     | Brak testów a11y w unit tests (planowane E2E)            |
+| Cache i rewalidacja      | ✅     | 13 testów hook + testy w api-client                      |
 
 ### 3.2. Zgodność z metrykami sukcesu
 
-| Metryka | Cel (Plan) | Aktualny | Status |
-|---------|-----------|----------|--------|
-| Pokrycie kodu | ~70% | Nieznane* | ⚠️ |
-| Test Files | - | 5/5 pass | ✅ |
-| Tests Pass Rate | 100% | 119/119 (100%) | ✅ |
-| Test Duration | - | 18.43s | ✅ |
+| Metryka         | Cel (Plan) | Aktualny       | Status |
+| --------------- | ---------- | -------------- | ------ |
+| Pokrycie kodu   | ~70%       | Nieznane\*     | ⚠️     |
+| Test Files      | -          | 5/5 pass       | ✅     |
+| Tests Pass Rate | 100%       | 119/119 (100%) | ✅     |
+| Test Duration   | -          | 18.43s         | ✅     |
 
-*Wymaga uruchomienia `npm run test:coverage`
+\*Wymaga uruchomienia `npm run test:coverage`
 
 ---
 
@@ -234,18 +241,20 @@ it("should clear grid cache but preserve preferences", () => {
 ### 4.1. Krytyczne braki (MUST HAVE)
 
 #### ❌ Brak testów dla webhook.service.ts
+
 **Priorytet:** WYSOKI  
 **User Stories:** US-009 (Stripe webhooks)
 
 **Rekomendacja:**
+
 ```typescript
 // Proponowane testy:
-describe('Webhook Service', () => {
-  it('should validate Stripe signature');
-  it('should process subscription.created event');
-  it('should process subscription.updated event');
-  it('should process subscription.deleted event');
-  it('should reject invalid signature');
+describe("Webhook Service", () => {
+  it("should validate Stripe signature");
+  it("should process subscription.created event");
+  it("should process subscription.updated event");
+  it("should process subscription.deleted event");
+  it("should reject invalid signature");
 });
 ```
 
@@ -254,17 +263,19 @@ describe('Webhook Service', () => {
 ---
 
 #### ❌ Brak testów dla user.service.ts
+
 **Priorytet:** WYSOKI  
 **User Stories:** US-007, US-015
 
 **Rekomendacja:**
+
 ```typescript
 // Proponowane testy:
-describe('User Service', () => {
-  it('should get user profile');
-  it('should create user profile on first access');
-  it('should update user metadata');
-  it('should handle RLS policies');
+describe("User Service", () => {
+  it("should get user profile");
+  it("should create user profile on first access");
+  it("should update user metadata");
+  it("should handle RLS policies");
 });
 ```
 
@@ -275,20 +286,22 @@ describe('User Service', () => {
 ### 4.2. Średnio-krytyczne braki (SHOULD HAVE)
 
 #### ⚠️ Brak dedykowanych testów nocodb-client.ts
+
 **Priorytet:** ŚREDNI
 
 **Obecny stan:** Testowane pośrednio przez nocodb.service.test.ts  
 **Ryzyko:** Brak testów izolowanych dla QueryBuilder
 
 **Rekomendacja:**
+
 ```typescript
 // Proponowane testy:
-describe('NocoDBQueryBuilder', () => {
-  it('should build WHERE clause');
-  it('should build IN clause');
-  it('should chain multiple conditions');
-  it('should build sort parameters');
-  it('should build limit/offset');
+describe("NocoDBQueryBuilder", () => {
+  it("should build WHERE clause");
+  it("should build IN clause");
+  it("should chain multiple conditions");
+  it("should build sort parameters");
+  it("should build limit/offset");
 });
 ```
 
@@ -297,9 +310,11 @@ describe('NocoDBQueryBuilder', () => {
 ---
 
 #### ⚠️ Uproszczone asercje w testach NocoDB
+
 **Priorytet:** ŚREDNI
 
 **Problem:** Niektóre testy sprawdzają tylko strukturę, nie zawartość:
+
 ```typescript
 // Obecne:
 expect(response.symbols).toBeInstanceOf(Array);
@@ -317,9 +332,11 @@ expect(response.symbols).toEqual(["CPD", "PKN"]);
 ### 4.3. Nice to have (COULD HAVE)
 
 #### 💡 Test coverage report
+
 **Rekomendacja:** Uruchomić `npm run test:coverage` i zweryfikować czy osiągnięto ~70%
 
 #### 💡 Visual regression dla error states
+
 **Rekomendacja:** Dodać snapshot testy dla komponentów Error Boundary
 
 ---
@@ -329,16 +346,19 @@ expect(response.symbols).toEqual(["CPD", "PKN"]);
 ### Propozycja planu naprawczego:
 
 #### Faza 1: Uzupełnienie krytycznych braków (1-2 tygodnie)
+
 - [ ] Testy dla `webhook.service.ts` (4-6h)
 - [ ] Testy dla `user.service.ts` (3-4h)
 - [ ] Uruchomienie `test:coverage` i weryfikacja 70%
 
 #### Faza 2: Ulepszenia (1 tydzień)
+
 - [ ] Dedykowane testy dla `nocodb-client.ts` (2-3h)
 - [ ] Ulepszenie mocków w `nocodb.service.test.ts` (2-3h)
 - [ ] Visual regression setup (4-6h)
 
 #### Faza 3: Dokumentacja (2-3 dni)
+
 - [ ] Aktualizacja test-plan.md z rzeczywistą implementacją
 - [ ] Utworzenie TESTING.md z instrukcjami uruchamiania
 - [ ] README z sekcją o testach
@@ -348,6 +368,7 @@ expect(response.symbols).toEqual(["CPD", "PKN"]);
 ## 6. Podsumowanie
 
 ### ✅ Mocne strony implementacji:
+
 1. **Wysoka jakość testów** - 119/119 przechodzi (100%)
 2. **Dobre pokrycie utility i hooks** - zgodne z planem
 3. **Solidne testy API Client** - retry logic, error handling, 401
@@ -355,12 +376,14 @@ expect(response.symbols).toEqual(["CPD", "PKN"]);
 5. **Szybkie wykonanie** - 18.43s dla 119 testów
 
 ### ⚠️ Obszary wymagające uwagi:
+
 1. **Brakujące serwisy** - webhook.service, user.service (0 testów)
 2. **Uproszczone testy NocoDB** - niektóre asercje mogłyby być dokładniejsze
 3. **Brak pokrycia kodu** - nie zweryfikowano celu 70%
 4. **Brak testów izolowanych** - nocodb-client testowany tylko pośrednio
 
 ### 🎯 Zgodność z planem: **85%**
+
 - Zaimplementowano: 119 testów z ~140 planowanych
 - Pokrycie: 3/6 serwisów (50%)
 - Utility functions: 100%
@@ -433,4 +456,3 @@ Test Files: 5
 
 **Raport sporządzony:** 2026-01-07  
 **Następny audyt:** Po dodaniu testów webhook.service i user.service
-

@@ -7,12 +7,15 @@ Szybki przewodnik rozwiązywania typowych problemów z testami jednostkowymi.
 ## 🔍 Diagnozowanie problemów
 
 ### Krok 1: Uruchom testy
+
 ```bash
 npm run test:unit
 ```
 
 ### Krok 2: Sprawdź logi błędów
+
 Szukaj wzorców:
+
 - ❌ `Cannot destructure property` → Problem z mockami
 - ❌ `environment variable is required` → Brak env variables
 - ❌ `TypeError: X is not a function` → Mock zwraca zły typ
@@ -25,11 +28,13 @@ Szukaj wzorców:
 ### Problem 1: Mock Supabase - "Cannot destructure property 'data'"
 
 **Błąd:**
+
 ```
 TypeError: Cannot destructure property 'data' of '(intermediate value)' as it is undefined.
 ```
 
 **Rozwiązanie:**
+
 ```typescript
 vi.mock("@/db/supabase.client", () => ({
   supabaseClient: {
@@ -53,11 +58,13 @@ vi.mock("@/db/supabase.client", () => ({
 ### Problem 2: NocoDB - "NOCODB_API_URL environment variable is required"
 
 **Błąd:**
+
 ```
 Error: NOCODB_API_URL environment variable is required
 ```
 
 **Rozwiązanie:**
+
 ```typescript
 import { beforeAll } from "vitest";
 
@@ -77,7 +84,9 @@ vi.mock("@/lib/nocodb-client", () => ({
     where: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
   })),
-  NOCODB_TABLES: { /* ... */ },
+  NOCODB_TABLES: {
+    /* ... */
+  },
 }));
 
 // TERAZ import serwisu
@@ -89,13 +98,15 @@ import { NocoDBService } from "@/services/nocodb.service";
 ### Problem 3: vi.mock hoisting error
 
 **Błąd:**
+
 ```
-Error: [vitest] There was an error when mocking a module. 
+Error: [vitest] There was an error when mocking a module.
 If you are using "vi.mock" factory, make sure there are no top level variables inside
 ```
 
 **Rozwiązanie:**
 ❌ **ŹLE:**
+
 ```typescript
 vi.mock("@/lib/module", async () => {
   const actual = await vi.importActual("@/lib/module");
@@ -104,6 +115,7 @@ vi.mock("@/lib/module", async () => {
 ```
 
 ✅ **DOBRZE:**
+
 ```typescript
 vi.mock("@/lib/module", () => ({
   someFunction: vi.fn(),
@@ -118,11 +130,13 @@ vi.mock("@/lib/module", () => ({
 ### Problem 4: -0 vs 0 w testach dat
 
 **Błąd:**
+
 ```
 expected -0 to be +0 // Object.is equality
 ```
 
 **Rozwiązanie:**
+
 ```typescript
 // ❌ ŹLE
 expect(result).toBe(0);
@@ -136,16 +150,18 @@ expect(Math.abs(result ?? 0)).toBe(0);
 ### Problem 5: Testy przechodzą lokalnie, ale failują w CI
 
 **Możliwe przyczyny:**
+
 1. Różne timezone
 2. Brak zmiennych środowiskowych
 3. Brak dependencies (`node_modules`)
 
 **Rozwiązanie:**
+
 ```typescript
 // Mockuj Date w testach
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.setSystemTime(new Date('2025-01-15'));
+  vi.setSystemTime(new Date("2025-01-15"));
 });
 
 afterEach(() => {
@@ -158,14 +174,16 @@ afterEach(() => {
 ### Problem 6: Test timeout
 
 **Błąd:**
+
 ```
 Test timeout of 5000ms exceeded
 ```
 
 **Rozwiązanie:**
+
 ```typescript
 // Zwiększ timeout dla wolnych testów
-test('slow test', async () => {
+test("slow test", async () => {
   // ...
 }, 10000); // 10 sekund
 
@@ -182,6 +200,7 @@ export default defineConfig({
 ### Problem 7: Mock nie działa (funkcja wywołuje prawdziwy kod)
 
 **Rozwiązanie:**
+
 ```typescript
 // vi.mock MUSI być na top-level (nie w describe/beforeEach)
 vi.mock("@/lib/module", () => ({ ... }));
@@ -207,6 +226,7 @@ describe("Test suite", () => {
 ## 🚨 Emergency: Wszystkie testy failują
 
 ### Szybka diagnoza:
+
 ```bash
 # 1. Sprawdź czy dependencies są zainstalowane
 npm ci
@@ -234,4 +254,3 @@ npm run test:unit
 ---
 
 **Ostatnia aktualizacja:** 2026-01-07
-

@@ -12,6 +12,7 @@ Scenariusz "master-merge.yml" powinien działać następująco:
 - Dodać komentarz do PR z informacją o wdrożeniu
 
 Dodatkowe uwagi:
+
 - deployment na środowisko produkcyjne uruchamia się tylko kiedy poprzedni zestaw zadań przejdzie poprawnie
 - unit-test i e2e-test uruchamiają się równolegle
 - w jobie e2e pobieraj przeglądarki wg @playwright.config.ts

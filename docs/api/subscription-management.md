@@ -13,6 +13,7 @@ Retrieves the current subscription status for the authenticated user.
 **Authentication:** Required (Bearer token)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -29,6 +30,7 @@ Retrieves the current subscription status for the authenticated user.
 ```
 
 **Status Codes:**
+
 - `200` - Success
 - `401` - Unauthorized
 - `404` - User not found
@@ -43,6 +45,7 @@ Creates a Stripe Checkout session for subscription purchase.
 **Authentication:** Required (Bearer token)
 
 **Request Body:**
+
 ```json
 {
   "price_id": "price_1ABC123xyz",
@@ -52,11 +55,13 @@ Creates a Stripe Checkout session for subscription purchase.
 ```
 
 **Validation Rules:**
+
 - `price_id`: Must start with `price_`
 - `success_url`: Must be a valid URL from allowed domains
 - `cancel_url`: Must be a valid URL from allowed domains
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -69,6 +74,7 @@ Creates a Stripe Checkout session for subscription purchase.
 ```
 
 **Status Codes:**
+
 - `200` - Success
 - `400` - Validation error or invalid URL
 - `401` - Unauthorized
@@ -83,6 +89,7 @@ Creates a Stripe Customer Portal session for subscription management.
 **Authentication:** Required (Bearer token)
 
 **Request Body:**
+
 ```json
 {
   "return_url": "https://app.example.com/account"
@@ -90,9 +97,11 @@ Creates a Stripe Customer Portal session for subscription management.
 ```
 
 **Validation Rules:**
+
 - `return_url`: Must be a valid URL from allowed domains
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -104,6 +113,7 @@ Creates a Stripe Customer Portal session for subscription management.
 ```
 
 **Status Codes:**
+
 - `200` - Success
 - `400` - Validation error or invalid URL
 - `401` - Unauthorized
@@ -119,9 +129,11 @@ Creates a Stripe Customer Portal session for subscription management.
 All redirect URLs (success_url, cancel_url, return_url) must be from whitelisted domains:
 
 **Production:**
+
 - `https://app.blackswangrid.com`
 
 **Development:**
+
 - `http://localhost:4321`
 - `http://localhost:3000`
 - `http://127.0.0.1:4321`
@@ -152,6 +164,7 @@ All errors follow this format:
 ```
 
 **Error Codes:**
+
 - `UNAUTHORIZED` - Missing or invalid authentication
 - `VALIDATION_ERROR` - Invalid request data
 - `INVALID_URL` - URL not in whitelist
@@ -180,6 +193,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ### Service Layer
 
 **SubscriptionService** (`src/services/subscription.service.ts`)
+
 - Handles business logic
 - Stripe API integration
 - Database operations
@@ -188,17 +202,20 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ### Validation Layer
 
 **Zod Schemas** (`src/lib/subscription-validation.ts`)
+
 - Request validation
 - Type inference
 - Error formatting
 
 **URL Whitelist** (`src/config/allowed-domains.ts`)
+
 - Domain validation
 - Environment-based configuration
 
 ### Error Handling
 
 **Custom Errors** (`src/lib/errors.ts`)
+
 - Structured error hierarchy
 - HTTP status code mapping
 - Consistent error responses
@@ -210,12 +227,14 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ### Manual Testing with cURL
 
 **Get Status:**
+
 ```bash
 curl -X GET http://localhost:4321/api/subscriptions/status \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 **Create Checkout:**
+
 ```bash
 curl -X POST http://localhost:4321/api/subscriptions/create-checkout \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -228,6 +247,7 @@ curl -X POST http://localhost:4321/api/subscriptions/create-checkout \
 ```
 
 **Create Portal:**
+
 ```bash
 curl -X POST http://localhost:4321/api/subscriptions/create-portal \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -260,6 +280,7 @@ curl -X POST http://localhost:4321/api/subscriptions/create-portal \
 ## Next Steps
 
 1. **Install Dependencies:**
+
    ```bash
    npm install stripe zod
    ```
@@ -282,8 +303,8 @@ curl -X POST http://localhost:4321/api/subscriptions/create-portal \
 ## Support
 
 For issues or questions:
+
 1. Check error logs in console
 2. Verify environment variables
 3. Test with Stripe test mode keys
 4. Review Stripe Dashboard for API errors
-

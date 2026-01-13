@@ -9,12 +9,15 @@
 ## ✅ Rozwiązanie (DZIAŁA)
 
 ### 1. Utworzono wrapper komponent:
+
 **Plik**: `src/components/auth/AuthPageWrapper.tsx`
 
 ```tsx
 export function AuthPageWrapper({ mode, returnUrl }) {
   return (
-    <ToastProvider>       // ✅ W jednej wyspie
+    <ToastProvider>
+      {" "}
+      // ✅ W jednej wyspie
       <AuthForm mode={mode} returnUrl={returnUrl} />
       <ToastContainer />
     </ToastProvider>
@@ -25,11 +28,13 @@ export function AuthPageWrapper({ mode, returnUrl }) {
 ### 2. Zaktualizowano strony auth:
 
 **login.astro** i **register.astro** teraz używają:
+
 ```astro
 <AuthPageWrapper client:load mode="login" returnUrl={returnUrl} />
 ```
 
 Zamiast:
+
 ```astro
 <!-- ❌ NIE DZIAŁA - każdy client:load to osobna wyspa -->
 <ToastProvider client:load>
@@ -43,14 +48,18 @@ Zamiast:
 ## 🎯 Kluczowa zasada Astro
 
 **❌ ŹLE** (wiele wysp):
+
 ```astro
 <Provider client:load>
-  <Child1 client:load />  <!-- Osobna wyspa, brak contextu! -->
-  <Child2 client:load />  <!-- Osobna wyspa, brak contextu! -->
+  <Child1 client:load />
+  <!-- Osobna wyspa, brak contextu! -->
+  <Child2 client:load />
+  <!-- Osobna wyspa, brak contextu! -->
 </Provider>
 ```
 
 **✅ DOBRZE** (jedna wyspa):
+
 ```tsx
 // Wrapper.tsx
 function Wrapper() {
@@ -72,6 +81,7 @@ function Wrapper() {
 ## 📋 Co teraz zrobić:
 
 1. **Restart dev servera** (jeśli był uruchomiony):
+
 ```bash
 # Zatrzymaj (Ctrl+C)
 npm run dev
@@ -89,4 +99,3 @@ npm run dev
 ---
 
 **Status**: ✅ Naprawione - Teraz powinno działać!
-

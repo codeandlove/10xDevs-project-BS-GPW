@@ -42,6 +42,7 @@ Dane wyjściowe powinny mieć następującą strukturę:
 W tym miejscu proszę wymienić pytania i zalecenia, dla przejrzystości opatrzone numerami:
 
 Na przykład:
+
 1. Czy na pocztówce powinno znajdować się nazwisko autora?
 
 Rekomendacja: Tak, na pocztówce powinno znajdować się nazwisko autora.

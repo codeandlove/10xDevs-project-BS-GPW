@@ -38,13 +38,13 @@ Stripe Event → Webhook Endpoint → Signature Verification → Service Layer �
 
 ## Supported Events
 
-| Event Type | Description | Action |
-|------------|-------------|--------|
-| `customer.subscription.created` | New subscription | Set status to `active`, save subscription ID |
-| `customer.subscription.updated` | Subscription changed | Update status, period end, plan ID |
-| `customer.subscription.deleted` | Subscription canceled | Set status to `canceled` |
-| `invoice.payment_succeeded` | Payment succeeded | Confirm `active` status, update period |
-| `invoice.payment_failed` | Payment failed | Set status to `past_due` |
+| Event Type                      | Description           | Action                                       |
+| ------------------------------- | --------------------- | -------------------------------------------- |
+| `customer.subscription.created` | New subscription      | Set status to `active`, save subscription ID |
+| `customer.subscription.updated` | Subscription changed  | Update status, period end, plan ID           |
+| `customer.subscription.deleted` | Subscription canceled | Set status to `canceled`                     |
+| `invoice.payment_succeeded`     | Payment succeeded     | Confirm `active` status, update period       |
+| `invoice.payment_failed`        | Payment failed        | Set status to `past_due`                     |
 
 ---
 
@@ -109,11 +109,12 @@ stripe trigger customer.subscription.created
 Every webhook request is verified using Stripe's signature:
 
 ```typescript
-const signature = request.headers.get('stripe-signature');
+const signature = request.headers.get("stripe-signature");
 const event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
 ```
 
 **Why it's important:**
+
 - Prevents spoofed requests
 - Ensures event authenticity
 - Required for production
@@ -128,20 +129,22 @@ UNIQUE INDEX on stripe_webhook_events.event_id
 ```
 
 **Benefits:**
+
 - Safe to retry failed webhooks
 - Prevents double-charging or double-updates
 - Automatic duplicate detection
 
 ### 3. Error Handling Strategy
 
-| Error Type | Status Code | Stripe Retry | Reason |
-|------------|-------------|--------------|--------|
-| Invalid signature | 400 | ❌ No | Security violation |
-| Missing signature | 400 | ❌ No | Invalid request |
-| Processing error | 200 | ✅ Yes | Temporary failure |
-| Database error | 200 | ✅ Yes | Transient issue |
+| Error Type        | Status Code | Stripe Retry | Reason             |
+| ----------------- | ----------- | ------------ | ------------------ |
+| Invalid signature | 400         | ❌ No        | Security violation |
+| Missing signature | 400         | ❌ No        | Invalid request    |
+| Processing error  | 200         | ✅ Yes       | Temporary failure  |
+| Database error    | 200         | ✅ Yes       | Transient issue    |
 
 **Why return 200 for errors?**
+
 - Stripe retries non-200 responses for 3 days
 - Processing errors are logged internally
 - Prevents retry spam for permanent failures
@@ -191,6 +194,7 @@ CREATE TABLE subscription_audit (
 ### customer.subscription.created
 
 **What happens:**
+
 1. Find user by `stripe_customer_id`
 2. Update user:
    ```typescript
@@ -205,12 +209,14 @@ CREATE TABLE subscription_audit (
 3. Log to audit trail
 
 **Edge cases:**
+
 - User not found → Log warning, mark event as processed (OK)
 - Duplicate subscription → Idempotency prevents double-update
 
 ### customer.subscription.updated
 
 **What happens:**
+
 1. Map Stripe status to our enum:
    - `active` → `active`
    - `past_due` → `past_due`
@@ -220,6 +226,7 @@ CREATE TABLE subscription_audit (
 3. Log change to audit
 
 **Use cases:**
+
 - Plan upgrade/downgrade
 - Status changes (dunning)
 - Period renewal
@@ -227,6 +234,7 @@ CREATE TABLE subscription_audit (
 ### customer.subscription.deleted
 
 **What happens:**
+
 1. Set `subscription_status` to `canceled`
 2. Keep `current_period_end` (grace period)
 3. User retains access until period end
@@ -236,11 +244,13 @@ CREATE TABLE subscription_audit (
 ### invoice.payment_succeeded
 
 **What happens:**
+
 1. Confirm subscription is `active`
 2. Update `current_period_end` from invoice
 3. Log successful payment
 
 **Use cases:**
+
 - Initial subscription payment
 - Renewal payments
 - Retry after failed payment
@@ -248,10 +258,12 @@ CREATE TABLE subscription_audit (
 ### invoice.payment_failed
 
 **What happens:**
+
 1. Set `subscription_status` to `past_due`
 2. User loses access (depending on grace period settings)
 
 **Stripe automatic behavior:**
+
 - Retries payment based on your retry rules
 - Sends multiple `invoice.payment_failed` events
 - Eventually cancels if all retries fail
@@ -265,12 +277,13 @@ CREATE TABLE subscription_audit (
 All webhook events are logged with `[WEBHOOK]` prefix:
 
 ```typescript
-console.log('[WEBHOOK] Received event:', { id, type, created });
-console.log('[WEBHOOK] Event processed successfully:', { event_id, user_id });
-console.error('[WEBHOOK] Event processing failed:', { event_id, error });
+console.log("[WEBHOOK] Received event:", { id, type, created });
+console.log("[WEBHOOK] Event processed successfully:", { event_id, user_id });
+console.error("[WEBHOOK] Event processing failed:", { event_id, error });
 ```
 
 **Search logs:**
+
 ```bash
 # Find all webhook events
 grep "\\[WEBHOOK\\]" logs/*.log
@@ -286,7 +299,7 @@ grep "evt_1ABC123xyz" logs/*.log
 
 ```sql
 -- Check recent webhooks
-SELECT 
+SELECT
   event_id,
   status,
   user_id,
@@ -311,6 +324,7 @@ ORDER BY created_at DESC;
 ### Stripe Dashboard
 
 View webhook attempts in Stripe:
+
 1. Go to **Developers → Webhooks**
 2. Click your endpoint
 3. View **Recent events** tab
@@ -366,11 +380,13 @@ stripe trigger customer.subscription.created
 ### Problem: Webhook returns 400 "Invalid signature"
 
 **Causes:**
+
 - Wrong `STRIPE_WEBHOOK_SECRET`
 - Using test secret with live mode (or vice versa)
 - Body modified before verification
 
 **Solution:**
+
 1. Verify environment variable matches Stripe Dashboard
 2. Check if using correct mode (test vs live)
 3. Ensure raw body is passed to `constructEvent()`
@@ -378,6 +394,7 @@ stripe trigger customer.subscription.created
 ### Problem: Events not being processed
 
 **Check:**
+
 ```sql
 SELECT * FROM stripe_webhook_events
 WHERE status = 'failed'
@@ -385,11 +402,13 @@ ORDER BY received_at DESC LIMIT 10;
 ```
 
 **Common causes:**
+
 - Database connection error
 - Missing user (customer not linked)
 - Supabase RLS blocking writes
 
 **Solution:**
+
 - Check service logs for errors
 - Verify user exists with matching `stripe_customer_id`
 - Use service_role client for webhooks (bypasses RLS)
@@ -399,6 +418,7 @@ ORDER BY received_at DESC LIMIT 10;
 **Should not happen** due to unique constraint.
 
 **If it does:**
+
 1. Check database constraint exists:
    ```sql
    SELECT * FROM pg_indexes
@@ -416,10 +436,12 @@ ORDER BY received_at DESC LIMIT 10;
 Target: < 5 seconds (Stripe timeout is 30s)
 
 **Bottlenecks:**
+
 - Database queries (SELECT + 2 INSERTs + 1 UPDATE)
 - Network latency to Supabase
 
 **Optimization:**
+
 - Use connection pooling
 - Consider async processing for scale (Bull queue)
 
@@ -428,6 +450,7 @@ Target: < 5 seconds (Stripe timeout is 30s)
 Stripe may send multiple events simultaneously.
 
 **Safe due to:**
+
 - Unique constraint on `event_id`
 - Atomic database transactions
 - Idempotent operations
@@ -438,7 +461,7 @@ Stripe may send multiple events simultaneously.
 
 - [ ] `STRIPE_WEBHOOK_SECRET` configured
 - [ ] Webhook endpoint added in Stripe Dashboard
-- [ ] Events selected: subscription.* and invoice.*
+- [ ] Events selected: subscription._ and invoice._
 - [ ] Database tables created (stripe_webhook_events, subscription_audit)
 - [ ] Unique index on event_id exists
 - [ ] RLS policies allow service writes
@@ -462,8 +485,8 @@ Stripe may send multiple events simultaneously.
 ## Support
 
 For issues:
+
 1. Check `stripe_webhook_events` table for failed events
 2. Review application logs with `[WEBHOOK]` prefix
 3. Verify Stripe Dashboard shows successful delivery
 4. Test with Stripe CLI in local environment
-
