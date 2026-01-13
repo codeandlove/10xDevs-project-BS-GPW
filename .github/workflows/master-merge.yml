@@ -129,18 +129,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: npm run build
-
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -151,13 +139,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y sshpass
 
-      - name: Deploy to production server
+      - name: Deploy source code to server
         run: |
           sshpass -p '${{ secrets.DEPLOY_SSH_PASSWORD }}' rsync -avz --delete \
             -e "ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no" \
             --exclude node_modules \
+            --exclude dist \
             --exclude .git \
             --exclude .env \
+            --exclude coverage \
+            --exclude test-results \
+            --exclude playwright-report \
             ./ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}
 
       - name: Install dependencies on server
@@ -166,11 +158,17 @@ jobs:
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
             "cd ${{ secrets.DEPLOY_PATH }} && npm ci --production"
 
+      - name: Build application on server
+        run: |
+          sshpass -p '${{ secrets.DEPLOY_SSH_PASSWORD }}' ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "cd ${{ secrets.DEPLOY_PATH }} && npm run build"
+
       - name: Restart PM2 application
         run: |
           sshpass -p '${{ secrets.DEPLOY_SSH_PASSWORD }}' ssh -p ${{ secrets.DEPLOY_SSH_PORT }} -o StrictHostKeyChecking=no \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
-            "pm2 restart ${{ secrets.PM2_APP_NAME }} || pm2 start ${{ secrets.DEPLOY_PATH }}/dist/server/entry.mjs --name ${{ secrets.PM2_APP_NAME }}"
+            "cd ${{ secrets.DEPLOY_PATH }} && pm2 delete ${{ secrets.PM2_APP_NAME }} || true && pm2 start ecosystem.config.cjs && pm2 save"
 
       - name: Verify deployment
         run: |
