@@ -3,9 +3,11 @@
 ## ✅ Zrealizowane zadania
 
 ### Krok 7: Summary Sidebar/Drawer ✅
+
 **Cel**: Wyświetlanie szczegółów wydarzenia z AI summary po kliknięciu w komórkę
 
 **Zrealizowane:**
+
 - ✅ Utworzono `EventHeader.tsx` - wyświetlanie podstawowych informacji o wydarzeniu
 - ✅ Utworzono `SummaryCard.tsx` - karta z AI summary, sentymentem, przyczynami, prognozami
 - ✅ Utworzono `SummarySidebar.tsx` - sidebar dla desktop (33% width, React Portal)
@@ -15,6 +17,7 @@
 - ✅ Dodano obsługę ESC, overlay click, close button
 
 **Funkcjonalności:**
+
 - React Portal dla overlay
 - ESC key handling
 - Prevent body scroll gdy otwarte
@@ -26,9 +29,11 @@
 ---
 
 ### Krok 8: Account Modal ✅
+
 **Cel**: Umożliwić użytkownikowi zarządzanie kontem i subskrypcją
 
 **Zrealizowane:**
+
 - ✅ Utworzono `UserInfo.tsx` - wyświetlanie email i avatara
 - ✅ Utworzono `SubscriptionStatus.tsx` - status subskrypcji z datami
 - ✅ Utworzono `ManageSubscriptionButton.tsx` - redirect do Stripe Portal
@@ -38,6 +43,7 @@
 - ✅ Dodano akcję "Wyloguj" → signOut + redirect
 
 **Funkcjonalności:**
+
 - React Portal dla modal
 - ESC key handling
 - Loading states podczas fetch Stripe Portal URL
@@ -48,9 +54,11 @@
 ---
 
 ### Krok 9: API Integration (podstawowa) ✅
+
 **Cel**: Podłączyć prawdziwe endpointy API zamiast mockowych danych
 
 **Zrealizowane:**
+
 - ✅ Utworzono `api-client.ts` - centralized fetch wrapper z error handling
 - ✅ Zaimplementowano retry logic z exponential backoff
 - ✅ Utworzono `api-service.ts` - high-level API functions
@@ -62,6 +70,7 @@
 - ✅ Dodano error handling i retry logic
 
 **Funkcjonalności:**
+
 - APIError class z status codes
 - Retry logic (max 3 attempts)
 - Exponential backoff
@@ -76,6 +85,7 @@
 ## 📁 Nowe pliki (14)
 
 ### Summary Components (5)
+
 1. `src/components/summary/EventHeader.tsx`
 2. `src/components/summary/SummaryCard.tsx`
 3. `src/components/summary/SummarySidebar.tsx`
@@ -83,16 +93,19 @@
 5. `src/components/summary/SummaryView.tsx`
 
 ### Account Components (4)
+
 6. `src/components/account/UserInfo.tsx`
 7. `src/components/account/SubscriptionStatus.tsx`
 8. `src/components/account/ManageSubscriptionButton.tsx`
 9. `src/components/account/AccountModal.tsx`
 
 ### API Layer (2)
+
 10. `src/lib/api-client.ts`
 11. `src/lib/api-service.ts`
 
 ### Documentation (3)
+
 12. `docs/ITERATION_1_STEPS_4-6.md`
 13. `docs/ITERATION_1_STEPS_7-9.md` (ten plik)
 14. Zaktualizowano `docs/UI_IMPLEMENTATION_STATUS.md`
@@ -123,30 +136,35 @@
 ### Główne zadania Iteracji 2:
 
 #### 1. Full Detail View (strona `/event/:id`)
+
 - Pełna strona z wszystkimi AI summaries
 - Historyczne dane OHLC (chart)
 - Timeline summaries
 - Breadcrumbs navigation
 
 #### 2. Grid Virtualization
+
 - Implementacja @tanstack/react-virtual
 - Wydajność dla dużych zbiorów danych (1000+ events)
 - Virtual scrolling (rows + columns)
 - Dynamic cell sizing
 
 #### 3. Keyboard Navigation
+
 - Arrow keys w gridzie
 - Tab navigation
 - Focus management
 - Accessibility improvements
 
 #### 4. Advanced Filters
+
 - Date picker dla custom range
 - Event type filter (BLACK_SWAN_UP/DOWN, etc.)
 - Sort options (date, percent_change)
 - Filter persistence w URL
 
 #### 5. Toast Notifications
+
 - Success/error toasts
 - Action feedback
 - Auto-dismiss
@@ -157,18 +175,21 @@
 ## 🧪 Testowanie (Do zrobienia)
 
 ### API Integration
+
 - [ ] Test z prawdziwymi danymi z NocoDB
 - [ ] Test error scenarios (network errors, 4xx, 5xx)
 - [ ] Test retry logic
 - [ ] Test cache invalidation
 
 ### UI Components
+
 - [ ] Test Summary Sidebar na różnych rozdzielczościach
 - [ ] Test swipe-to-dismiss na urządzeniach mobilnych
 - [ ] Test Account Modal z różnymi statusami subskrypcji
 - [ ] Test Grid z dużą ilością danych
 
 ### Accessibility
+
 - [ ] Keyboard navigation w Grid
 - [ ] Screen reader compatibility
 - [ ] Focus management w modalach
@@ -202,6 +223,7 @@ npm run format
 ## 🎉 Podsumowanie Iteracji 1
 
 ### Osiągnięcia:
+
 - ✅ 30 nowych plików (komponenty + lib + docs)
 - ✅ Pełna podstawowa funkcjonalność Grid View
 - ✅ Summary Sidebar/Drawer z AI analysis
@@ -213,6 +235,7 @@ npm run format
 - ✅ Client-side caching
 
 ### Statystyki:
+
 - **Lines of code**: ~3000+ LOC
 - **Komponenty React**: 24
 - **API functions**: 9
@@ -220,6 +243,7 @@ npm run format
 - **Custom hooks**: 2 (useClientCache, useAuth, useGrid)
 
 ### Gotowość:
+
 - **MVP Foundation**: ✅ 60%
 - **API Integration**: ✅ Podstawowa gotowa
 - **UI/UX**: ✅ Core components gotowe
@@ -233,4 +257,3 @@ npm run format
 **Status**: ✅ **ITERACJA 1 UKOŃCZONA (100%)**
 
 **Następny krok**: Przejście do Iteracji 2 lub testowanie obecnej implementacji
-

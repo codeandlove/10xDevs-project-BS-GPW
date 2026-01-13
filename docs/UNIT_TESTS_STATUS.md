@@ -56,22 +56,26 @@ Test Files  2 failed | 3 passed (5)
 ## 🔧 Naprawione problemy (w tej sesji)
 
 ### 1. ✅ Hoisting errors - vi.mock
+
 **Problem:** `Cannot access 'mockGetSession' before initialization`
 
 **Rozwiązanie:**
+
 ```typescript
 // ❌ ŹLE - zmienne przed vi.mock
 const mockFn = vi.fn();
 vi.mock("module", () => ({ fn: mockFn }));
 
 // ✅ DOBRZE - wszystko w vi.mock
-vi.mock("module", () => ({ 
-  fn: vi.fn(() => Promise.resolve({ data: {} }))
+vi.mock("module", () => ({
+  fn: vi.fn(() => Promise.resolve({ data: {} })),
 }));
 ```
 
 ### 2. ✅ Mock Supabase Client
+
 **Rozwiązanie:**
+
 ```typescript
 vi.mock("@/db/supabase.client", () => ({
   supabaseClient: {
@@ -93,7 +97,9 @@ vi.mock("@/db/supabase.client", () => ({
 ```
 
 ### 3. ⚠️ Mock NocoDBQueryBuilder (częściowo)
+
 **Rozwiązanie (current):**
+
 ```typescript
 class MockQueryBuilder {
   where = vi.fn().mockReturnValue(this);
@@ -110,6 +116,7 @@ class MockQueryBuilder {
 ### Priorytet 1: MSW Handlers dla api-client.test.ts
 
 **Wymagane handlery:**
+
 ```typescript
 // src/test/mocks/handlers.ts
 http.get('/api/nocodb/grid', () => {
@@ -130,10 +137,12 @@ http.get('/api/nocodb/events/:id', () => {
 ### Priorytet 2: Dokończenie mocków NocoDB Service
 
 **Problem:**
+
 - `this.client` jest `undefined` w niektórych metodach
 - Mock `NocoDBQueryBuilder` musi zwracać instancję z metodami
 
 **Rozwiązanie:**
+
 ```typescript
 beforeEach(() => {
   service = new NocoDBService();
@@ -152,13 +161,13 @@ beforeEach(() => {
 
 ### Pliki przetestowane:
 
-| Plik | Status | Ilość testów | Procent |
-|------|--------|--------------|---------|
-| `useClientCache.ts` | ✅ | 13/13 | 100% |
-| `ui-utils.ts` | ✅ | 46/46 | 100% |
-| `validation.ts` | ✅ | 15/15 | 100% |
-| `api-client.ts` | ❌ | 0/20 | 0% |
-| `nocodb.service.ts` | ⚠️ | 4/25 | 16% |
+| Plik                | Status | Ilość testów | Procent |
+| ------------------- | ------ | ------------ | ------- |
+| `useClientCache.ts` | ✅     | 13/13        | 100%    |
+| `ui-utils.ts`       | ✅     | 46/46        | 100%    |
+| `validation.ts`     | ✅     | 15/15        | 100%    |
+| `api-client.ts`     | ❌     | 0/20         | 0%      |
+| `nocodb.service.ts` | ⚠️     | 4/25         | 16%     |
 
 ### Metryki pokrycia (zgodnie z test-plan.md):
 
@@ -172,11 +181,13 @@ beforeEach(() => {
 ## 🚀 Następne działania
 
 ### Do zrobienia PILNIE:
+
 1. [ ] Dodać MSW handlery dla `/api/nocodb/*`
 2. [ ] Naprawić mocki NocoDBClient w testach
 3. [ ] Uruchomić `npm run test:coverage` i zweryfikować %
 
 ### Do zrobienia PÓŹNIEJ:
+
 - [ ] Uruchomić testy E2E: `npm run test:e2e`
 - [ ] Skonfigurować CI/CD pipeline dla testów
 - [ ] Dodać testy integracyjne dla middleware
@@ -195,5 +206,3 @@ beforeEach(() => {
 
 **Status:** ⚠️ 78/119 testów przechodzi. Wymagane są poprawki MSW handlerów i mocków NocoDB.
 **Priorytet:** ŚREDNI - podstawowe testy (UI, validation, cache) działają poprawnie.
-
-

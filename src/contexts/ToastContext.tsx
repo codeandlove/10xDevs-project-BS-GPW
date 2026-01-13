@@ -46,10 +46,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       setToasts((prev) => [...prev, newToast]);
 
       // Auto-dismiss after duration
-      if (newToast.duration && newToast.duration > 0) {
+      const duration = newToast.duration ?? 0;
+      if (duration > 0) {
         setTimeout(() => {
           removeToast(newToast.id);
-        }, newToast.duration);
+        }, duration);
       }
     },
     [removeToast]

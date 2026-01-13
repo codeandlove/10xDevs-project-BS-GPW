@@ -13,6 +13,7 @@
 Black Swan Grid to aplikacja webowa do analizy znaczących wydarzeń rynkowych (Black Swan events) z wykorzystaniem AI. Projekt został zrealizowany w dwóch iteracjach używając metodyki 3x3, osiągając 100% zakładanych funkcjonalności MVP.
 
 **Kluczowe Metryki**:
+
 - **Czas realizacji**: ~8 godzin (2 iteracje)
 - **Pliki**: 50+ plików źródłowych
 - **Komponenty**: 45+ komponentów React
@@ -35,19 +36,19 @@ Frontend:
   Styling: Tailwind CSS 4.x
   Components: shadcn/ui (custom)
   State: React Context API
-  
+
 Backend:
   Auth: Supabase Auth
   Database: Supabase PostgreSQL
   API Proxy: NocoDB
   Payments: Stripe
-  
+
 Build & Deploy:
   Package Manager: npm
   TypeScript: 5.8.x
   Linting: ESLint 9.x
   Formatting: Prettier
-  
+
 Key Libraries:
   - @tanstack/react-virtual: Grid virtualization
   - lucide-react: Icons
@@ -147,6 +148,7 @@ docs/                    # Dokumentacja
 ### 1. System Autoryzacji
 
 **Pliki**:
+
 - `src/contexts/AuthContext.tsx`
 - `src/components/auth/AuthForm.tsx`
 - `src/components/auth/AuthPageWrapper.tsx`
@@ -154,6 +156,7 @@ docs/                    # Dokumentacja
 - `src/pages/auth/register.astro`
 
 **Funkcjonalność**:
+
 - Rejestracja i logowanie przez Supabase Auth
 - Sesja użytkownika w React Context
 - Automatyczna inicjalizacja profilu w bazie
@@ -162,6 +165,7 @@ docs/                    # Dokumentacja
 - Email verification
 
 **Key Insights**:
+
 ```typescript
 // AuthContext pattern
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -169,26 +173,27 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Supabase session listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsLoading(false);
     });
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => setSession(session)
-    );
-    
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
+
     return () => subscription.unsubscribe();
   }, []);
-  
+
   // ...
 }
 ```
 
 **Astro Islands Pattern**:
+
 ```typescript
 // AuthPageWrapper.tsx - KRYTYCZNE dla Astro
 // Context musi być w jednej wyspie z komponentami go używającymi
@@ -207,6 +212,7 @@ export function AuthPageWrapper({ mode, returnUrl }: Props) {
 ### 2. Grid System z Virtualizacją
 
 **Pliki**:
+
 - `src/components/grid/GridView.tsx` - Main orchestrator
 - `src/components/grid/BasicGrid.tsx` - < 100 events
 - `src/components/grid/VirtualizedGrid.tsx` - >= 100 events
@@ -214,6 +220,7 @@ export function AuthPageWrapper({ mode, returnUrl }: Props) {
 - `src/contexts/GridContext.tsx` - State management
 
 **Funkcjonalność**:
+
 - Automatyczne przełączanie BasicGrid ↔ VirtualizedGrid
 - Virtual scrolling (@tanstack/react-virtual)
 - Client-side filtering i sorting
@@ -222,13 +229,14 @@ export function AuthPageWrapper({ mode, returnUrl }: Props) {
 - Cell selection & navigation
 
 **Performance Optimization**:
+
 ```typescript
 // VirtualizedGrid.tsx
 const rowVirtualizer = useVirtualizer({
   count: symbols.length,
   getScrollElement: () => parentRef.current,
-  estimateSize: () => 80,  // Row height
-  overscan: 3,             // Extra rows
+  estimateSize: () => 80, // Row height
+  overscan: 3, // Extra rows
 });
 
 const columnVirtualizer = useVirtualizer({
@@ -236,7 +244,7 @@ const columnVirtualizer = useVirtualizer({
   count: dates.length,
   getScrollElement: () => parentRef.current,
   estimateSize: () => 140, // Column width
-  overscan: 5,             // Extra columns
+  overscan: 5, // Extra columns
 });
 
 // Renderuje tylko widoczne komórki!
@@ -244,16 +252,17 @@ const columnVirtualizer = useVirtualizer({
 ```
 
 **GridContext State**:
+
 ```typescript
 interface GridState {
-  range: DateRange;                    // "week" | "month" | "quarter"
-  symbols: string[];                   // Selected tickers
-  eventTypes?: EventType[];           // Filtered event types
+  range: DateRange; // "week" | "month" | "quarter"
+  symbols: string[]; // Selected tickers
+  eventTypes?: EventType[]; // Filtered event types
   sortField?: "date" | "percent_change";
   sortDirection?: "asc" | "desc";
-  endDate?: string;                   // Custom range end
-  eventId?: string;                   // Selected event for sidebar
-  scrollPosition?: number;            // Scroll restoration
+  endDate?: string; // Custom range end
+  eventId?: string; // Selected event for sidebar
+  scrollPosition?: number; // Scroll restoration
 }
 ```
 
@@ -262,6 +271,7 @@ interface GridState {
 ### 3. System Filtrów
 
 **Pliki**:
+
 - `src/components/grid/RangeSelector.tsx` - Date range (week/month/quarter)
 - `src/components/grid/DateRangePicker.tsx` - Custom date range
 - `src/components/grid/TickerFilter.tsx` - Symbol multi-select
@@ -270,15 +280,14 @@ interface GridState {
 - `src/components/grid/ClearFiltersButton.tsx` - Reset all
 
 **Filtering Flow**:
+
 ```typescript
 // GridView.tsx
 let events = gridResponse?.events || [];
 
 // 1. Filter by event types
 if (gridState.eventTypes && gridState.eventTypes.length > 0) {
-  events = events.filter((event) => 
-    gridState.eventTypes?.includes(event.event_type)
-  );
+  events = events.filter((event) => gridState.eventTypes?.includes(event.event_type));
 }
 
 // 2. Apply sorting
@@ -306,17 +315,18 @@ const activeFiltersCount = useMemo(() => {
 ```
 
 **URL Persistence**:
+
 ```typescript
 // GridContext.tsx - Automatic URL sync
 function updateUrlParams(state: Partial<GridState>): void {
   const params = new URLSearchParams(window.location.search);
-  
+
   if (state.range) params.set("range", state.range);
   if (state.symbols?.length) params.set("symbols", state.symbols.join(","));
   if (state.eventTypes?.length) params.set("eventTypes", state.eventTypes.join(","));
   if (state.sortField) params.set("sortField", state.sortField);
   if (state.sortDirection) params.set("sortDirection", state.sortDirection);
-  
+
   const newUrl = `${window.location.pathname}?${params.toString()}`;
   window.history.pushState({}, "", newUrl);
 }
@@ -330,10 +340,12 @@ function updateUrlParams(state: Partial<GridState>): void {
 ### 4. Toast Notification System
 
 **Pliki**:
+
 - `src/contexts/ToastContext.tsx` - State management
 - `src/components/ui/ToastContainer.tsx` - Portal renderer
 
 **API Design**:
+
 ```typescript
 // ToastContext.tsx
 interface Toast {
@@ -366,16 +378,17 @@ error("Błąd logowania", "Nieprawidłowe dane logowania");
 ```
 
 **Portal Rendering**:
+
 ```typescript
 // ToastContainer.tsx
 export function ToastContainer() {
   const { toasts, removeToast } = useToast();
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => setMounted(true), []);
-  
+
   if (!mounted || toasts.length === 0) return null;
-  
+
   return createPortal(
     <div className="fixed inset-0 z-[100] flex flex-col items-end justify-end gap-2 p-6">
       {toasts.map((toast) => (
@@ -388,6 +401,7 @@ export function ToastContainer() {
 ```
 
 **Critical Bug Fix**:
+
 ```typescript
 // BEFORE (bug):
 if (newToast.duration > 0) {
@@ -406,12 +420,14 @@ if (newToast.duration && newToast.duration > 0) {
 ### 5. Event Detail View
 
 **Pliki**:
+
 - `src/pages/event/[id].astro` - Dynamic route page
 - `src/components/event/EventDetailView.tsx` - Main view
 - `src/components/event/Timeline.tsx` - AI summaries timeline
 - `src/components/event/PriceChart.tsx` - Historic chart (SVG)
 
 **Data Flow**:
+
 ```typescript
 // EventDetailView.tsx
 useEffect(() => {
@@ -419,21 +435,18 @@ useEffect(() => {
     // 1. Fetch event details
     const eventResponse = await fetchEventDetails(eventId);
     setEvent(eventResponse.event);
-    
+
     // 2. Fetch all summaries for this event
-    const summariesResponse = await fetchSummaries(
-      event.symbol,
-      event.occurrence_date,
-      event.event_type
-    );
+    const summariesResponse = await fetchSummaries(event.symbol, event.occurrence_date, event.event_type);
     setSummaries(summariesResponse.summaries || []);
   };
-  
+
   fetchData();
 }, [eventId]);
 ```
 
 **Timeline Component**:
+
 ```typescript
 // Timeline.tsx - Chronological display of AI summaries
 export function Timeline({ summaries }: { summaries: AISummary[] }) {
@@ -441,13 +454,13 @@ export function Timeline({ summaries }: { summaries: AISummary[] }) {
     <div className="relative">
       {/* Vertical line */}
       <div className="absolute left-4 top-8 bottom-8 w-0.5 bg-border" />
-      
+
       {/* Timeline items */}
       {summaries.map((summary, index) => (
         <div key={summary.id} className="relative flex gap-6">
           {/* Dot indicator */}
           <div className="h-3 w-3 rounded-full bg-primary ring-4 ring-background" />
-          
+
           {/* Summary card */}
           <SummaryCard summary={summary} />
         </div>
@@ -458,6 +471,7 @@ export function Timeline({ summaries }: { summaries: AISummary[] }) {
 ```
 
 **Price Chart (SVG)**:
+
 ```typescript
 // PriceChart.tsx - Simple SVG line chart
 const prices = data.map((d) => d.close);
@@ -485,49 +499,52 @@ const pathData = `M ${points.join(" L ")}`;
 ### 6. Subscription Management
 
 **Pliki**:
+
 - `src/components/subscription/SubscriptionBanner.tsx` - Status banner
 - `src/components/subscription/AccountModal.tsx` - Stripe Portal access
 - `src/lib/stripe.ts` - Stripe utilities
 - `src/services/subscription.service.ts` - Business logic
 
 **Stripe Integration**:
+
 ```typescript
 // subscription.service.ts
 export async function createCheckoutSession(userId: string, priceId: string) {
   const session = await stripe.checkout.sessions.create({
     customer_email: user.email,
-    mode: 'subscription',
+    mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${BASE_URL}/grid?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${BASE_URL}/grid`,
     metadata: { user_id: userId },
   });
-  
+
   return { sessionId: session.id, url: session.url };
 }
 
 export async function createPortalSession(userId: string) {
   const user = await getUserProfile(userId);
-  
+
   const session = await stripe.billingPortal.sessions.create({
     customer: user.stripe_customer_id,
     return_url: `${BASE_URL}/grid`,
   });
-  
+
   return { url: session.url };
 }
 ```
 
 **Webhook Handler**:
+
 ```typescript
 // src/pages/api/webhooks/stripe.ts
 export async function POST({ request }: APIContext) {
   const signature = request.headers.get("stripe-signature");
   const payload = await request.text();
-  
+
   // Verify webhook signature
   const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
-  
+
   // Process event
   switch (event.type) {
     case "checkout.session.completed":
@@ -540,7 +557,7 @@ export async function POST({ request }: APIContext) {
       await handleSubscriptionCancel(event.data.object);
       break;
   }
-  
+
   return new Response(JSON.stringify({ received: true }), { status: 200 });
 }
 ```
@@ -550,11 +567,13 @@ export async function POST({ request }: APIContext) {
 ### 7. API Integration (NocoDB Proxy)
 
 **Pliki**:
+
 - `src/pages/api/nocodb/*.ts` - API endpoints
 - `src/lib/api-service.ts` - Client-side API calls
 - `src/services/nocodb.service.ts` - Server-side service
 
 **API Structure**:
+
 ```typescript
 // GET /api/nocodb/grid
 // Query params: range, symbols
@@ -579,27 +598,25 @@ export interface EventDetailsResponse {
 ```
 
 **Client-side Service**:
+
 ```typescript
 // api-service.ts
-export async function fetchGridData(
-  range: DateRange,
-  symbols: string[]
-): Promise<GridResponse> {
+export async function fetchGridData(range: DateRange, symbols: string[]): Promise<GridResponse> {
   const params = new URLSearchParams({
     range,
     symbols: symbols.join(","),
   });
-  
+
   const response = await fetch(`/api/nocodb/grid?${params}`);
   if (!response.ok) throw new Error("Failed to fetch grid data");
-  
+
   return response.json();
 }
 
 export async function fetchEventDetails(eventId: string): Promise<EventDetailsResponse> {
   const response = await fetch(`/api/nocodb/events/${eventId}`);
   if (!response.ok) throw new Error("Failed to fetch event details");
-  
+
   return response.json();
 }
 ```
@@ -643,6 +660,7 @@ export function AuthPageWrapper({ mode, returnUrl }) {
 ### 2. Client-side Caching
 
 **Pattern**:
+
 ```typescript
 // useClientCache.ts
 export function useClientCache<T>(
@@ -668,10 +686,13 @@ export function useClientCache<T>(
     fetcher()
       .then((result) => {
         setData(result);
-        localStorage.setItem(key, JSON.stringify({
-          data: result,
-          timestamp: Date.now(),
-        }));
+        localStorage.setItem(
+          key,
+          JSON.stringify({
+            data: result,
+            timestamp: Date.now(),
+          })
+        );
       })
       .catch(setError)
       .finally(() => setIsLoading(false));
@@ -681,10 +702,7 @@ export function useClientCache<T>(
 }
 
 // Usage
-const { data, isLoading, error } = useClientCache(
-  `grid:${range}:${symbols}`,
-  () => fetchGridData(range, symbols)
-);
+const { data, isLoading, error } = useClientCache(`grid:${range}:${symbols}`, () => fetchGridData(range, symbols));
 ```
 
 ---
@@ -692,6 +710,7 @@ const { data, isLoading, error } = useClientCache(
 ### 3. Error Boundaries
 
 **Pattern**:
+
 ```typescript
 // ErrorBoundary.tsx
 export class ErrorBoundary extends React.Component<Props, State> {
@@ -731,6 +750,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 ### 4. Loading States Pattern
 
 **Skeleton Pattern**:
+
 ```typescript
 // Skeleton.tsx
 export function GridSkeleton() {
@@ -775,12 +795,7 @@ export function GridSkeleton() {
 // nocodb.types.ts
 
 // Event types enum
-export type EventType = 
-  | "BLACK_SWAN_UP" 
-  | "BLACK_SWAN_DOWN" 
-  | "VOLATILITY_UP" 
-  | "VOLATILITY_DOWN" 
-  | "BIG_MOVE";
+export type EventType = "BLACK_SWAN_UP" | "BLACK_SWAN_DOWN" | "VOLATILITY_UP" | "VOLATILITY_DOWN" | "BIG_MOVE";
 
 // Date range options
 export type DateRange = "week" | "month" | "quarter";
@@ -893,12 +908,12 @@ export interface SubscriptionStatusDTO {
 // middleware/index.ts
 export const onRequest = defineMiddleware(async (context, next) => {
   const session = await supabase.auth.getSession();
-  
+
   // Protected routes
   if (context.url.pathname.startsWith("/grid") && !session) {
     return context.redirect("/auth/login");
   }
-  
+
   return next();
 });
 ```
@@ -925,11 +940,7 @@ CREATE POLICY "Users can update own metadata"
 // lib/rate-limiter.ts
 const rateLimiter = new Map<string, { count: number; resetAt: number }>();
 
-export function checkRateLimit(
-  identifier: string,
-  maxRequests: number = 100,
-  windowMs: number = 60000
-): boolean {
+export function checkRateLimit(identifier: string, maxRequests: number = 100, windowMs: number = 60000): boolean {
   const now = Date.now();
   const record = rateLimiter.get(identifier);
 
@@ -961,8 +972,8 @@ export const GridQuerySchema = z.object({
 // API endpoint
 const result = GridQuerySchema.safeParse(queryParams);
 if (!result.success) {
-  return new Response(JSON.stringify({ error: result.error }), { 
-    status: 400 
+  return new Response(JSON.stringify({ error: result.error }), {
+    status: 400,
   });
 }
 ```
@@ -993,17 +1004,17 @@ BASE_URL=http://localhost:4321
 
 ```javascript
 // astro.config.mjs
-import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
-import node from '@astrojs/node';
+import { defineConfig } from "astro/config";
+import react from "@astrojs/react";
+import node from "@astrojs/node";
 
 export default defineConfig({
-  output: 'server',
-  adapter: node({ mode: 'standalone' }),
+  output: "server",
+  adapter: node({ mode: "standalone" }),
   integrations: [react()],
   vite: {
     ssr: {
-      noExternal: ['@supabase/supabase-js'],
+      noExternal: ["@supabase/supabase-js"],
     },
   },
 });
@@ -1032,6 +1043,7 @@ export default defineConfig({
 
 ```markdown
 ## Authentication
+
 - [ ] Register new user
 - [ ] Login with credentials
 - [ ] Logout
@@ -1039,6 +1051,7 @@ export default defineConfig({
 - [ ] Password reset
 
 ## Grid View
+
 - [ ] Load grid with default filters
 - [ ] Apply symbol filter
 - [ ] Apply event type filter
@@ -1050,12 +1063,14 @@ export default defineConfig({
 - [ ] Virtual scrolling (100+ events)
 
 ## Event Detail
+
 - [ ] Navigate to event detail
 - [ ] View timeline with summaries
 - [ ] View price chart
 - [ ] Back navigation
 
 ## Subscriptions
+
 - [ ] View subscription banner
 - [ ] Create checkout session
 - [ ] Complete payment (test mode)
@@ -1063,6 +1078,7 @@ export default defineConfig({
 - [ ] Cancel subscription
 
 ## Toast Notifications
+
 - [ ] Success toast on registration
 - [ ] Error toast on login failure
 - [ ] Auto-dismiss after 5s
@@ -1070,11 +1086,13 @@ export default defineConfig({
 - [ ] Multiple toasts stacking
 
 ## Responsive Design
+
 - [ ] Desktop (1920x1080)
 - [ ] Tablet (768x1024)
 - [ ] Mobile (375x667)
 
 ## Accessibility
+
 - [ ] Keyboard navigation
 - [ ] Screen reader (NVDA/JAWS)
 - [ ] Color contrast (WCAG AAA)
@@ -1250,6 +1268,7 @@ Custom Metrics:
 **Lesson**: Context Provider musi być w tej samej wyspie co komponenty używające contextu.
 
 **Example**:
+
 ```typescript
 // ❌ NIE DZIAŁA
 <Provider client:load>
@@ -1274,6 +1293,7 @@ function Wrapper() {
 **Lesson**: Używaj optional chaining lub explicit checks dla optional properties.
 
 **Example**:
+
 ```typescript
 // ❌ Bug
 if (duration > 0) { ... }
@@ -1301,44 +1321,52 @@ if (duration && duration > 0) { ... }
 ### MVP Goals
 
 ✅ **User Authentication**
+
 - Supabase Auth integration
 - Email verification
 - Session management
 
 ✅ **Grid View**
+
 - Real-time data display
 - Multiple filter types (5)
 - Virtual scrolling
 - Responsive design
 
 ✅ **Event Details**
+
 - Full detail page
 - Timeline view
 - Price charts
 - Historic data
 
 ✅ **Notifications**
+
 - Toast system (4 types)
 - Auto + manual dismiss
 - Stacking support
 
 ✅ **Subscriptions**
+
 - Stripe integration
 - Checkout flow
 - Portal access
 - Status tracking
 
 ✅ **Performance**
+
 - Lighthouse 90+
 - 60fps scrolling
 - < 1s initial load
 
 ✅ **Accessibility**
+
 - WCAG AAA compliance
 - Keyboard navigation
 - Screen reader support
 
 ✅ **Code Quality**
+
 - TypeScript strict mode
 - 0 type errors
 - Comprehensive error handling
@@ -1387,15 +1415,17 @@ npm run format
 **Documentation**: Complete  
 **Test Coverage**: Comprehensive  
 **Performance**: Optimized  
-**Security**: Implemented  
+**Security**: Implemented
 
 ### Ready For:
+
 - ✅ Production deployment
 - ✅ User acceptance testing
 - ✅ Beta launch
 - ✅ Full public release
 
 ### Next Steps:
+
 1. Deploy to production (Vercel/Netlify)
 2. Configure domain + SSL
 3. Set up monitoring
@@ -1408,6 +1438,7 @@ npm run format
 ## 📋 QUICK REFERENCE
 
 ### Start Development
+
 ```bash
 npm install
 npm run dev
@@ -1415,12 +1446,14 @@ npm run dev
 ```
 
 ### Build for Production
+
 ```bash
 npm run build
 npm run preview
 ```
 
 ### Key URLs
+
 ```
 Landing:    /
 Auth:       /auth/login, /auth/register
@@ -1430,6 +1463,7 @@ API:        /api/*
 ```
 
 ### Key Components
+
 ```typescript
 import { useAuth } from "@/contexts/AuthContext";
 import { useGrid } from "@/contexts/GridContext";
@@ -1446,7 +1480,7 @@ Black Swan Grid MVP został pomyślnie zaimplementowany zgodnie z metodologią 3
 **Total Development Time**: ~8 hours  
 **MVP Completion**: 100%  
 **Production Ready**: YES  
-**Quality Score**: 9.5/10  
+**Quality Score**: 9.5/10
 
 **Status**: ✅ **READY TO LAUNCH** 🚀
 
@@ -1455,9 +1489,8 @@ Black Swan Grid MVP został pomyślnie zaimplementowany zgodnie z metodologią 3
 **Document Version**: 1.0  
 **Last Updated**: 2025-12-30  
 **Author**: AI Implementation Team  
-**For**: Future AI Context & Reference  
+**For**: Future AI Context & Reference
 
 ---
 
-*Dokument ten służy jako kompletna referencyjna dokumentacja implementacji projektu Black Swan Grid MVP dla wykorzystania w przyszłych kontekstach AI i dalszego rozwoju projektu.*
-
+_Dokument ten służy jako kompletna referencyjna dokumentacja implementacji projektu Black Swan Grid MVP dla wykorzystania w przyszłych kontekstach AI i dalszego rozwoju projektu._

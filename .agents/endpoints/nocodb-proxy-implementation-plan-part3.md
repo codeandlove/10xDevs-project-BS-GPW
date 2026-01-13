@@ -7,12 +7,14 @@
 **Czas: 30 min**
 
 1. **Verify dependencies**
+
    ```bash
    # Zod should already be installed from previous implementations
    npm list zod
    ```
 
 2. **Add environment variables**
+
    ```env
    # .env
    NOCODB_BASE_URL=https://nocodb.example.com
@@ -72,7 +74,7 @@ const tableAiSummaries = import.meta.env.NOCODB_TABLE_AI_SUMMARIES;
 const tableHistoricData = import.meta.env.NOCODB_TABLE_HISTORIC_DATA;
 
 if (!baseUrl || !apiToken || !tableBlackSwans || !tableAiSummaries || !tableHistoricData) {
-  throw new Error('Missing NocoDB configuration in environment variables');
+  throw new Error("Missing NocoDB configuration in environment variables");
 }
 
 export const nocoDBConfig = {
@@ -81,10 +83,10 @@ export const nocoDBConfig = {
   tables: {
     blackSwans: tableBlackSwans,
     aiSummaries: tableAiSummaries,
-    historicData: tableHistoricData
+    historicData: tableHistoricData,
   },
   timeout: 5000, // 5 seconds
-  maxRetries: 2
+  maxRetries: 2,
 };
 
 /**
@@ -93,7 +95,7 @@ export const nocoDBConfig = {
 export const rateLimitConfig = {
   limit: 60, // requests per window
   windowMs: 60 * 1000, // 1 minute
-  cleanupIntervalMs: 5 * 60 * 1000 // cleanup every 5 minutes
+  cleanupIntervalMs: 5 * 60 * 1000, // cleanup every 5 minutes
 };
 ```
 
@@ -110,8 +112,8 @@ export const rateLimitConfig = {
  * In-memory rate limiter
  * Implements sliding window algorithm
  */
-import type { RateLimitEntry, RateLimitResult } from '@/types/rate-limit.types';
-import { rateLimitConfig } from '@/config/nocodb.config';
+import type { RateLimitEntry, RateLimitResult } from "@/types/rate-limit.types";
+import { rateLimitConfig } from "@/config/nocodb.config";
 
 export class RateLimiter {
   private store: Map<string, RateLimitEntry> = new Map();
@@ -134,14 +136,14 @@ export class RateLimiter {
     if (!entry || entry.resetAt < now) {
       const newEntry: RateLimitEntry = {
         count: 1,
-        resetAt: now + this.windowMs
+        resetAt: now + this.windowMs,
       };
       this.store.set(userId, newEntry);
-      
+
       return {
         allowed: true,
         remaining: this.limit - 1,
-        resetAt: newEntry.resetAt
+        resetAt: newEntry.resetAt,
       };
     }
 
@@ -151,7 +153,7 @@ export class RateLimiter {
         allowed: false,
         remaining: 0,
         resetAt: entry.resetAt,
-        retryAfter: Math.ceil((entry.resetAt - now) / 1000)
+        retryAfter: Math.ceil((entry.resetAt - now) / 1000),
       };
     }
 
@@ -162,7 +164,7 @@ export class RateLimiter {
     return {
       allowed: true,
       remaining: this.limit - entry.count,
-      resetAt: entry.resetAt
+      resetAt: entry.resetAt,
     };
   }
 
@@ -172,14 +174,14 @@ export class RateLimiter {
   cleanup(): void {
     const now = Date.now();
     let removed = 0;
-    
+
     for (const [userId, entry] of this.store.entries()) {
       if (entry.resetAt < now) {
         this.store.delete(userId);
         removed++;
       }
     }
-    
+
     if (removed > 0) {
       console.log(`[RATE_LIMITER] Cleaned up ${removed} expired entries`);
     }
@@ -192,7 +194,7 @@ export class RateLimiter {
     return {
       totalUsers: this.store.size,
       limit: this.limit,
-      windowMs: this.windowMs
+      windowMs: this.windowMs,
     };
   }
 }
@@ -201,7 +203,7 @@ export class RateLimiter {
 export const rateLimiter = new RateLimiter();
 
 // Schedule cleanup
-if (typeof setInterval !== 'undefined') {
+if (typeof setInterval !== "undefined") {
   setInterval(() => {
     rateLimiter.cleanup();
   }, rateLimitConfig.cleanupIntervalMs);
@@ -220,59 +222,51 @@ if (typeof setInterval !== 'undefined') {
 /**
  * Zod validation schemas for NocoDB endpoints
  */
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Grid query parameters schema
  */
 export const GridQuerySchema = z.object({
-  range: z.enum(['week', 'month', 'quarter'], {
-    errorMap: () => ({ message: 'range must be one of: week, month, quarter' })
+  range: z.enum(["week", "month", "quarter"], {
+    errorMap: () => ({ message: "range must be one of: week, month, quarter" }),
   }),
-  symbols: z.string()
+  symbols: z
+    .string()
     .optional()
-    .refine(
-      (val) => !val || /^[A-Z0-9,\s]+$/.test(val),
-      { message: 'symbols must contain only letters, numbers, and commas' }
-    )
+    .refine((val) => !val || /^[A-Z0-9,\s]+$/.test(val), {
+      message: "symbols must contain only letters, numbers, and commas",
+    })
     .transform((val) => val?.toUpperCase()),
-  end_date: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'end_date must be in YYYY-MM-DD format')
+  end_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "end_date must be in YYYY-MM-DD format")
     .optional()
-    .refine(
-      (val) => !val || !isNaN(Date.parse(val)),
-      { message: 'end_date must be a valid date' }
-    )
+    .refine((val) => !val || !isNaN(Date.parse(val)), { message: "end_date must be a valid date" }),
 });
 
 /**
  * Event ID parameter schema
  */
-export const EventIdSchema = z.string()
-  .startsWith('rec_', 'Invalid NocoDB record ID format')
-  .min(10, 'Record ID too short');
+export const EventIdSchema = z
+  .string()
+  .startsWith("rec_", "Invalid NocoDB record ID format")
+  .min(10, "Record ID too short");
 
 /**
  * Summaries query parameters schema
  */
 export const SummariesQuerySchema = z.object({
-  symbol: z.string()
-    .min(1, 'symbol is required')
-    .max(10, 'symbol must be 10 characters or less')
+  symbol: z
+    .string()
+    .min(1, "symbol is required")
+    .max(10, "symbol must be 10 characters or less")
     .transform((val) => val.toUpperCase()),
-  occurrence_date: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'occurrence_date must be in YYYY-MM-DD format')
-    .refine(
-      (val) => !isNaN(Date.parse(val)),
-      { message: 'occurrence_date must be a valid date' }
-    ),
-  event_type: z.enum([
-    'BLACK_SWAN_UP',
-    'BLACK_SWAN_DOWN',
-    'VOLATILITY_UP',
-    'VOLATILITY_DOWN',
-    'BIG_MOVE'
-  ]).optional()
+  occurrence_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "occurrence_date must be in YYYY-MM-DD format")
+    .refine((val) => !isNaN(Date.parse(val)), { message: "occurrence_date must be a valid date" }),
+  event_type: z.enum(["BLACK_SWAN_UP", "BLACK_SWAN_DOWN", "VOLATILITY_UP", "VOLATILITY_DOWN", "BIG_MOVE"]).optional(),
 });
 
 /**
@@ -284,7 +278,7 @@ export function parseQueryParams<T>(
 ): { success: true; data: T } | { success: false; error: z.ZodError } {
   const params = Object.fromEntries(url.searchParams.entries());
   const result = schema.safeParse(params);
-  
+
   if (result.success) {
     return { success: true, data: result.data };
   } else {
@@ -311,10 +305,10 @@ import type {
   BlackSwanEventDetailed,
   AISummary,
   HistoricData,
-  NocoDBFilter
-} from '@/types/nocodb.types';
-import { nocoDBConfig } from '@/config/nocodb.config';
-import { NocoDBConnectionError, NocoDBTimeoutError, NocoDBNotFoundError } from './nocodb-errors';
+  NocoDBFilter,
+} from "@/types/nocodb.types";
+import { nocoDBConfig } from "@/config/nocodb.config";
+import { NocoDBConnectionError, NocoDBTimeoutError, NocoDBNotFoundError } from "./nocodb-errors";
 
 export class NocoDBClient {
   private baseUrl: string;
@@ -340,19 +334,16 @@ export class NocoDBClient {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(
-          () => controller.abort(),
-          nocoDBConfig.timeout
-        );
+        const timeoutId = setTimeout(() => controller.abort(), nocoDBConfig.timeout);
 
         const response = await fetch(url, {
           ...options,
           headers: {
-            'xc-token': this.apiToken,
-            'Content-Type': 'application/json',
-            ...options.headers
+            "xc-token": this.apiToken,
+            "Content-Type": "application/json",
+            ...options.headers,
           },
-          signal: controller.signal
+          signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
@@ -366,12 +357,11 @@ export class NocoDBClient {
         }
 
         return await response.json();
-
       } catch (error) {
         lastError = error as Error;
 
         // AbortError = timeout
-        if (lastError.name === 'AbortError') {
+        if (lastError.name === "AbortError") {
           lastError = new NocoDBTimeoutError();
         }
 
@@ -379,7 +369,7 @@ export class NocoDBClient {
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 500; // 500ms, 1000ms
           console.log(`[NOCODB] Retry attempt ${attempt + 1} after ${delay}ms`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
           continue;
         }
       }
@@ -393,45 +383,41 @@ export class NocoDBClient {
    */
   private buildWhereClause(filters: NocoDBFilter[]): string {
     return filters
-      .map(f => {
-        if (f.operator === 'in' && Array.isArray(f.value)) {
-          return `(${f.field},in,${f.value.join(',')})`;
+      .map((f) => {
+        if (f.operator === "in" && Array.isArray(f.value)) {
+          return `(${f.field},in,${f.value.join(",")})`;
         }
         return `(${f.field},${f.operator},${f.value})`;
       })
-      .join('~and');
+      .join("~and");
   }
 
   /**
    * Fetch Black Swan events (grid view)
    */
-  async fetchBlackSwanEvents(
-    startDate: string,
-    endDate: string,
-    symbols?: string[]
-  ): Promise<BlackSwanEventMinimal[]> {
+  async fetchBlackSwanEvents(startDate: string, endDate: string, symbols?: string[]): Promise<BlackSwanEventMinimal[]> {
     const filters: NocoDBFilter[] = [
-      { field: 'occurrence_date', operator: 'gte', value: startDate },
-      { field: 'occurrence_date', operator: 'lte', value: endDate }
+      { field: "occurrence_date", operator: "gte", value: startDate },
+      { field: "occurrence_date", operator: "lte", value: endDate },
     ];
 
     if (symbols && symbols.length > 0) {
-      filters.push({ field: 'symbol', operator: 'in', value: symbols });
+      filters.push({ field: "symbol", operator: "in", value: symbols });
     }
 
     const where = this.buildWhereClause(filters);
-    const fields = 'id,symbol,occurrence_date,event_type,percent_change';
+    const fields = "id,symbol,occurrence_date,event_type,percent_change";
     const url = `${this.baseUrl}/api/v2/tables/${this.tables.blackSwans}/records?where=${encodeURIComponent(where)}&fields=${fields}&sort=-occurrence_date`;
 
     const response = await this.fetchWithRetry<{ list: any[] }>(url);
 
-    return response.list.map(event => ({
+    return response.list.map((event) => ({
       id: event.id,
       symbol: event.symbol,
       occurrence_date: event.occurrence_date,
       event_type: event.event_type,
       percent_change: parseFloat(event.percent_change),
-      has_summary: true // TODO: Check if summary exists
+      has_summary: true, // TODO: Check if summary exists
     }));
   }
 
@@ -446,18 +432,14 @@ export class NocoDBClient {
   /**
    * Fetch AI summaries for event
    */
-  async fetchAISummaries(
-    symbol: string,
-    occurrenceDate: string,
-    eventType?: string
-  ): Promise<AISummary[]> {
+  async fetchAISummaries(symbol: string, occurrenceDate: string, eventType?: string): Promise<AISummary[]> {
     const filters: NocoDBFilter[] = [
-      { field: 'symbol', operator: 'eq', value: symbol },
-      { field: 'occurrence_date', operator: 'eq', value: occurrenceDate }
+      { field: "symbol", operator: "eq", value: symbol },
+      { field: "occurrence_date", operator: "eq", value: occurrenceDate },
     ];
 
     if (eventType) {
-      filters.push({ field: 'event_type', operator: 'eq', value: eventType });
+      filters.push({ field: "event_type", operator: "eq", value: eventType });
     }
 
     const where = this.buildWhereClause(filters);
@@ -465,30 +447,27 @@ export class NocoDBClient {
 
     const response = await this.fetchWithRetry<{ list: any[] }>(url);
 
-    return response.list.map(summary => ({
+    return response.list.map((summary) => ({
       id: summary.id,
       date: summary.date,
       summary: summary.summary,
       article_sentiment: summary.article_sentiment,
       identified_causes: summary.identified_causes || [],
       predicted_trend_probability: summary.predicted_trend_probability || {},
-      recommended_action: summary.recommended_action || { action: 'HOLD', justification: '' },
+      recommended_action: summary.recommended_action || { action: "HOLD", justification: "" },
       keywords: summary.keywords || [],
-      source_article_url: summary.source_article_url
+      source_article_url: summary.source_article_url,
     }));
   }
 
   /**
    * Fetch historic data for symbol
    */
-  async fetchHistoricData(
-    symbol: string,
-    date: string
-  ): Promise<HistoricData | null> {
+  async fetchHistoricData(symbol: string, date: string): Promise<HistoricData | null> {
     try {
       const filters: NocoDBFilter[] = [
-        { field: 'symbol', operator: 'eq', value: symbol },
-        { field: 'date', operator: 'eq', value: date }
+        { field: "symbol", operator: "eq", value: symbol },
+        { field: "date", operator: "eq", value: date },
       ];
 
       const where = this.buildWhereClause(filters);
@@ -506,7 +485,7 @@ export class NocoDBClient {
         close: parseFloat(data.close),
         high: parseFloat(data.high),
         low: parseFloat(data.low),
-        volume: parseInt(data.volume)
+        volume: parseInt(data.volume),
       };
     } catch {
       // Graceful degradation - historic data is optional
@@ -540,37 +519,37 @@ export class NocoDBError extends Error {
     public retryable: boolean = false
   ) {
     super(message);
-    this.name = 'NocoDBError';
+    this.name = "NocoDBError";
   }
 }
 
 export class NocoDBConnectionError extends NocoDBError {
-  constructor(message: string = 'Failed to connect to NocoDB') {
-    super(message, 'NOCODB_CONNECTION_ERROR', 503, true);
+  constructor(message: string = "Failed to connect to NocoDB") {
+    super(message, "NOCODB_CONNECTION_ERROR", 503, true);
   }
 }
 
 export class NocoDBTimeoutError extends NocoDBError {
-  constructor(message: string = 'NocoDB request timeout') {
-    super(message, 'NOCODB_TIMEOUT', 504, true);
+  constructor(message: string = "NocoDB request timeout") {
+    super(message, "NOCODB_TIMEOUT", 504, true);
   }
 }
 
 export class NocoDBNotFoundError extends NocoDBError {
-  constructor(resource: string = 'Resource') {
-    super(`${resource} not found`, 'NOCODB_NOT_FOUND', 404, false);
+  constructor(resource: string = "Resource") {
+    super(`${resource} not found`, "NOCODB_NOT_FOUND", 404, false);
   }
 }
 
 export class RateLimitError extends NocoDBError {
   constructor(public retryAfter: number) {
-    super('Rate limit exceeded', 'RATE_LIMIT_EXCEEDED', 429, false);
+    super("Rate limit exceeded", "RATE_LIMIT_EXCEEDED", 429, false);
   }
 }
 
 export class SubscriptionRequiredError extends NocoDBError {
   constructor() {
-    super('Active subscription required', 'SUBSCRIPTION_REQUIRED', 401, false);
+    super("Active subscription required", "SUBSCRIPTION_REQUIRED", 401, false);
   }
 }
 ```
@@ -593,33 +572,36 @@ import type {
   GridResponse,
   BlackSwanEventDetailed,
   SummariesQueryParams,
-  SummariesResponse
-} from '@/types/nocodb.types';
-import { nocoDBClient } from '@/lib/nocodb-client';
+  SummariesResponse,
+} from "@/types/nocodb.types";
+import { nocoDBClient } from "@/lib/nocodb-client";
 
 export class NocoDBService {
   /**
    * Calculate date range based on range parameter
    */
-  private calculateDateRange(range: 'week' | 'month' | 'quarter', endDate?: string): { startDate: string; endDate: string } {
+  private calculateDateRange(
+    range: "week" | "month" | "quarter",
+    endDate?: string
+  ): { startDate: string; endDate: string } {
     const end = endDate ? new Date(endDate) : new Date();
     const start = new Date(end);
 
     switch (range) {
-      case 'week':
+      case "week":
         start.setDate(end.getDate() - 7);
         break;
-      case 'month':
+      case "month":
         start.setDate(end.getDate() - 30);
         break;
-      case 'quarter':
+      case "quarter":
         start.setDate(end.getDate() - 90);
         break;
     }
 
     return {
-      startDate: start.toISOString().split('T')[0],
-      endDate: end.toISOString().split('T')[0]
+      startDate: start.toISOString().split("T")[0],
+      endDate: end.toISOString().split("T")[0],
     };
   }
 
@@ -628,7 +610,10 @@ export class NocoDBService {
    */
   private parseSymbols(symbolsString?: string): string[] | undefined {
     if (!symbolsString) return undefined;
-    return symbolsString.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    return symbolsString
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
   }
 
   /**
@@ -647,7 +632,7 @@ export class NocoDBService {
     const events = await nocoDBClient.fetchBlackSwanEvents(startDate, endDate, symbols);
 
     // Extract unique symbols from results
-    const uniqueSymbols = [...new Set(events.map(e => e.symbol))];
+    const uniqueSymbols = [...new Set(events.map((e) => e.symbol))];
 
     return {
       range,
@@ -655,7 +640,7 @@ export class NocoDBService {
       end_date: endDate,
       events,
       symbols: uniqueSymbols,
-      cached_at: new Date().toISOString()
+      cached_at: new Date().toISOString(),
     };
   }
 
@@ -667,7 +652,7 @@ export class NocoDBService {
     const [event, summaries, historicData] = await Promise.all([
       nocoDBClient.fetchBlackSwanEvent(eventId),
       nocoDBClient.fetchAISummaries(event.symbol, event.occurrence_date).catch(() => []),
-      nocoDBClient.fetchHistoricData(event.symbol, event.occurrence_date).catch(() => null)
+      nocoDBClient.fetchHistoricData(event.symbol, event.occurrence_date).catch(() => null),
     ]);
 
     return {
@@ -677,7 +662,7 @@ export class NocoDBService {
       event_type: event.event_type,
       percent_change: parseFloat(event.percent_change),
       summary: summaries.length > 0 ? summaries[0] : null,
-      historic_data: historicData
+      historic_data: historicData,
     };
   }
 
@@ -690,15 +675,15 @@ export class NocoDBService {
     const summaries = await nocoDBClient.fetchAISummaries(symbol, occurrence_date, event_type);
 
     if (summaries.length === 0) {
-      throw new Error('No summaries found');
+      throw new Error("No summaries found");
     }
 
     return {
       symbol,
       occurrence_date,
-      event_type: event_type || 'BLACK_SWAN_DOWN', // Default if not provided
+      event_type: event_type || "BLACK_SWAN_DOWN", // Default if not provided
       summaries,
-      total_summaries: summaries.length
+      total_summaries: summaries.length,
     };
   }
 }
@@ -707,4 +692,3 @@ export class NocoDBService {
 ---
 
 **KONIEC CZĘŚCI 3/3 - będzie kontynuowane z etapami implementacji endpointów**
-

@@ -11,9 +11,9 @@ Komponenty są dostępne w folderze `src/components/ui`, zgodnie z aliasami z pl
 Zaimportuj komponent zgodnie ze skonfigurowanym aliasem `@/`
 
 ```tsx
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 ```
 
 Przykładowe wykorzystanie komponnetów:
@@ -40,7 +40,6 @@ Przykładowe wykorzystanie komponnetów:
 Wiele innych komponentów jest dostępnych, ale nie są one obecnie zainstalowane. Pełną listę można znaleźć na stronie https://ui.shadcn.com/r
 
 Aby zainstalować nowy komponent, wykorzystaj shadcn CLI
-
 
 ```bash
 npx shadcn@latest add [component-name]

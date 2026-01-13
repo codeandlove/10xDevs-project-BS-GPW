@@ -16,6 +16,7 @@ Session Notes:
 <session_notes>
 <conversation_summary>
 <decisions>
+
 1. Użycie TanStack Router jako rozwiązania do routingu.
 2. Brak tradycyjnej głównej nawigacji — dostęp do konta przez ikonę avatara (moje konto w modal/sidebari).
 3. Strona główna dostępna tylko po kliknięciu w logo.
@@ -28,28 +29,31 @@ Session Notes:
 10. Na etapie MVP: jeden zunifikowany sposób cache'owania danych (bez offline support).
     </decisions>
     <matched_recommendations>
-1. Wykorzystanie TanStack Router z type-safe routes — dopasowane do decyzji o routingu.
-2. React Context jako główny mechanizm stanu + URL params i `localStorage` dla persystencji — zgodne z preferencją bez zewnętrznych bibliotek.
-3. React Portal dla modali/overlay — dopasowane do implementacji konta i summary.
-4. Jednolita strategia cache'owania w localStorage dla MVP, brak offline — dopasowane do prostoty MVP.
-5. Progressive loading i lazy rendering komórek gridu — istotne przy responsywnym gridzie i dużych datasetach.
-6. Użycie History API do zachowania nawigacji wstecz z rozszerzonym state — rekomendowane i zaakceptowane.
-7. Accessibility & mobile touch guidelines (min. target 44x44, ARIA, keyboard navigation) — krytyczne dla wymagań.
-   </matched_recommendations>
-   <ui_architecture_planning_summary>
-   Główne wymagania dotyczące architektury UI:
+11. Wykorzystanie TanStack Router z type-safe routes — dopasowane do decyzji o routingu.
+12. React Context jako główny mechanizm stanu + URL params i `localStorage` dla persystencji — zgodne z preferencją bez zewnętrznych bibliotek.
+13. React Portal dla modali/overlay — dopasowane do implementacji konta i summary.
+14. Jednolita strategia cache'owania w localStorage dla MVP, brak offline — dopasowane do prostoty MVP.
+15. Progressive loading i lazy rendering komórek gridu — istotne przy responsywnym gridzie i dużych datasetach.
+16. Użycie History API do zachowania nawigacji wstecz z rozszerzonym state — rekomendowane i zaakceptowane.
+17. Accessibility & mobile touch guidelines (min. target 44x44, ARIA, keyboard navigation) — krytyczne dla wymagań.
+    </matched_recommendations>
+    <ui_architecture_planning_summary>
+    Główne wymagania dotyczące architektury UI:
+
 - Prostota i spójność rozwiązań (MVP).
 - Jeden zunifikowany mechanizm cache'owania dla wszystkich rozdzielczości.
 - Brak offline w MVP.
 - Pełna responsywność i touch-first UX dla gridu.
 
 Kluczowe widoki, ekrany i przepływy użytkownika:
+
 1. Layout główny: logo (nawigacja do home), avatar (dostęp do konta w modal/sidebar).
 2. Widok grid: główny widok po zalogowaniu — responsywny, zachowany na desktop/tablet/mobile; mniejsza zawartość kart na mobile, pełna interakcyjność (tap, swipe, drag).
 3. Summary panel: szczegóły elementu po kliknięciu komórki — modal/drawer/sidebar w zależności od breakpointu.
 4. Konto użytkownika: modal/drawer/sidebar zamiast dedykowanej strony na etapie MVP (ew. decyzja później).
 
 Strategia integracji z API i zarządzania stanem:
+
 - Routing: TanStack Router (type-safe), URL params dla filtra/ID/stanów widoku.
 - Globalny stan: React Context (uwierzytelnienie, ustawienia UI, minimalne cache meta).
 - Persystencja: `localStorage` dla preferencji i zunifikowanego cache'u (TTL i invalidation do ustalenia).
@@ -58,17 +62,20 @@ Strategia integracji z API i zarządzania stanem:
 - Bezpieczeństwo: nie przechowywać wrażliwych tokenów w URL; szyfrowanie/bezpieczne przechowywanie tokenów w `localStorage` rozważone, walidacja przy odczycie.
 
 Kwestie dotyczące responsywności, dostępności i bezpieczeństwa:
+
 - Responsywność: grid zawsze obecny; adaptacja layoutu i zawartości komórek; minimalne rozmiary touch targetów 44x44px.
 - Accessibility: ARIA labels, focus management (trap w modalach), obsługa klawiatury, czytelne contrasty, testy z screen readerami.
 - Performance: wirtualizacja dużych list/gridów, code-splitting dla heavy components (React.lazy/Suspense), memoization dla kosztownych komponentów.
 - Security: sanityzacja URL params, unikanie wrażliwych danych w URL, szyfrowanie wrażliwych danych w `localStorage`, token refresh/validation w Context.
 
 Dodatkowe praktyki techniczne (MVP):
+
 - Functional components + hooks; React.memo / useCallback / useMemo tam, gdzie potrzeba.
 - Progressive loading skeletons dla komórek.
 - TanStack Router + History API integracja dla deep-linkingu i powrotów.
   </ui_architecture_planning_summary>
   <unresolved_issues>
+
 1. Ostateczna decyzja: `modal/side­bar` vs dedykowana podstrona `/my-account` — zależna od zakresu informacji w sekcji konta.
 2. Szczegóły cache strategy: TTL, invalidation, synchronizacja między zakładkami.
 3. Dokładna implementacja History API: jakie pola stanu trzymać i jak synchronizować z URL params.
@@ -78,7 +85,7 @@ Dodatkowe praktyki techniczne (MVP):
 7. Konkretny format i zakres danych ładowanych per komórka (pełna vs partial payload).
    </unresolved_issues>
    </conversation_summary>
-</session_notes>
+   </session_notes>
 
 Twoim zadaniem jest stworzenie szczegółowej architektury interfejsu użytkownika, która obejmuje niezbędne widoki, mapowanie podróży użytkownika, strukturę nawigacji i kluczowe elementy dla każdego widoku. Projekt powinien uwzględniać doświadczenie użytkownika, dostępność i bezpieczeństwo.
 
@@ -112,6 +119,7 @@ Przedstaw ostateczną architekturę interfejsu użytkownika w następującym for
 ## 2. Lista widoków
 
 [Dla każdego widoku podaj:
+
 - Nazwa widoku
 - Ścieżka widoku
 - Główny cel

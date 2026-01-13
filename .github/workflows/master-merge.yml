@@ -17,8 +17,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -45,8 +45,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -88,8 +88,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -176,7 +176,6 @@ jobs:
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
             "pm2 list | grep ${{ secrets.PM2_APP_NAME }}"
 
-
   deployment-comment:
     name: Deployment Status Comment
     runs-on: ubuntu-latest
@@ -217,12 +216,12 @@ jobs:
               direction: 'desc',
               per_page: 10
             });
-            
+
             const pr = pulls.find(p => 
               p.merge_commit_sha === context.sha ||
               p.head.sha === context.sha
             );
-            
+
             if (pr) {
               core.setOutput('pr_number', pr.number);
               core.setOutput('pr_found', 'true');
@@ -241,7 +240,7 @@ jobs:
             const unitTestStatus = '${{ needs.unit-test.result }}';
             const e2eTestStatus = '${{ needs.e2e-test.result }}';
             const deployStatus = '${{ needs.deploy.result }}';
-            
+
             const getStatusEmoji = (status) => {
               if (status === 'success') return '✅';
               if (status === 'failure') return '❌';
@@ -249,30 +248,29 @@ jobs:
               if (status === 'skipped') return '⏭️';
               return '⏭️';
             };
-            
+
             const comment = `## ${statusEmoji} Master Merge - Deployment Status
-            
+
             ${statusMessage}
-            
+
             ### Pipeline Results:
             - **Build**: ${getStatusEmoji(buildStatus)} \`${buildStatus}\`
             - **Unit Tests**: ${getStatusEmoji(unitTestStatus)} \`${unitTestStatus}\`
             - **E2E Tests**: ${getStatusEmoji(e2eTestStatus)} \`${e2eTestStatus}\`
             - **Deployment**: ${getStatusEmoji(deployStatus)} \`${deployStatus}\`
-            
+
             ### Deployment Details:
             - **Commit**: \`${{ github.sha }}\`
             - **Branch**: \`${{ github.ref_name }}\`
             - **Triggered by**: @${{ github.actor }}
             - **Environment**: Production
-            
+
             ---
             *Workflow run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
-            
+
             await github.rest.issues.createComment({
               issue_number: ${{ steps.find-pr.outputs.pr_number }},
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: comment
             });
-

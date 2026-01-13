@@ -3,9 +3,11 @@
 ## ✅ Zrealizowane zadania
 
 ### Krok 4: Zarządzanie stanem (rozszerzenie)
+
 **Cel**: Zunifikować zarządzanie stanem gridu i eliminować duplikację logiki URL sync
 
 **Zrealizowane:**
+
 - ✅ Utworzono `GridContext.tsx` - dedykowany context dla stanu gridu
 - ✅ Zaimplementowano automatyczną synchronizację z URL params
 - ✅ Dodano obsługę History API (back/forward buttons)
@@ -14,6 +16,7 @@
 - ✅ Owinięto GridView w GridProvider w `grid.astro`
 
 **Korzyści:**
+
 - Czystszy kod (separation of concerns)
 - Łatwiejsze testowanie
 - Reużywalność logiki URL sync
@@ -22,9 +25,11 @@
 ---
 
 ### Krok 5: Obsługa błędów i przypadki brzegowe
+
 **Cel**: Zapewnić graceful degradation i user-friendly error handling
 
 **Zrealizowane:**
+
 - ✅ Utworzono `ErrorBoundary.tsx` - React Error Boundary component
 - ✅ Dodano fallback UI z opcją retry
 - ✅ Zaimplementowano HOC `withErrorBoundary()` dla reużywalności
@@ -32,6 +37,7 @@
 - ✅ Dodano szczegóły błędu w details/summary (dla debugowania)
 
 **Obsługiwane scenariusze:**
+
 - Runtime errors w komponencie
 - Błędy renderowania React
 - Nieoczekiwane wyjątki w event handlers
@@ -40,9 +46,11 @@
 ---
 
 ### Krok 6: Subscription Banner
+
 **Cel**: Informować użytkownika o statusie trial/subskrypcji i zachęcać do upgradu
 
 **Zrealizowane:**
+
 - ✅ Utworzono `SubscriptionBanner.tsx` z logiką wyświetlania
 - ✅ Zaimplementowano różne typy alertów (warning, error, info)
 - ✅ Dodano logikę obliczania dni do wygaśnięcia (daysRemaining)
@@ -50,6 +58,7 @@
 - ✅ Utworzono kompaktową wersję dla mobile
 
 **Obsługiwane statusy:**
+
 - Trial wygasa za 3 dni lub mniej (warning)
 - Trial wygasł (error)
 - Subskrypcja wygasa wkrótce (info)
@@ -75,9 +84,11 @@
 ## 🎯 Kolejne 3 kroki (Plan na Iterację 2)
 
 ### Krok 7: Summary Sidebar/Drawer
+
 **Cel**: Wyświetlanie szczegółów wydarzenia z AI summary po kliknięciu w komórkę
 
 **Zadania:**
+
 - Utworzyć `SummarySidebar.tsx` (desktop - 33% width, z prawej)
 - Utworzyć `SummaryDrawer.tsx` (mobile - bottom drawer, 70% height)
 - Zaimplementować React Portal dla overlay
@@ -88,9 +99,11 @@
 ---
 
 ### Krok 8: Account Modal
+
 **Cel**: Umożliwić użytkownikowi zarządzanie kontem i subskrypcją
 
 **Zadania:**
+
 - Utworzyć `AccountModal.tsx` (desktop - centered modal)
 - Utworzyć `AccountDrawer.tsx` (mobile - bottom drawer)
 - Dodać komponenty: `UserInfo`, `SubscriptionStatus`, `ManageSubscriptionButton`
@@ -101,9 +114,11 @@
 ---
 
 ### Krok 9: API Integration (podstawowa)
+
 **Cel**: Podłączyć prawdziwe endpointy API zamiast mockowych danych
 
 **Zadania:**
+
 - Utworzyć `src/lib/api-client.ts` - wrapper dla fetch z error handling
 - Zaimplementować `fetchGridData()` z `/api/nocodb/grid`
 - Zaimplementować `fetchEventSummary()` z `/api/nocodb/summaries`
@@ -125,4 +140,3 @@
 
 **Data**: 2025-12-30  
 **Ostatnia aktualizacja**: Kroki 4-6 zakończone
-

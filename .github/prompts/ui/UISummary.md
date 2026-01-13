@@ -1,4 +1,3 @@
-
 1. WG rekomendacji
 2. WG rekomendacji
 3. Raczej wykluczam używanie odrębnych bibliotek do budowania stanu aplikacji. Jeśli to możliwe chciałbym zachować używanie react context + URL params + localStorage.
@@ -13,6 +12,7 @@
 ---
 
 Jesteś asystentem AI, którego zadaniem jest podsumowanie rozmowy na temat planowania architektury UI dla MVP i przygotowanie zwięzłego podsumowania dla następnego etapu rozwoju. W historii konwersacji znajdziesz następujące informacje:
+
 1. Dokument wymagań produktu (PRD)
 2. Informacje o stacku technologicznym
 3. Plan API
@@ -20,6 +20,7 @@ Jesteś asystentem AI, którego zadaniem jest podsumowanie rozmowy na temat plan
 5. Zalecenia dotyczące architektury UI
 
 Twoim zadaniem jest:
+
 1. Podsumować historię konwersacji, koncentrując się na wszystkich decyzjach związanych z planowaniem architektury UI.
 2. Dopasować zalecenia modelu do odpowiedzi udzielonych w historii konwersacji. Zidentyfikować, które zalecenia są istotne w oparciu o dyskusję.
 3. Przygotować szczegółowe podsumowanie rozmowy, które obejmuje:

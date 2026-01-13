@@ -70,10 +70,12 @@ Client Response
 ```
 
 **Interakcje zewnętrzne:**
+
 - **Supabase**: Query `app_users` (subscription check)
 - **NocoDB API**: GET `/api/v2/tables/{tableId}/records` z filtrami
 
 **Performance considerations:**
+
 - NocoDB query: ~300-800ms (depends on data size)
 - Subscription check: ~50ms (indexed query)
 - Total target: < 1.5s
@@ -120,13 +122,15 @@ Client Response
 ```
 
 **Interakcje zewnętrzne:**
+
 - **Supabase**: Query `app_users`
-- **NocoDB API**: 
+- **NocoDB API**:
   - GET `/api/v2/tables/{blackSwansTableId}/records/{id}`
   - GET `/api/v2/tables/{aiSummariesTableId}/records` (filtered query)
   - GET `/api/v2/tables/{historicDataTableId}/records` (filtered query)
 
 **Optimization:**
+
 - Parallel fetching: Execute summary + historic_data queries concurrently
 - Use Promise.all() for parallel requests
 
@@ -176,6 +180,7 @@ Client Response
 ```
 
 **Interakcje zewnętrzne:**
+
 - **Supabase**: Query `app_users`
 - **NocoDB API**: GET `/api/v2/tables/{aiSummariesTableId}/records`
 
@@ -188,22 +193,24 @@ Client Response
 **Multi-layer security:**
 
 1. **Bearer Token Verification**
+
    ```typescript
    const authUid = await getAuthUid(request, supabase);
    if (!authUid) {
-     return createErrorResponse('Unauthorized', 401, 'UNAUTHORIZED');
+     return createErrorResponse("Unauthorized", 401, "UNAUTHORIZED");
    }
    ```
 
 2. **Subscription Status Check**
+
    ```typescript
    const user = await userService.getUserProfile(authUid);
-   const hasAccess = 
-     ['trial', 'active'].includes(user.subscription_status) ||
+   const hasAccess =
+     ["trial", "active"].includes(user.subscription_status) ||
      (user.trial_expires_at && new Date(user.trial_expires_at) > new Date());
-   
+
    if (!hasAccess) {
-     return createErrorResponse('Active subscription required', 401, 'SUBSCRIPTION_REQUIRED');
+     return createErrorResponse("Active subscription required", 401, "SUBSCRIPTION_REQUIRED");
    }
    ```
 
@@ -226,6 +233,7 @@ NOCODB_TABLE_HISTORIC_DATA=tbl_zzz
 ```
 
 **Best practices:**
+
 - Token stored only server-side (Astro endpoint)
 - Use separate token for each environment (dev, staging, prod)
 - Rotate tokens quarterly
@@ -234,6 +242,7 @@ NOCODB_TABLE_HISTORIC_DATA=tbl_zzz
 ### 6.3. Rate Limiting Implementation
 
 **Purpose:**
+
 - Prevent abuse (excessive API calls)
 - Protect NocoDB from overload
 - Fair usage across users
@@ -256,14 +265,14 @@ export class RateLimiter {
     if (!entry || entry.resetAt < now) {
       const newEntry: RateLimitEntry = {
         count: 1,
-        resetAt: now + this.windowMs
+        resetAt: now + this.windowMs,
       };
       this.store.set(userId, newEntry);
-      
+
       return {
         allowed: true,
         remaining: this.limit - 1,
-        resetAt: newEntry.resetAt
+        resetAt: newEntry.resetAt,
       };
     }
 
@@ -273,7 +282,7 @@ export class RateLimiter {
         allowed: false,
         remaining: 0,
         resetAt: entry.resetAt,
-        retryAfter: Math.ceil((entry.resetAt - now) / 1000)
+        retryAfter: Math.ceil((entry.resetAt - now) / 1000),
       };
     }
 
@@ -284,7 +293,7 @@ export class RateLimiter {
     return {
       allowed: true,
       remaining: this.limit - entry.count,
-      resetAt: entry.resetAt
+      resetAt: entry.resetAt,
     };
   }
 
@@ -307,6 +316,7 @@ setInterval(() => rateLimiter.cleanup(), 5 * 60 * 1000);
 ```
 
 **Usage in endpoint:**
+
 ```typescript
 const rateLimitResult = rateLimiter.check(authUid);
 
@@ -315,28 +325,28 @@ if (!rateLimitResult.allowed) {
     JSON.stringify({
       success: false,
       error: {
-        message: 'Rate limit exceeded',
-        code: 'RATE_LIMIT_EXCEEDED',
-        details: { retry_after: rateLimitResult.retryAfter }
-      }
+        message: "Rate limit exceeded",
+        code: "RATE_LIMIT_EXCEEDED",
+        details: { retry_after: rateLimitResult.retryAfter },
+      },
     }),
     {
       status: 429,
       headers: {
-        'Content-Type': 'application/json',
-        'X-RateLimit-Limit': '60',
-        'X-RateLimit-Remaining': '0',
-        'X-RateLimit-Reset': rateLimitResult.resetAt.toString(),
-        'Retry-After': rateLimitResult.retryAfter!.toString()
-      }
+        "Content-Type": "application/json",
+        "X-RateLimit-Limit": "60",
+        "X-RateLimit-Remaining": "0",
+        "X-RateLimit-Reset": rateLimitResult.resetAt.toString(),
+        "Retry-After": rateLimitResult.retryAfter!.toString(),
+      },
     }
   );
 }
 
 // Add headers to successful response
-headers.set('X-RateLimit-Limit', '60');
-headers.set('X-RateLimit-Remaining', rateLimitResult.remaining.toString());
-headers.set('X-RateLimit-Reset', rateLimitResult.resetAt.toString());
+headers.set("X-RateLimit-Limit", "60");
+headers.set("X-RateLimit-Remaining", rateLimitResult.remaining.toString());
+headers.set("X-RateLimit-Reset", rateLimitResult.resetAt.toString());
 ```
 
 ### 6.4. Input Validation & Sanitization
@@ -346,38 +356,37 @@ headers.set('X-RateLimit-Reset', rateLimitResult.resetAt.toString());
 ```typescript
 // src/lib/nocodb-validation.ts
 
-import { z } from 'zod';
+import { z } from "zod";
 
 export const GridQuerySchema = z.object({
-  range: z.enum(['week', 'month', 'quarter']),
-  symbols: z.string().optional().refine(
-    (val) => !val || /^[A-Z0-9,]+$/.test(val),
-    { message: 'Invalid symbols format' }
-  ),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()
+  range: z.enum(["week", "month", "quarter"]),
+  symbols: z
+    .string()
+    .optional()
+    .refine((val) => !val || /^[A-Z0-9,]+$/.test(val), { message: "Invalid symbols format" }),
+  end_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
-export const EventIdSchema = z.string().startsWith('rec_');
+export const EventIdSchema = z.string().startsWith("rec_");
 
 export const SummariesQuerySchema = z.object({
   symbol: z.string().min(1).max(10).toUpperCase(),
   occurrence_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  event_type: z.enum([
-    'BLACK_SWAN_UP',
-    'BLACK_SWAN_DOWN',
-    'VOLATILITY_UP',
-    'VOLATILITY_DOWN',
-    'BIG_MOVE'
-  ]).optional()
+  event_type: z.enum(["BLACK_SWAN_UP", "BLACK_SWAN_DOWN", "VOLATILITY_UP", "VOLATILITY_DOWN", "BIG_MOVE"]).optional(),
 });
 ```
 
 **SQL Injection Prevention:**
+
 - NocoDB API uses parameterized queries internally
 - Never construct raw SQL queries in application
 - Use NocoDB's query builder/filters
 
 **XSS Prevention:**
+
 - Validate all user inputs with Zod
 - Sanitize symbol strings (allow only alphanumeric + comma)
 - Date validation with regex (prevent injection)
@@ -385,30 +394,28 @@ export const SummariesQuerySchema = z.object({
 ### 6.5. Error Information Disclosure
 
 **Never expose:**
+
 - NocoDB API token
 - Internal table IDs (abstract in config)
 - Detailed NocoDB error messages (could reveal schema)
 - Stack traces in production
 
 **Pattern:**
+
 ```typescript
 try {
   const data = await nocodbService.fetchGrid(params);
   return createSuccessResponse(data, 200);
 } catch (error) {
   // Log detailed error server-side
-  console.error('[NOCODB] Grid fetch error:', {
+  console.error("[NOCODB] Grid fetch error:", {
     params,
-    error: error instanceof Error ? error.message : 'Unknown',
-    stack: error instanceof Error ? error.stack : undefined
+    error: error instanceof Error ? error.message : "Unknown",
+    stack: error instanceof Error ? error.stack : undefined,
   });
-  
+
   // Return generic error to client
-  return createErrorResponse(
-    'Failed to fetch grid data',
-    500,
-    'NOCODB_ERROR'
-  );
+  return createErrorResponse("Failed to fetch grid data", 500, "NOCODB_ERROR");
 }
 ```
 
@@ -429,56 +436,56 @@ export class NocoDBError extends Error {
     public retryable: boolean = false
   ) {
     super(message);
-    this.name = 'NocoDBError';
+    this.name = "NocoDBError";
   }
 }
 
 export class NocoDBConnectionError extends NocoDBError {
-  constructor(message: string = 'Failed to connect to NocoDB') {
-    super(message, 'NOCODB_CONNECTION_ERROR', 503, true);
+  constructor(message: string = "Failed to connect to NocoDB") {
+    super(message, "NOCODB_CONNECTION_ERROR", 503, true);
   }
 }
 
 export class NocoDBTimeoutError extends NocoDBError {
-  constructor(message: string = 'NocoDB request timeout') {
-    super(message, 'NOCODB_TIMEOUT', 504, true);
+  constructor(message: string = "NocoDB request timeout") {
+    super(message, "NOCODB_TIMEOUT", 504, true);
   }
 }
 
 export class NocoDBNotFoundError extends NocoDBError {
-  constructor(resource: string = 'Resource') {
-    super(`${resource} not found`, 'NOCODB_NOT_FOUND', 404, false);
+  constructor(resource: string = "Resource") {
+    super(`${resource} not found`, "NOCODB_NOT_FOUND", 404, false);
   }
 }
 
 export class RateLimitError extends NocoDBError {
   constructor(public retryAfter: number) {
-    super('Rate limit exceeded', 'RATE_LIMIT_EXCEEDED', 429, false);
+    super("Rate limit exceeded", "RATE_LIMIT_EXCEEDED", 429, false);
   }
 }
 
 export class SubscriptionRequiredError extends NocoDBError {
   constructor() {
-    super('Active subscription required', 'SUBSCRIPTION_REQUIRED', 401, false);
+    super("Active subscription required", "SUBSCRIPTION_REQUIRED", 401, false);
   }
 }
 ```
 
 ### 7.2. Scenariusze błędów
 
-| Scenariusz | Status | Code | Retryable | Handling |
-|------------|--------|------|-----------|----------|
-| Brak tokena auth | 401 | UNAUTHORIZED | ❌ | Return immediately |
-| Nieaktywna subskrypcja | 401 | SUBSCRIPTION_REQUIRED | ❌ | Return immediately |
-| Rate limit exceeded | 429 | RATE_LIMIT_EXCEEDED | ❌ | Return with Retry-After |
-| Nieprawidłowy range | 400 | VALIDATION_ERROR | ❌ | Return validation errors |
-| Nieprawidłowy date format | 400 | VALIDATION_ERROR | ❌ | Return validation errors |
-| NocoDB timeout | 504 | NOCODB_TIMEOUT | ✅ | Retry 2x with backoff |
-| NocoDB connection error | 503 | NOCODB_CONNECTION_ERROR | ✅ | Retry 2x with backoff |
-| Event not found | 404 | EVENT_NOT_FOUND | ❌ | Return 404 |
-| No summaries found | 404 | SUMMARIES_NOT_FOUND | ❌ | Return 404 |
-| NocoDB API error | 500 | NOCODB_ERROR | ❌ | Log + return generic error |
-| Unknown error | 500 | UNKNOWN_ERROR | ❌ | Log + return generic error |
+| Scenariusz                | Status | Code                    | Retryable | Handling                   |
+| ------------------------- | ------ | ----------------------- | --------- | -------------------------- |
+| Brak tokena auth          | 401    | UNAUTHORIZED            | ❌        | Return immediately         |
+| Nieaktywna subskrypcja    | 401    | SUBSCRIPTION_REQUIRED   | ❌        | Return immediately         |
+| Rate limit exceeded       | 429    | RATE_LIMIT_EXCEEDED     | ❌        | Return with Retry-After    |
+| Nieprawidłowy range       | 400    | VALIDATION_ERROR        | ❌        | Return validation errors   |
+| Nieprawidłowy date format | 400    | VALIDATION_ERROR        | ❌        | Return validation errors   |
+| NocoDB timeout            | 504    | NOCODB_TIMEOUT          | ✅        | Retry 2x with backoff      |
+| NocoDB connection error   | 503    | NOCODB_CONNECTION_ERROR | ✅        | Retry 2x with backoff      |
+| Event not found           | 404    | EVENT_NOT_FOUND         | ❌        | Return 404                 |
+| No summaries found        | 404    | SUMMARIES_NOT_FOUND     | ❌        | Return 404                 |
+| NocoDB API error          | 500    | NOCODB_ERROR            | ❌        | Log + return generic error |
+| Unknown error             | 500    | UNKNOWN_ERROR           | ❌        | Log + return generic error |
 
 ### 7.3. Retry Logic
 
@@ -487,11 +494,7 @@ export class SubscriptionRequiredError extends NocoDBError {
 ```typescript
 // src/lib/nocodb-client.ts
 
-async function fetchWithRetry<T>(
-  url: string,
-  options: RequestInit,
-  maxRetries: number = 2
-): Promise<T> {
+async function fetchWithRetry<T>(url: string, options: RequestInit, maxRetries: number = 2): Promise<T> {
   let lastError: Error;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -501,7 +504,7 @@ async function fetchWithRetry<T>(
 
       const response = await fetch(url, {
         ...options,
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -511,14 +514,13 @@ async function fetchWithRetry<T>(
       }
 
       return await response.json();
-
     } catch (error) {
       lastError = error as Error;
 
       // Don't retry on timeout or connection errors if it's the last attempt
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 500; // 500ms, 1000ms
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
     }
@@ -569,11 +571,12 @@ async function fetchWithRetry<T>(
 const [event, summaries, historicData] = await Promise.all([
   nocodbClient.getEvent(eventId),
   nocodbClient.getSummaries(symbol, date).catch(() => null), // Graceful fail
-  nocodbClient.getHistoricData(symbol, date).catch(() => null) // Graceful fail
+  nocodbClient.getHistoricData(symbol, date).catch(() => null), // Graceful fail
 ]);
 ```
 
 **Benefits:**
+
 - Reduce total time from 900ms to ~400ms (3x parallel)
 - Graceful degradation jeśli summary/historic fail
 
@@ -585,7 +588,7 @@ const [event, summaries, historicData] = await Promise.all([
 // Query params
 const GridQuerySchemaWithPagination = GridQuerySchema.extend({
   page: z.number().int().positive().default(1),
-  pageSize: z.number().int().min(10).max(100).default(50)
+  pageSize: z.number().int().min(10).max(100).default(50),
 });
 
 // Response
@@ -607,18 +610,13 @@ interface GridResponsePaginated extends GridResponse {
 
 ```typescript
 // Instead of SELECT *
-const fields = [
-  'id',
-  'symbol',
-  'occurrence_date',
-  'event_type',
-  'percent_change'
-].join(',');
+const fields = ["id", "symbol", "occurrence_date", "event_type", "percent_change"].join(",");
 
 const url = `${baseUrl}/records?fields=${fields}&where=...`;
 ```
 
 **Benefits:**
+
 - Reduce payload size ~50%
 - Faster JSON parsing
 - Lower bandwidth
@@ -630,12 +628,12 @@ const url = `${baseUrl}/records?fields=${fields}&where=...`;
 ```typescript
 // src/lib/nocodb-client.ts
 
-import { Agent } from 'https';
+import { Agent } from "https";
 
 const httpsAgent = new Agent({
   keepAlive: true,
   maxSockets: 50,
-  keepAliveMsecs: 60000
+  keepAliveMsecs: 60000,
 });
 
 // Use in fetch
@@ -648,6 +646,7 @@ fetch(url, {
 ### 8.3. Monitoring Metrics
 
 **Key metrics:**
+
 - NocoDB API response time (p50, p95, p99)
 - Rate limit hits per user
 - Cache hit rate (jeśli caching zaimplementowany)
@@ -655,6 +654,7 @@ fetch(url, {
 - Payload size distribution
 
 **Alerts:**
+
 - NocoDB response time > 2s
 - Error rate > 5% w 5 min window
 - Rate limit exceeded > 10x/hour per user
@@ -664,7 +664,7 @@ fetch(url, {
 **KONIEC CZĘŚCI 2/3**
 
 Następna część będzie zawierać:
+
 - Etapy wdrożenia (szczegółowe kroki)
 - Checklisty walidacyjne
 - Decyzje architektoniczne
-

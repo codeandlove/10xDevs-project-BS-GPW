@@ -3,9 +3,11 @@
 ## ✅ Zrealizowane zadania
 
 ### Krok 1: Full Detail View ✅
+
 **Cel**: Dedykowana strona `/event/:id` z pełnymi szczegółami wydarzenia
 
 **Zrealizowane:**
+
 - ✅ Utworzono `/event/[id].astro` - strona Astro z dynamic routing
 - ✅ Utworzono `Timeline.tsx` - wyświetlanie multiple AI summaries
 - ✅ Utworzono `PriceChart.tsx` - wykres OHLC (SVG)
@@ -16,6 +18,7 @@
 - ✅ Error handling z fallback UI
 
 **Funkcjonalności:**
+
 - Pełny widok wydarzenia z wszystkimi danymi OHLC
 - Timeline z wszystkimi AI summaries (chronologicznie)
 - Wykres cenowy (SVG) z hover tooltips
@@ -26,9 +29,11 @@
 ---
 
 ### Krok 2: Toast Notifications ✅
+
 **Cel**: Globalny system notyfikacji dla user feedback
 
 **Zrealizowane:**
+
 - ✅ Utworzono `ToastContext.tsx` - Context z toast management
 - ✅ Utworzono `ToastContainer.tsx` - Portal-based toast renderer
 - ✅ Zintegrowano z AppLayout (ToastProvider + ToastContainer)
@@ -39,6 +44,7 @@
 - ✅ Smooth animations (enter/exit)
 
 **Funkcjonalności:**
+
 - React Portal dla z-index control
 - Stack multiple toasts
 - Configurable duration per type
@@ -52,16 +58,19 @@
 ## 📁 Nowe pliki Iteracja 2 (7)
 
 ### Full Detail View Components (4)
+
 1. `src/pages/event/[id].astro` - Dynamic route page
 2. `src/components/event/Timeline.tsx` - Timeline dla summaries
 3. `src/components/event/PriceChart.tsx` - SVG chart component
 4. `src/components/event/EventDetailView.tsx` - Main detail view
 
 ### Toast System (2)
+
 5. `src/contexts/ToastContext.tsx` - Toast state management
 6. `src/components/ui/ToastContainer.tsx` - Toast renderer
 
 ### Documentation (1)
+
 7. `docs/ITERATION_2_STEPS_1-2.md` (ten plik)
 
 ---
@@ -85,9 +94,11 @@
 ## 🎯 Następne kroki (Iteracja 2 - kontynuacja)
 
 ### Krok 3: Grid Virtualization
+
 **Cel**: Optymalizacja wydajności dla dużych zbiorów danych
 
 **Zadania:**
+
 - Zainstalować @tanstack/react-virtual
 - Utworzyć VirtualizedGrid.tsx component
 - Zaimplementować virtual scrolling (rows + columns)
@@ -98,9 +109,11 @@
 ---
 
 ### Krok 4: Advanced Filters
+
 **Cel**: Rozszerzone opcje filtrowania
 
 **Zadania:**
+
 - Utworzyć DateRangePicker.tsx (custom date range)
 - Utworzyć EventTypeFilter.tsx (multi-select event types)
 - Utworzyć SortOptions.tsx (sort by date/percent_change)
@@ -111,9 +124,11 @@
 ---
 
 ### Krok 5: Keyboard Navigation
+
 **Cel**: Accessibility i power user features
 
 **Zadania:**
+
 - Dodać arrow keys navigation w gridzie
 - Implementować Tab navigation
 - Focus management w modalach
@@ -126,12 +141,14 @@
 ## 🧪 Testowanie (Do zrobienia)
 
 ### Full Detail View
+
 - [ ] Test z prawdziwymi danymi z API
 - [ ] Test chart rendering na różnych rozdzielczościach
 - [ ] Test timeline z wieloma summaries
 - [ ] Test navigation (back button, browser back/forward)
 
 ### Toast Notifications
+
 - [ ] Test multiple toasts (stack behavior)
 - [ ] Test auto-dismiss timers
 - [ ] Test manual dismiss
@@ -160,6 +177,7 @@ npx shadcn@latest add calendar popover
 ## 🎉 Podsumowanie Iteracji 2 (częściowe)
 
 ### Osiągnięcia:
+
 - ✅ Full Detail View - kompletna strona z timeline i charts
 - ✅ Toast Notifications - globalny system z 4 typami
 - ✅ API Integration - fetchEventDetails + fetchSummaries
@@ -167,12 +185,14 @@ npx shadcn@latest add calendar popover
 - ✅ Error Handling - graceful degradation
 
 ### Statystyki:
+
 - **Lines of code**: ~1500+ LOC (nowe)
 - **Komponenty React**: 7 nowych
 - **Contexts**: 1 nowy (ToastContext)
 - **Pages**: 1 nowa (dynamic route)
 
 ### Gotowość:
+
 - **Full Detail View**: ✅ 100% (basic implementation)
 - **Toast System**: ✅ 100%
 - **Grid Virtualization**: 🔄 0% (następny krok)
@@ -186,4 +206,3 @@ npx shadcn@latest add calendar popover
 **Status**: 🔄 **ITERACJA 2 W TRAKCIE (40%)**
 
 **Następny krok**: Krok 3 (Grid Virtualization) lub kontynuacja pozostałych kroków
-

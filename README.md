@@ -88,7 +88,6 @@ Extracted from `package.json`:
 - `npm run lint:fix` — run ESLint with auto-fix
 - `npm run format` — run Prettier to format files
 
-
 ## Project scope (MVP)
 
 Includes
@@ -151,7 +150,9 @@ If you'd like, I can now:
 - create a CONTRIBUTING.md or an initial Playwright test scaffold.
 
 ## GHActions Workflow
+
 The GitHub Actions workflow for pull requests is defined in `.github/workflows/pull-request.yml`. It includes the following jobs:
+
 - Linting the codebase
 - Running unit tests and end-to-end tests in parallel
 - Posting a status comment on the pull request if all previous jobs pass

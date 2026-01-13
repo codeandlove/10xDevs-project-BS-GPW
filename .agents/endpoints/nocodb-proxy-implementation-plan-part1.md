@@ -33,6 +33,7 @@ Moduł **NocoDB Proxy** zapewnia bezpieczny dostęp do danych Black Swan Events 
 **Autentykacja:** Required (Bearer token + active subscription/trial)
 
 **Parametry:**
+
 - Wymagane:
   - `range` (query string) - enum: 'week' | 'month' | 'quarter'
 - Opcjonalne:
@@ -40,6 +41,7 @@ Moduł **NocoDB Proxy** zapewnia bezpieczny dostęp do danych Black Swan Events 
   - `end_date` (query string) - ISO date format YYYY-MM-DD (default: today)
 
 **Przykładowe URL:**
+
 ```
 GET /api/nocodb/grid?range=week
 GET /api/nocodb/grid?range=month&symbols=CPD,PKN
@@ -47,16 +49,22 @@ GET /api/nocodb/grid?range=quarter&symbols=ALR&end_date=2025-12-25
 ```
 
 **Walidacja (Zod Schema):**
+
 ```typescript
 const GridQuerySchema = z.object({
-  range: z.enum(['week', 'month', 'quarter'], {
-    errorMap: () => ({ message: 'range must be one of: week, month, quarter' })
+  range: z.enum(["week", "month", "quarter"], {
+    errorMap: () => ({ message: "range must be one of: week, month, quarter" }),
   }),
-  symbols: z.string().optional().refine(
-    (val) => !val || val.split(',').every(s => s.length > 0 && s.length <= 10),
-    { message: 'Each symbol must be 1-10 characters' }
-  ),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD').optional()
+  symbols: z
+    .string()
+    .optional()
+    .refine((val) => !val || val.split(",").every((s) => s.length > 0 && s.length <= 10), {
+      message: "Each symbol must be 1-10 characters",
+    }),
+  end_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD")
+    .optional(),
 });
 ```
 
@@ -69,18 +77,21 @@ const GridQuerySchema = z.object({
 **Autentykacja:** Required (Bearer token + active subscription/trial)
 
 **Parametry:**
+
 - Wymagane:
   - `id` (path parameter) - NocoDB record ID (format: `rec_*`)
 - Opcjonalne: Brak
 
 **Przykładowe URL:**
+
 ```
 GET /api/nocodb/events/rec_abc123xyz
 ```
 
 **Walidacja:**
+
 ```typescript
-const EventIdSchema = z.string().startsWith('rec_', 'Invalid NocoDB record ID format');
+const EventIdSchema = z.string().startsWith("rec_", "Invalid NocoDB record ID format");
 ```
 
 ---
@@ -92,6 +103,7 @@ const EventIdSchema = z.string().startsWith('rec_', 'Invalid NocoDB record ID fo
 **Autentykacja:** Required (Bearer token + active subscription/trial)
 
 **Parametry:**
+
 - Wymagane:
   - `symbol` (query string) - Ticker symbol (1-10 chars)
   - `occurrence_date` (query string) - ISO date YYYY-MM-DD
@@ -99,23 +111,19 @@ const EventIdSchema = z.string().startsWith('rec_', 'Invalid NocoDB record ID fo
   - `event_type` (query string) - enum: 'BLACK_SWAN_UP' | 'BLACK_SWAN_DOWN' | 'VOLATILITY_UP' | 'VOLATILITY_DOWN' | 'BIG_MOVE'
 
 **Przykładowe URL:**
+
 ```
 GET /api/nocodb/summaries?symbol=CPD&occurrence_date=2025-12-10
 GET /api/nocodb/summaries?symbol=PKN&occurrence_date=2025-12-15&event_type=BLACK_SWAN_DOWN
 ```
 
 **Walidacja (Zod Schema):**
+
 ```typescript
 const SummariesQuerySchema = z.object({
-  symbol: z.string().min(1).max(10, 'Symbol must be 1-10 characters'),
-  occurrence_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD'),
-  event_type: z.enum([
-    'BLACK_SWAN_UP',
-    'BLACK_SWAN_DOWN',
-    'VOLATILITY_UP',
-    'VOLATILITY_DOWN',
-    'BIG_MOVE'
-  ]).optional()
+  symbol: z.string().min(1).max(10, "Symbol must be 1-10 characters"),
+  occurrence_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD"),
+  event_type: z.enum(["BLACK_SWAN_UP", "BLACK_SWAN_DOWN", "VOLATILITY_UP", "VOLATILITY_DOWN", "BIG_MOVE"]).optional(),
 });
 ```
 
@@ -132,7 +140,7 @@ const SummariesQuerySchema = z.object({
  * Query parameters for grid endpoint
  */
 export interface GridQueryParams {
-  range: 'week' | 'month' | 'quarter';
+  range: "week" | "month" | "quarter";
   symbols?: string; // comma-separated
   end_date?: string; // YYYY-MM-DD
 }
@@ -149,12 +157,7 @@ export interface SummariesQueryParams {
 /**
  * Event type enum
  */
-export type EventType = 
-  | 'BLACK_SWAN_UP' 
-  | 'BLACK_SWAN_DOWN' 
-  | 'VOLATILITY_UP' 
-  | 'VOLATILITY_DOWN' 
-  | 'BIG_MOVE';
+export type EventType = "BLACK_SWAN_UP" | "BLACK_SWAN_DOWN" | "VOLATILITY_UP" | "VOLATILITY_DOWN" | "BIG_MOVE";
 ```
 
 ### 3.2. Response DTOs
@@ -178,7 +181,7 @@ export interface BlackSwanEventMinimal {
  * Grid response
  */
 export interface GridResponse {
-  range: 'week' | 'month' | 'quarter';
+  range: "week" | "month" | "quarter";
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
   events: BlackSwanEventMinimal[];
@@ -193,7 +196,7 @@ export interface AISummary {
   id: string;
   date: string; // ISO timestamp
   summary: string;
-  article_sentiment: 'positive' | 'negative' | 'neutral';
+  article_sentiment: "positive" | "negative" | "neutral";
   identified_causes: string[];
   predicted_trend_probability: {
     further_decline?: number;
@@ -201,7 +204,7 @@ export interface AISummary {
     continued_growth?: number;
   };
   recommended_action: {
-    action: 'BUY' | 'SELL' | 'HOLD';
+    action: "BUY" | "SELL" | "HOLD";
     justification: string;
   };
   keywords: string[];
@@ -267,7 +270,7 @@ export interface NocoDBConfig {
  */
 export interface NocoDBFilter {
   field: string;
-  operator: 'eq' | 'gte' | 'lte' | 'in' | 'like';
+  operator: "eq" | "gte" | "lte" | "in" | "like";
   value: string | number | string[];
 }
 
@@ -316,6 +319,7 @@ export interface RateLimitResult {
 ### 4.1. GET /api/nocodb/grid
 
 **Sukces (200 OK):**
+
 ```json
 {
   "success": true,
@@ -349,7 +353,9 @@ export interface RateLimitResult {
 ```
 
 **Błędy:**
+
 - `400 Bad Request`: Nieprawidłowe parametry
+
   ```json
   {
     "success": false,
@@ -365,6 +371,7 @@ export interface RateLimitResult {
   ```
 
 - `401 Unauthorized`: Brak lub nieprawidłowa autentykacja
+
   ```json
   {
     "success": false,
@@ -377,6 +384,7 @@ export interface RateLimitResult {
   ```
 
 - `429 Too Many Requests`: Rate limit exceeded
+
   ```json
   {
     "success": false,
@@ -390,7 +398,9 @@ export interface RateLimitResult {
     "timestamp": "2025-12-28T10:30:00Z"
   }
   ```
+
   **Headers:**
+
   ```
   X-RateLimit-Limit: 60
   X-RateLimit-Remaining: 0
@@ -415,6 +425,7 @@ export interface RateLimitResult {
 ### 4.2. GET /api/nocodb/events/:id
 
 **Sukces (200 OK):**
+
 ```json
 {
   "success": true,
@@ -454,6 +465,7 @@ export interface RateLimitResult {
 ```
 
 **Błędy:**
+
 - `404 Not Found`: Event nie istnieje
   ```json
   {
@@ -471,6 +483,7 @@ export interface RateLimitResult {
 ### 4.3. GET /api/nocodb/summaries
 
 **Sukces (200 OK):**
+
 ```json
 {
   "success": true,
@@ -521,6 +534,7 @@ export interface RateLimitResult {
 ```
 
 **Błędy:**
+
 - `404 Not Found`: Brak summaries dla wydarzenia
   ```json
   {
@@ -538,7 +552,7 @@ export interface RateLimitResult {
 **KONIEC CZĘŚCI 1/3**
 
 Następna część będzie zawierać:
+
 - Przepływ danych (szczegółowe diagramy)
 - Względy bezpieczeństwa
 - Obsługa błędów
-

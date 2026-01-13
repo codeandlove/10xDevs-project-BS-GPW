@@ -35,6 +35,7 @@ Po zakończeniu analizy, stwórz plan testów wewnątrz bloku <plan_testów>. Pl
 10. Procedury raportowania błędów
 
 Pamiętaj, aby plan testów był:
+
 - Dokładnie dostosowany do kontekstu projektu
 - Uwzględniał specyfikę wykorzystywanych technologii
 - Priorytetyzował kluczowe elementy repozytorium

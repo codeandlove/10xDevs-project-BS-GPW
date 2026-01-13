@@ -9,20 +9,24 @@
 ## 🚨 KRYTYCZNE BŁĘDY
 
 ### 1. **Import Supabase Client - BŁĄD KOMPILACJI**
+
 **Lokalizacja**: `src/components/auth/AuthForm.tsx:9`
 
 **Błąd**:
+
 ```typescript
 import { supabase } from "@/db/supabase.client";
 // ❌ ERROR: Module has no exported member 'supabase'
 ```
 
 **Poprawna wersja** (w pliku `supabase.client.ts`):
+
 ```typescript
 export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
 ```
 
 **Rozwiązanie**:
+
 ```typescript
 // AuthForm.tsx - POPRAW:
 import { supabaseClient } from "@/db/supabase.client";
@@ -38,7 +42,9 @@ supabase.auth.signUp() → supabaseClient.auth.signUp()
 ## ⚠️ PROBLEMY FORMATOWANIA (WSZYSTKIE PLIKI)
 
 ### Problem: CRLF line endings
+
 **Dotyczy**:
+
 - `EventDetailView.tsx` (150+ błędów prettier)
 - `Timeline.tsx` (50+ błędów prettier)
 - `PriceChart.tsx` (130+ błędów prettier)
@@ -48,6 +54,7 @@ supabase.auth.signUp() → supabaseClient.auth.signUp()
 **Przyczyna**: Pliki zapisane w formacie Windows (CRLF) zamiast Unix (LF)
 
 **Rozwiązanie**:
+
 ```bash
 # Opcja 1: Auto-fix przez prettier
 npm run format
@@ -72,14 +79,17 @@ git config --global core.autocrlf false
 ### ✅ Full Detail View Components
 
 #### 1. `EventDetailView.tsx`
+
 **Status**: ✅ Logika poprawna  
 **Problemy**:
+
 - ⚠️ Formatowanie (CRLF)
 - ✅ Typy poprawne
 - ✅ API integration działa
 - ✅ Error handling obecny
 
 **Uwagi**:
+
 - Import `fetchEventDetails` i `fetchSummaries` - OK
 - useState hooks - OK
 - useEffect dependency array - OK
@@ -88,14 +98,17 @@ git config --global core.autocrlf false
 ---
 
 #### 2. `Timeline.tsx`
+
 **Status**: ✅ Implementacja poprawna  
 **Problemy**:
+
 - ⚠️ Formatowanie (CRLF)
 - ⚠️ **WARNING**: "Unused function Timeline"
   - To normalne - używane w `EventDetailView.tsx`
   - TypeScript może nie widzieć użycia z powodu Astro islands
 
 **Uwagi**:
+
 - Props typing - OK
 - Empty state handling - OK
 - Map z unique keys - OK (summary.id)
@@ -103,13 +116,16 @@ git config --global core.autocrlf false
 ---
 
 #### 3. `PriceChart.tsx`
+
 **Status**: ✅ Implementacja SVG poprawna  
 **Problemy**:
+
 - ⚠️ Formatowanie (CRLF)
 - ⚠️ **WARNING**: "Unused function PriceChart"
   - Jw. używane w `EventDetailView.tsx`
 
 **Uwagi**:
+
 - SVG math calculations - OK
 - Hover tooltips - OK (title element w circle)
 - Responsive viewBox - OK
@@ -118,14 +134,17 @@ git config --global core.autocrlf false
 ---
 
 #### 4. `[id].astro` page
+
 **Status**: ✅ Routing poprawny  
 **Struktura**:
+
 ```astro
-const { id } = Astro.params; // ✅ Pobieranie ID z URL
+const {id} = Astro.params; // ✅ Pobieranie ID z URL
 <EventDetailView client:load eventId={id} /> // ✅ Przekazywanie do React
 ```
 
 **Uwagi**:
+
 - Dynamic routing syntax - OK
 - Client directive - OK (niezbędne dla React)
 
@@ -134,13 +153,16 @@ const { id } = Astro.params; // ✅ Pobieranie ID z URL
 ### ✅ Toast Notification System
 
 #### 1. `ToastContext.tsx`
+
 **Status**: ✅ Context implementacja poprawna  
 **Problemy**:
+
 - ⚠️ Formatowanie (CRLF)
 - ⚠️ **WARNING**: "Unused function ToastProvider/useToast"
   - Używane w `AppLayout.tsx` - OK
 
 **Uwagi**:
+
 - Context pattern - OK
 - useCallback optimization - OK
 - Auto-dismiss timeout - OK
@@ -149,13 +171,16 @@ const { id } = Astro.params; // ✅ Pobieranie ID z URL
 ---
 
 #### 2. `ToastContainer.tsx`
+
 **Status**: ✅ Portal + animations poprawne  
 **Problemy**:
+
 - ⚠️ Formatowanie (CRLF)
 - ⚠️ **WARNING**: "Unused function ToastContainer"
   - Używane w `AppLayout.tsx` - OK
 
 **Uwagi**:
+
 - createPortal usage - OK
 - useState for mount check - OK (SSR safety)
 - Animation states - OK (isExiting)
@@ -168,6 +193,7 @@ const { id } = Astro.params; // ✅ Pobieranie ID z URL
 ## 🔄 INTEGRACJA Z ISTNIEJĄCYM KODEM
 
 ### ✅ `AppLayout.tsx`
+
 **Status**: ✅ Integracja poprawna
 
 ```typescript
@@ -182,14 +208,17 @@ const { id } = Astro.params; // ✅ Pobieranie ID z URL
 ---
 
 ### ⚠️ `AuthForm.tsx`
+
 **Status**: ❌ BŁĄD KOMPILACJI
 
 **Problemy**:
+
 1. 🔴 Niepoprawny import Supabase (patrz sekcja KRYTYCZNE BŁĘDY)
 2. ⚠️ Warning: 'throw' of exception caught locally (linie 53, 75)
    - To normalne - try/catch pattern jest OK
 
 **Wymagane zmiany**:
+
 ```typescript
 // PRZED:
 import { supabase } from "@/db/supabase.client";
@@ -209,10 +238,11 @@ supabase.auth.signInWithPassword → supabaseClient.auth.signInWithPassword
 ### 🔴 Priorytet 1 (Krytyczne - blokujące)
 
 1. **Napraw import Supabase w AuthForm.tsx**
+
    ```typescript
    - import { supabase } from "@/db/supabase.client";
    + import { supabaseClient } from "@/db/supabase.client";
-   
+
    // Zamień wszystkie użycia:
    - await supabase.auth.signUp(...)
    + await supabaseClient.auth.signUp(...)
@@ -223,10 +253,11 @@ supabase.auth.signInWithPassword → supabaseClient.auth.signInWithPassword
 ### 🟡 Priorytet 2 (Ważne - nie blokujące)
 
 2. **Napraw formatowanie (CRLF → LF)**
+
    ```bash
    # W terminalu projektu:
    npm run format
-   
+
    # Lub jeśli nie działa:
    npx prettier --write "src/**/*.{ts,tsx,astro}"
    ```
@@ -237,15 +268,16 @@ supabase.auth.signInWithPassword → supabaseClient.auth.signInWithPassword
 
 3. **Usuń niewykorzystane console.log** (jeśli są)
 4. **Dodaj .editorconfig** do projektu:
+
    ```ini
    # .editorconfig
    root = true
-   
+
    [*]
    end_of_line = lf
    insert_final_newline = true
    charset = utf-8
-   
+
    [*.{ts,tsx,astro}]
    indent_style = space
    indent_size = 2
@@ -256,6 +288,7 @@ supabase.auth.signInWithPassword → supabaseClient.auth.signInWithPassword
 ## ✅ CO DZIAŁA POPRAWNIE
 
 ### Architektura
+
 - ✅ Struktura folderów logiczna
 - ✅ Separation of concerns
 - ✅ React Context pattern
@@ -263,12 +296,14 @@ supabase.auth.signInWithPassword → supabaseClient.auth.signInWithPassword
 - ✅ Error boundaries
 
 ### TypeScript
+
 - ✅ Typy importowane poprawnie
 - ✅ Props interfaces zdefiniowane
 - ✅ Type safety w API calls
 - ✅ Brak błędów typu (poza importem Supabase)
 
 ### React Patterns
+
 - ✅ Hooks usage poprawny
 - ✅ useCallback dla optymalizacji
 - ✅ useState dla local state
@@ -276,12 +311,14 @@ supabase.auth.signInWithPassword → supabaseClient.auth.signInWithPassword
 - ✅ Conditional rendering
 
 ### Accessibility
+
 - ✅ ARIA attributes (aria-live, aria-label, role)
 - ✅ Keyboard support (ESC w modalach)
 - ✅ Semantic HTML
 - ✅ Focus management
 
 ### API Integration
+
 - ✅ Fetch functions z `api-service.ts`
 - ✅ Error handling
 - ✅ Loading states
@@ -292,12 +329,14 @@ supabase.auth.signInWithPassword → supabaseClient.auth.signInWithPassword
 ## 🧪 PLAN TESTOWANIA (Po poprawkach)
 
 ### 1. Kompilacja
+
 ```bash
 npm run build
 # Powinno przejść bez błędów
 ```
 
 ### 2. Development server
+
 ```bash
 npm run dev
 # Sprawdź:
@@ -307,6 +346,7 @@ npm run dev
 ```
 
 ### 3. Manualne testy
+
 - [ ] Full Detail View:
   - [ ] Otwórz `/event/rec_001` (lub inny ID)
   - [ ] Sprawdź czy renderuje EventHeader
@@ -328,6 +368,7 @@ npm run dev
 ## 📊 OCENA KOŃCOWA
 
 ### Kod Quality: 🟡 **7/10**
+
 - ✅ Architektura: 9/10
 - ❌ Kompilacja: 0/10 (błąd Supabase)
 - ⚠️ Formatowanie: 4/10 (CRLF)
@@ -335,6 +376,7 @@ npm run dev
 - ✅ Best Practices: 9/10
 
 ### Funkcjonalność: 🟢 **9/10**
+
 - ✅ Full Detail View: 9/10
 - ✅ Toast System: 10/10
 - ✅ API Integration: 9/10
@@ -343,6 +385,7 @@ npm run dev
 ### Gotowość: ⚠️ **NIE GOTOWE DO DEPLOY**
 
 **Powody**:
+
 1. 🔴 Błąd kompilacji (import Supabase) - MUST FIX
 2. 🟡 Formatowanie (fail CI/CD prettier check) - SHOULD FIX
 
@@ -351,6 +394,7 @@ npm run dev
 ## 🎯 KOLEJNE KROKI
 
 ### 1. Natychmiastowe (15 minut)
+
 ```bash
 # Napraw import Supabase
 # Uruchom prettier
@@ -361,11 +405,13 @@ npm run build
 ```
 
 ### 2. Krótkoterminowe (1 godzina)
+
 - Przetestuj wszystkie flow manualne
 - Sprawdź responsive design
 - Sprawdź browser compatibility
 
 ### 3. Przed kontynuacją Iteracji 2
+
 - ✅ Wszystkie błędy kompilacji naprawione
 - ✅ Prettier pass
 - ✅ Podstawowe testy działają
@@ -376,11 +422,13 @@ npm run build
 ## 📝 REKOMENDACJE
 
 ### Do natychmiastowego wdrożenia:
+
 1. **Napraw import Supabase** (5 min)
 2. **Uruchom prettier** (2 min)
 3. **Przetestuj build** (3 min)
 
 ### Do rozważenia:
+
 1. **Dodaj .editorconfig** - zapobiegnie CRLF w przyszłości
 2. **Pre-commit hook** - automatyczne formatowanie:
    ```bash
@@ -394,6 +442,7 @@ npm run build
 ## ✅ PODSUMOWANIE
 
 ### Plusy:
+
 - ✅ Świetna architektura
 - ✅ Właściwe użycie React patterns
 - ✅ Dobry error handling
@@ -401,10 +450,12 @@ npm run build
 - ✅ Type safety (prawie wszędzie)
 
 ### Minusy:
+
 - ❌ Błąd importu Supabase (krytyczny)
 - ⚠️ Formatowanie (blokuje CI/CD)
 
 ### Werdykt:
+
 **⚠️ Implementacja jest DOBRA, ale wymaga 2 szybkich poprawek przed kontynuacją.**
 
 Po naprawieniu błędu Supabase i uruchomieniu prettier, kod jest gotowy do użycia.
@@ -414,4 +465,3 @@ Po naprawieniu błędu Supabase i uruchomieniu prettier, kod jest gotowy do uży
 **Autor**: AI Code Review  
 **Data**: 2025-12-30  
 **Wersja raportu**: 1.0
-
