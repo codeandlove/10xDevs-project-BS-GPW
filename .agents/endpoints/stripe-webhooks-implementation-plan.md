@@ -424,7 +424,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...  # Different from STRIPE_SECRET_KEY
 
 1. Developers → Webhooks
 2. Add endpoint: `https://yourdomain.com/api/webhooks/stripe`
-3. Select events: customer.subscription._, invoice.payment\__
+3. Select events: customer.subscription.\_, invoice.payment\_\_
 4. Copy webhook signing secret → `.env`
 
 ### 6.5. RLS Bypass

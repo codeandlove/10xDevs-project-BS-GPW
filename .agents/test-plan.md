@@ -1520,4 +1520,4 @@ export default defineConfig({
 - [ ] Tech Lead
 - [ ] Dev Team Lead
 
-**Data zatwierdzenia:** ******\_\_\_******
+**Data zatwierdzenia:** **\*\***\_\_\_**\*\***
