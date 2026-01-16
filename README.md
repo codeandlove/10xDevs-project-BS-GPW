@@ -19,6 +19,7 @@ Black Swan Grid is a desktop-focused web application MVP that helps retail inves
 ## Tech stack
 
 **Frontend:**
+
 - Framework: Astro 5.x (SSR + Islands Architecture)
 - UI Library: React 19.x (functional components with hooks)
 - Language: TypeScript 5.8.x
@@ -27,12 +28,14 @@ Black Swan Grid is a desktop-focused web application MVP that helps retail inves
 - Virtualization: @tanstack/react-virtual
 
 **Backend & Services:**
+
 - Authentication: Supabase Auth
 - Database: Supabase PostgreSQL
 - Data Source: NocoDB API (historical data and AI summaries)
 - Payments: Stripe
 
 **Development & Build:**
+
 - Package Manager: npm
 - Linting: ESLint 9.x
 - Formatting: Prettier
@@ -112,17 +115,20 @@ npm run preview
 ## Available scripts
 
 **Development:**
+
 - `npm run dev` — Start Astro development server
 - `npm run build` — Build for production
 - `npm run preview` — Preview built site locally
 - `npm run astro` — Run Astro CLI
 
 **Code Quality:**
+
 - `npm run lint` — Run ESLint checks
 - `npm run lint:fix` — Run ESLint with auto-fix
 - `npm run format` — Run Prettier to format files
 
 **Testing:**
+
 - `npm run test` — Run Vitest in watch mode
 - `npm run test:unit` — Run unit tests once
 - `npm run test:watch` — Run unit tests in watch mode
@@ -164,6 +170,7 @@ npm run preview
 **Current stage**: ✅ MVP Complete - Production Ready
 
 **Implementation Status**:
+
 - ✅ Core architecture and configuration
 - ✅ Authentication and authorization middleware
 - ✅ Client-side cache with stale-while-revalidate strategy
@@ -179,6 +186,7 @@ npm run preview
 - ✅ CI/CD pipelines (GitHub Actions)
 
 **Key Metrics**:
+
 - Components: 45+ React components
 - Lines of Code: ~5000
 - TypeScript Errors: 0
@@ -187,6 +195,7 @@ npm run preview
 - Performance: Lighthouse 90+
 
 **Next Steps** (Post-MVP):
+
 - Server-side cache (Redis)
 - Production monitoring (Sentry/Datadog)
 - Mobile UI optimizations
@@ -196,12 +205,14 @@ npm run preview
 ## Testing
 
 **Unit Tests:**
+
 - Framework: Vitest with @vitest/ui
 - Libraries: @testing-library/react, @testing-library/user-event
 - Coverage: Available via `npm run test:coverage`
 - Location: Test files located alongside source files with `.test.ts` or `.test.tsx` extensions
 
 **E2E Tests:**
+
 - Framework: Playwright
 - Browser: Chromium (Desktop Chrome)
 - Accessibility: @axe-core/playwright integration
@@ -209,6 +220,7 @@ npm run preview
 - Test users: Create via `npm run test:e2e:setup`
 
 **Best Practices:**
+
 - Follow existing code style (ESLint + Prettier)
 - Run lint and format before committing: `npm run lint` and `npm run format`
 - Write tests for new features
@@ -221,6 +233,7 @@ npm run preview
 The project uses GitHub Actions for continuous integration and deployment:
 
 **Pull Request Workflow** (`.github/workflows/pull-request.yml`):
+
 - **Triggered on**: Pull requests to `master` branch
 - **Jobs**:
   1. **Lint**: Runs ESLint checks on codebase
@@ -230,10 +243,12 @@ The project uses GitHub Actions for continuous integration and deployment:
 - **Artifacts**: Uploads coverage reports and test results
 
 **Master Merge Workflow** (`.github/workflows/master-merge.yml`):
+
 - **Triggered on**: Push to `master` branch
 - Handles deployment to production environment
 
 **Required Secrets**:
+
 - `PUBLIC_SUPABASE_URL`
 - `PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -264,6 +279,7 @@ No license specified. Please add a LICENSE file (for example: MIT) if you want t
 ---
 
 **For more information:**
+
 - Check `/docs` folder for detailed implementation documentation
 - Review `.github/prompts` for code generation templates
 - See `/.agents` for AI agent configurations

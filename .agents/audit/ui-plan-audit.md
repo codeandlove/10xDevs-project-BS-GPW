@@ -7,6 +7,7 @@ Zakres analizy: Kompletna analiza implementacji komponentów UI względem planu 
 ## 1. Podsumowanie wykonawcze
 
 ### 1.1. Statystyki pokrycia
+
 - Elementy zaplanowane: 47 komponentów/widoków
 - Elementy zaimplementowane: 42 (89%)
 - Elementy częściowo zaimplementowane: 3 (6%)
@@ -14,9 +15,11 @@ Zakres analizy: Kompletna analiza implementacji komponentów UI względem planu 
 - Elementy dodatkowe (poza planem): 5
 
 ### 1.2. Ogólna ocena
+
 ZAAWANSOWANA - Większość kluczowych komponentów UI została zaimplementowana zgodnie z planem. Grid z wirtualizacją działa, system autoryzacji funkcjonuje, komponenty shadcn/ui zintegrowane. Pozostały drobne niedociągnięcia w zakresie keyboard navigation i niektórych filtrów.
 
 ### 1.3. Kluczowe ustalenia
+
 1. Grid z wirtualizacją (@tanstack/react-virtual) został w pełni zaimplementowany i działa wydajnie dla zbiorów 1000+ rekordów
 2. System autoryzacji Supabase zintegrowany, działa z React Context i Toast notifications
 3. Komponenty shadcn/ui (Button, Dialog, Drawer, Badge, Card, Skeleton) wdrożone i używane konsekwentnie
@@ -24,6 +27,7 @@ ZAAWANSOWANA - Większość kluczowych komponentów UI została zaimplementowana
 5. Routing działa ale nie użyto TanStack Router (zamiast tego Astro routing)
 
 ### 1.4. Priorytety działań
+
 1. CRITICAL: Dokończyć keyboard navigation w VirtualizedGrid (Arrow keys, Tab)
 2. MEDIUM: Zaimplementować brakujące filtry (EventTypeFilter, SortOptions)
 3. LOW: Rozważyć dodanie Error Boundary dla robustności
@@ -36,6 +40,7 @@ ZAAWANSOWANA - Większość kluczowych komponentów UI została zaimplementowana
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - Hero section z opisem produktu - ✅
 - Value proposition - ✅
 - CTA do rejestracji/logowania - ✅
@@ -43,17 +48,21 @@ ZAAWANSOWANA - Większość kluczowych komponentów UI została zaimplementowana
 - Komponenty: Hero.astro, Features.astro, CTAButtons.tsx, Header.astro - ⚠️ (różne nazwy)
 
 #### Lokalizacja w projekcie:
+
 - Pliki: src/pages/index.astro, src/components/landing/Hero.tsx (nie .astro)
 - Ścieżki: /
 
 #### Analiza szczegółowa:
+
 Landing page został zaimplementowany ale z innymi nazwami komponentów. Zamiast Hero.astro użyto Hero.tsx (React island). Główne funkcjonalności obecne - opis produktu, CTA buttons, informacje o trialu. Semantyczny HTML zastosowany poprawnie.
 
 #### Zidentyfikowane problemy:
+
 - MINOR: Komponenty nazwane inaczej niż w planie (Hero.tsx zamiast Hero.astro)
 - INFO: Nie znaleziono oddzielnego Features.astro - może być wbudowany inline
 
 #### Rekomendacje:
+
 - Zachować istniejącą implementację (działa poprawnie)
 - Zaktualizować dokumentację jeśli nazwy się różnią od planu
 
@@ -62,6 +71,7 @@ Landing page został zaimplementowany ale z innymi nazwami komponentów. Zamiast
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - Email i hasło formularz - ✅
 - OAuth (opcjonalne) - ❌
 - Informacja o 7-dniowym trialu - ✅
@@ -70,7 +80,8 @@ Landing page został zaimplementowany ale z innymi nazwami komponentów. Zamiast
 - Komponenty: AuthForm.tsx, SupabaseAuthUI.tsx, PasswordReset.tsx - ⚠️
 
 #### Lokalizacja w projekcie:
-- Pliki: 
+
+- Pliki:
   - src/components/auth/AuthForm.tsx
   - src/components/auth/AuthPageWrapper.tsx
   - src/pages/auth/login.astro
@@ -78,9 +89,11 @@ Landing page został zaimplementowany ale z innymi nazwami komponentów. Zamiast
 - Ścieżki: /auth/login, /auth/register
 
 #### Analiza szczegółowa:
+
 System autoryzacji w pełni funkcjonalny. AuthForm.tsx obsługuje login i rejestrację z walidacją Zod. Integracja z Supabase Auth przez supabaseClient. Toast notifications dla feedback. AuthPageWrapper rozwiązuje problem Astro islands z React Context. ReturnUrl działa poprawnie przez middleware.
 
 Bezpieczeństwo:
+
 - ✅ HTTPS only (konfiguracja Supabase)
 - ✅ Walidacja email i hasła (Zod schema)
 - ✅ Clear error messages
@@ -88,11 +101,13 @@ Bezpieczeństwo:
 - ✅ Autocomplete attributes (email, current-password)
 
 #### Zidentyfikowane problemy:
+
 - MEDIUM: Brak komponentu PasswordReset.tsx (odzyskiwanie hasła)
 - LOW: Brak OAuth providers (opcjonalne w MVP)
 - FIXED: Błąd importu supabase → supabaseClient został naprawiony
 
 #### Rekomendacje:
+
 - Dodać flow odzyskiwania hasła (PasswordReset.tsx) w kolejnej iteracji
 - OAuth można dodać post-MVP
 
@@ -101,6 +116,7 @@ Bezpieczeństwo:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - Grid z osiami X=daty, Y=tickery - ✅
 - Kafelki z kolorowaniem wg typu zdarzenia - ✅
 - Virtualizacja (react-window lub @tanstack/react-virtual) - ✅ (@tanstack/react-virtual)
@@ -111,6 +127,7 @@ Bezpieczeństwo:
 - Komponenty: GridView.tsx, VirtualizedGrid.tsx, BasicGrid.tsx, GridCell.tsx - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/components/grid/GridView.tsx
   - src/components/grid/VirtualizedGrid.tsx
@@ -122,15 +139,18 @@ Bezpieczeństwo:
 - Ścieżki: /grid
 
 #### Analiza szczegółowa:
+
 Grid jest sercem aplikacji i został bardzo dobrze zaimplementowany. VirtualizedGrid używa @tanstack/react-virtual z row i column virtualization. Overscan ustawiony (3 rows, 5 cols) dla płynnego scroll. Auto-switch przy 100+ events działa poprawnie. Sticky header i left column zaimplementowane.
 
 Performance optimizations:
+
 - ✅ React.memo na GridCell
 - ✅ useCallback dla event handlers
 - ✅ useMemo dla computed values (dates, symbols grouping)
 - ✅ Virtual scrolling (tylko widoczne komórki renderowane)
 
 GridCell obsługuje:
+
 - ✅ Event type coloring (BLACK_SWAN_UP/DOWN, VOLATILITY_UP/DOWN, BIG_MOVE)
 - ✅ Percent change display
 - ✅ Empty cells dla braku zdarzeń
@@ -138,12 +158,14 @@ GridCell obsługuje:
 - ✅ Selection state (selectedEventId)
 
 #### Zidentyfikowane problemy:
+
 - MEDIUM: EventTypeFilter.tsx nie został zaimplementowany (multi-select event types)
 - MEDIUM: SortOptions.tsx nie został zaimplementowany (sortowanie po różnych kryteriach)
 - LOW: Keyboard navigation tylko częściowo - Enter i Escape działają, Arrow keys do dokończenia
 - INFO: DateRangePicker jest ale wymaga weryfikacji funkcjonalności
 
 #### Rekomendacje:
+
 - Dodać EventTypeFilter.tsx dla kompletności filtrowania
 - Dodać SortOptions.tsx (sortowanie po date, symbol, percent_change)
 - Dokończyć keyboard navigation w VirtualizedGrid (Arrow keys do nawigacji między komórkami)
@@ -154,6 +176,7 @@ GridCell obsługuje:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - Drawer 33% width - ✅
 - Event details (symbol, date, type, percent_change) - ✅
 - Pierwsze AI summary - ✅
@@ -162,28 +185,34 @@ GridCell obsługuje:
 - Komponenty: Sidebar.tsx, EventQuickView.tsx - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/components/grid/Sidebar.tsx
   - src/components/grid/EventQuickView.tsx
 - Ścieżki: N/A (overlay)
 
 #### Analiza szczegółowa:
+
 Sidebar używa shadcn/ui Drawer component z vaul library. Width 33% zaimplementowany przez CSS (max-w-md lub custom). EventQuickView wyświetla szczegóły zdarzenia: symbol, occurrence_date, event_type, percent_change, pierwsze AI summary z NocoDB. Link "Zobacz więcej" prowadzi do /event/[id]. Close button (X) w nagłówku Drawer.
 
 Accessibility:
+
 - ✅ ARIA attributes (role="dialog", aria-modal)
 - ✅ Focus trap w Drawer
 - ✅ Keyboard: Escape zamyka
 - ✅ Overlay click zamyka
 
 Performance:
+
 - ✅ Cache dla event details (stale-while-revalidate)
 - ✅ Loading state dla fetch
 
 #### Zidentyfikowane problemy:
+
 - Brak istotnych problemów
 
 #### Rekomendacje:
+
 - Wszystko działa zgodnie z planem
 
 ### 2.5. Full Detail View (Event Page)
@@ -191,6 +220,7 @@ Performance:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - Dedykowana strona /event/:id - ✅
 - Lista wszystkich AI summaries - ✅
 - Lista artykułów źródłowych - ✅
@@ -198,6 +228,7 @@ Performance:
 - Komponenty: EventDetailPage.tsx, SummaryList.tsx, ArticleList.tsx - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/pages/event/[id].astro
   - src/components/event/EventDetailPage.tsx (❓ nie znaleziono)
@@ -206,9 +237,11 @@ Performance:
 - Ścieżki: /event/[id]
 
 #### Analiza szczegółowa:
+
 Pełny widok zdarzenia działa przez dynamic routing Astro (/event/[id].astro). Strona wyświetla event details, wszystkie AI summaries (nie tylko pierwsze), artykuły źródłowe z linkami. Back navigation przez browser history lub przycisk "Wróć". API integration z fetchEventDetails i fetchSummaries.
 
 Features:
+
 - ✅ Dynamic routing
 - ✅ API integration (NocoDB)
 - ✅ Loading states
@@ -218,10 +251,12 @@ Features:
 - ✅ Accessibility (ARIA)
 
 #### Zidentyfikowane problemy:
+
 - INFO: Komponenty mogą być inline w [id].astro zamiast oddzielnych SummaryList.tsx, ArticleList.tsx
 - LOW: Nie zweryfikowano Error Boundary dla tego widoku
 
 #### Rekomendacje:
+
 - Sprawdzić czy Error Boundary opakowuje EventDetailPage
 - Jeśli komponenty są inline, rozważyć ekstrakcję dla reużywalności
 
@@ -230,6 +265,7 @@ Features:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - ToastContext + ToastProvider - ✅
 - ToastContainer (Portal) - ✅
 - 4 typy (success, error, warning, info) - ✅
@@ -238,6 +274,7 @@ Features:
 - Stack multiple toasts - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/contexts/ToastContext.tsx
   - src/components/ui/ToastContainer.tsx
@@ -246,20 +283,24 @@ Features:
   - src/components/auth/AuthPageWrapper.tsx
 
 #### Analiza szczegółowa:
+
 System toast notifications w pełni funkcjonalny. ToastContext zarządza stanem toastów. ToastContainer renderuje przez React Portal (z-index wysoki dla overlay). Obsługuje 4 typy z różnymi kolorami i ikonami. Auto-dismiss z konfigurowalnym duration. Manual close przez przycisk X. Stack multiple toasts pionowo.
 
 Bugfix Astro Islands:
 Oryginalnie był problem z wieloma React islands - ToastContext nie działał między AuthForm a ToastContainer. Rozwiązano przez AuthPageWrapper który opakowuje wszystko w jedną wyspę.
 
 Accessibility:
+
 - ✅ aria-live="polite" lub "assertive"
 - ✅ role="alert"
 - ✅ Focus management
 
 #### Zidentyfikowane problemy:
+
 - FIXED: Błąd z wieloma Astro islands został naprawiony (AuthPageWrapper pattern)
 
 #### Rekomendacje:
+
 - Wszystko działa poprawnie
 
 ### 2.7. Komponenty shadcn/ui
@@ -267,6 +308,7 @@ Accessibility:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - Button - ✅
 - Dialog - ✅
 - Dropdown Menu - ✅
@@ -276,16 +318,20 @@ Accessibility:
 - Skeleton - ✅
 
 #### Lokalizacja w projekcie:
-- Pliki: src/components/ui/*.tsx
+
+- Pliki: src/components/ui/\*.tsx
 - components.json konfiguracja
 
 #### Analiza szczegółowa:
+
 Wszystkie podstawowe komponenty shadcn/ui zainstalowane i skonfigurowane. Używane konsekwentnie w całej aplikacji. Tailwind CSS 4.x styling. Komponenty dostosowane do projektu (kolory, spacing).
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Kontynuować użycie shadcn/ui dla consistency
 
 ## 3. Niezgodności i różnice
@@ -371,7 +417,9 @@ Brak krytycznych brakujących elementów. Wszystkie core features zaimplementowa
 ## 4. Analiza techniczna
 
 ### 4.1. Stack technologiczny
+
 ✅ Zgodność z tech-stack.md:
+
 - Framework: Astro 5.16.6 ✅
 - UI Library: React 19.1.1 ✅
 - Language: TypeScript 5.8.3 ✅
@@ -381,6 +429,7 @@ Brak krytycznych brakujących elementów. Wszystkie core features zaimplementowa
 - Auth: Supabase @supabase/supabase-js 2.87.1 ✅
 
 Zależności (package.json):
+
 - @tanstack/react-virtual: ^3.13.14 ✅
 - @use-gesture/react: ^10.3.1 ✅ (dla mobile drawer)
 - vaul: ^1.1.2 ✅ (drawer component)
@@ -392,38 +441,45 @@ Zależności (package.json):
 Kompletność definicji typów: ✅ DOBRA
 
 Pliki z typami:
+
 - src/types/nocodb.types.ts - EventType, DateRange, BlackSwanEventMinimal, BlackSwanEventDetailed
 - src/types/types.ts - UserProfileDTO, SubscriptionStatus, inne typy biznesowe
 - src/env.d.ts - Astro global types
 
 Zgodność z planem:
+
 - ✅ EventType = "BLACK_SWAN_UP" | "BLACK_SWAN_DOWN" | "VOLATILITY_UP" | "VOLATILITY_DOWN" | "BIG_MOVE"
 - ✅ DateRange = "week" | "month" | "quarter"
 - ✅ BlackSwanEventMinimal (id, symbol, occurrence_date, event_type, percent_change, open, high, low, close)
 - ✅ BlackSwanEventDetailed extends BlackSwanEventMinimal
 
 Type safety score: 9/10
+
 - TypeScript strict mode: ON (tsconfig.json)
 - 0 TypeScript errors w projekcie
 - Dobra typizacja props w komponentach React
 
 Drobne uwagi:
+
 - Niektóre komponenty mogą używać 'any' w miejscach (wymaga code review)
 
 ### 4.3. Obsługa błędów i walidacja
 
 Error handling patterns:
+
 - ✅ Try-catch w AuthForm.tsx (Supabase API calls)
 - ✅ Try-catch w fetch calls (API integration)
 - ✅ Error states w komponentach (isError, errorMessage)
 - ⚠️ Error Boundary - nie zweryfikowano
 
 Input validation:
+
 - ✅ Zod schemas w AuthForm.tsx (email, password validation)
 - ✅ Inline validation errors
 - ✅ Clear error messages dla użytkownika
 
 Error responses consistency:
+
 - ✅ Toast notifications dla feedback (success/error/warning/info)
 - ✅ Empty states w GridView i EventDetailPage
 - ✅ Loading states (Skeleton loaders)
@@ -431,38 +487,45 @@ Error responses consistency:
 ### 4.4. Bezpieczeństwo
 
 Autoryzacja i uwierzytelnianie:
+
 - ✅ Supabase Auth integration
 - ✅ Middleware guard dla protected routes (/grid, /event/[id])
 - ✅ Session management przez Supabase
 - ✅ ReturnUrl dla deep linking po logowaniu
 
 Walidacja danych wejściowych:
+
 - ✅ Zod validation dla form inputs (email, password)
 - ✅ Supabase RLS policies (baza danych)
 - ✅ Server-side validation w API endpoints (Astro API routes)
 
 Secrets management:
+
 - ✅ Environment variables (.env, .env.example)
-- ✅ PUBLIC_* prefix dla client-side vars
+- ✅ PUBLIC\_\* prefix dla client-side vars
 - ✅ Service role keys tylko server-side
 - ✅ .gitignore dla .env
 
 Rate limiting:
+
 - ❌ Nie zweryfikowano (może być poza MVP scope)
 
 HTTPS:
+
 - ✅ Supabase hosted (HTTPS enforced)
 - Production deployment - wymaga weryfikacji HTTPS na DigitalOcean
 
 ### 4.5. Testy
 
 Unit tests:
+
 - Framework: Vitest ✅
 - Coverage: Comprehensive manual testing (według docs)
 - Lokalizacja: Testy obok source files (.test.ts, .test.tsx)
 - Status: ✅ Testy dla kluczowych modułów (auth, api-client, cache, rate-limiter)
 
 E2E tests:
+
 - Framework: Playwright ✅
 - Browser: Chromium ✅
 - Accessibility: @axe-core/playwright ✅
@@ -470,10 +533,12 @@ E2E tests:
 - Status: ✅ Tests dla auth.spec.ts, grid.spec.ts, sidebar.spec.ts
 
 Test coverage dla UI components:
+
 - ⚠️ Nie zweryfikowano pokrycia unit tests dla komponentów React
 - Zalecenie: Dodać testy dla GridView, VirtualizedGrid, Sidebar, AuthForm
 
 Jakość testów:
+
 - ✅ E2E tests mają clear assertions
 - ✅ Test users creation (e2e/setup/create-test-users.ts)
 - ✅ Helper functions (e2e/helpers/auth.helper.ts)
@@ -481,28 +546,33 @@ Jakość testów:
 ### 4.6. Dostępność (dla UI)
 
 ARIA attributes:
+
 - ✅ AuthForm: aria-invalid, aria-describedby dla validation errors
 - ✅ Sidebar/Drawer: role="dialog", aria-modal
 - ✅ Toast: aria-live, role="alert"
 - ✅ Buttons: aria-label gdzie potrzebne
 
 Keyboard navigation:
+
 - ✅ AuthForm: Tab order, Enter to submit
 - ✅ Drawer: Escape to close, focus trap
 - ⚠️ Grid: Enter i Escape działają, Arrow keys do dokończenia
 - ✅ Buttons/Links: focusable, keyboard accessible
 
 Focus management:
+
 - ✅ Drawer focus trap
 - ✅ Modal focus trap
 - ⚠️ Grid focusedCell state - częściowo zaimplementowany
 
 Semantic HTML:
+
 - ✅ section, header, nav, main, article w strukturze
 - ✅ button zamiast div z onClick
 - ✅ form element dla AuthForm
 
 WCAG compliance:
+
 - Target: WCAG AAA standard (według docs COMPLETE_IMPLEMENTATION_SUMMARY.md)
 - Status: ✅ Podstawowe wymagania spełnione
 - Kontrasty kolorów: Wymaga manual verification z Colour Contrast Analyzer
@@ -511,12 +581,14 @@ WCAG compliance:
 ### 4.7. Performance
 
 Optimizations:
+
 - ✅ React.memo na GridCell
 - ✅ useCallback dla event handlers w VirtualizedGrid
 - ✅ useMemo dla computed values (dates, symbols grouping)
 - ✅ Lazy loading nie zweryfikowano (Astro może to robić automatycznie)
 
 Virtualization:
+
 - ✅ @tanstack/react-virtual dla Grid
 - ✅ Row virtualization (symbols)
 - ✅ Column virtualization (dates)
@@ -525,15 +597,18 @@ Virtualization:
 - Performance: 10x faster dla dużych zbiorów (według docs)
 
 Bundle size:
+
 - ⚠️ Nie zweryfikowano bundle size
 - Zalecenie: Uruchomić npm run build i sprawdzić output size
 
 Loading states:
+
 - ✅ Skeleton loaders dla Grid
 - ✅ Loading states w AuthForm
 - ✅ Loading states w EventDetailPage
 
 Lighthouse score:
+
 - Target: 90+ (według docs COMPLETE_IMPLEMENTATION_SUMMARY.md)
 - Status: Wymaga verification
 
@@ -542,6 +617,7 @@ Lighthouse score:
 ### 5.1. Zgodność ze standardami
 
 ESLint:
+
 - ✅ ESLint 9.23.0 skonfigurowany
 - ✅ @typescript-eslint/eslint-plugin
 - ✅ eslint-plugin-react, eslint-plugin-react-hooks
@@ -550,11 +626,13 @@ ESLint:
 - Status: 0 ESLint errors (według docs)
 
 Prettier:
+
 - ✅ Prettier skonfigurowany
 - ✅ prettier-plugin-astro
 - Status: Code sformatowany poprawnie
 
 Copilot-instructions.md adherence:
+
 - ✅ Functional components z hooks (nie class components)
 - ✅ React.memo dla expensive components (GridCell)
 - ✅ useCallback dla event handlers
@@ -565,6 +643,7 @@ Copilot-instructions.md adherence:
 - ✅ shadcn/ui components
 
 Code organization:
+
 - ✅ src/components/ - komponenty pogrupowane logicznie (auth, grid, ui, event)
 - ✅ src/pages/ - routing structure clear
 - ✅ src/contexts/ - React contexts
@@ -575,6 +654,7 @@ Code organization:
 ### 5.2. Best practices
 
 React patterns:
+
 - ✅ Functional components
 - ✅ Custom hooks (useToast)
 - ✅ Context API dla global state (AuthContext, ToastContext)
@@ -582,6 +662,7 @@ React patterns:
 - ✅ Controlled components w forms
 
 Astro patterns:
+
 - ✅ Islands architecture (client:load directives)
 - ✅ SSR dla pages
 - ✅ .astro components dla static layout
@@ -589,6 +670,7 @@ Astro patterns:
 - ⚠️ Astro Islands problem (wielokrotne islands) - rozwiązany przez AuthPageWrapper pattern
 
 Clean code:
+
 - ✅ Descriptive names (GridView, VirtualizedGrid, EventQuickView)
 - ✅ Single Responsibility Principle (komponenty małe, focused)
 - ✅ DRY - utility functions w lib/
@@ -597,11 +679,13 @@ Clean code:
 ### 5.3. Dokumentacja
 
 Code comments:
+
 - ✅ JSDoc comments w kluczowych komponentach (VirtualizedGrid.tsx, AuthForm.tsx)
 - ✅ Inline comments dla złożonej logiki
 - ✅ TODO comments gdzie potrzebne
 
 README completeness:
+
 - ✅ README.md comprehensive (według poprzedniego audytu)
 - ✅ Tech stack
 - ✅ Getting started
@@ -610,10 +694,12 @@ README completeness:
 - ✅ CI/CD
 
 API documentation:
+
 - ⚠️ Brak dedykowanej API documentation (Swagger/OpenAPI)
 - Dla MVP może być wystarczająca dokumentacja w plikach .agents/api-plan.md
 
 Docs folder:
+
 - ✅ 15+ plików dokumentacji w /docs
 - ✅ COMPLETE_IMPLEMENTATION_SUMMARY.md
 - ✅ FINAL_VERIFICATION_REPORT.md
@@ -622,32 +708,32 @@ Docs folder:
 
 ## 6. Mapa różnic (szczegółowa)
 
-| Element planu | Status | Lokalizacja | Uwagi |
-|--------------|--------|-------------|-------|
-| Landing View | ✅ | src/pages/index.astro | OK, różne nazwy komponentów |
-| Hero.astro | ⚠️ | Hero.tsx (React island) | Inne podejście ale działa |
-| Features.astro | ⚠️ | Inline? | Nie znaleziono oddzielnego pliku |
-| CTAButtons.tsx | ✅ | Inline w Hero | OK |
-| Auth View | ✅ | src/pages/auth/*.astro | OK |
-| AuthForm.tsx | ✅ | src/components/auth/AuthForm.tsx | OK |
-| AuthPageWrapper.tsx | ✅ | src/components/auth/AuthPageWrapper.tsx | Dodatkowy (rozwiązanie problemu islands) |
-| PasswordReset.tsx | ❌ | - | Brak implementacji |
-| Grid View | ✅ | src/pages/grid.astro, src/components/grid/ | OK |
-| GridView.tsx | ✅ | src/components/grid/GridView.tsx | OK |
-| VirtualizedGrid.tsx | ✅ | src/components/grid/VirtualizedGrid.tsx | OK, @tanstack/react-virtual |
-| BasicGrid.tsx | ✅ | (założenie) | OK |
-| GridCell.tsx | ✅ | src/components/grid/GridCell.tsx | OK, React.memo |
-| DateRangePicker.tsx | ✅ | src/components/grid/DateRangePicker.tsx | Do weryfikacji funkcjonalności |
-| EventTypeFilter.tsx | ❌ | - | Brak implementacji |
-| SortOptions.tsx | ❌ | - | Brak implementacji |
-| Keyboard navigation (Arrow keys) | ⚠️ | VirtualizedGrid.tsx | Częściowo (Enter/Escape OK, Arrow keys brak) |
-| Sidebar | ✅ | src/components/grid/Sidebar.tsx | OK |
-| EventQuickView.tsx | ✅ | src/components/grid/EventQuickView.tsx | OK |
-| Full Detail View | ✅ | src/pages/event/[id].astro | OK |
-| Toast System | ✅ | src/contexts/ToastContext.tsx, src/components/ui/ToastContainer.tsx | OK |
-| shadcn/ui components | ✅ | src/components/ui/*.tsx | OK |
-| TanStack Router | ❌ | - | Zastąpione Astro routing (akceptowalne) |
-| Error Boundary | ⚠️ | - | Nie zweryfikowano |
+| Element planu                    | Status | Lokalizacja                                                         | Uwagi                                        |
+| -------------------------------- | ------ | ------------------------------------------------------------------- | -------------------------------------------- |
+| Landing View                     | ✅     | src/pages/index.astro                                               | OK, różne nazwy komponentów                  |
+| Hero.astro                       | ⚠️     | Hero.tsx (React island)                                             | Inne podejście ale działa                    |
+| Features.astro                   | ⚠️     | Inline?                                                             | Nie znaleziono oddzielnego pliku             |
+| CTAButtons.tsx                   | ✅     | Inline w Hero                                                       | OK                                           |
+| Auth View                        | ✅     | src/pages/auth/\*.astro                                             | OK                                           |
+| AuthForm.tsx                     | ✅     | src/components/auth/AuthForm.tsx                                    | OK                                           |
+| AuthPageWrapper.tsx              | ✅     | src/components/auth/AuthPageWrapper.tsx                             | Dodatkowy (rozwiązanie problemu islands)     |
+| PasswordReset.tsx                | ❌     | -                                                                   | Brak implementacji                           |
+| Grid View                        | ✅     | src/pages/grid.astro, src/components/grid/                          | OK                                           |
+| GridView.tsx                     | ✅     | src/components/grid/GridView.tsx                                    | OK                                           |
+| VirtualizedGrid.tsx              | ✅     | src/components/grid/VirtualizedGrid.tsx                             | OK, @tanstack/react-virtual                  |
+| BasicGrid.tsx                    | ✅     | (założenie)                                                         | OK                                           |
+| GridCell.tsx                     | ✅     | src/components/grid/GridCell.tsx                                    | OK, React.memo                               |
+| DateRangePicker.tsx              | ✅     | src/components/grid/DateRangePicker.tsx                             | Do weryfikacji funkcjonalności               |
+| EventTypeFilter.tsx              | ❌     | -                                                                   | Brak implementacji                           |
+| SortOptions.tsx                  | ❌     | -                                                                   | Brak implementacji                           |
+| Keyboard navigation (Arrow keys) | ⚠️     | VirtualizedGrid.tsx                                                 | Częściowo (Enter/Escape OK, Arrow keys brak) |
+| Sidebar                          | ✅     | src/components/grid/Sidebar.tsx                                     | OK                                           |
+| EventQuickView.tsx               | ✅     | src/components/grid/EventQuickView.tsx                              | OK                                           |
+| Full Detail View                 | ✅     | src/pages/event/[id].astro                                          | OK                                           |
+| Toast System                     | ✅     | src/contexts/ToastContext.tsx, src/components/ui/ToastContainer.tsx | OK                                           |
+| shadcn/ui components             | ✅     | src/components/ui/\*.tsx                                            | OK                                           |
+| TanStack Router                  | ❌     | -                                                                   | Zastąpione Astro routing (akceptowalne)      |
+| Error Boundary                   | ⚠️     | -                                                                   | Nie zweryfikowano                            |
 
 ## 7. Rekomendacje i plan działania
 
@@ -747,6 +833,7 @@ Docs folder:
 ### 8.1. Lista przeanalizowanych plików
 
 Pliki źródłowe:
+
 - src/pages/index.astro
 - src/pages/auth/login.astro
 - src/pages/auth/register.astro
@@ -775,6 +862,7 @@ Pliki źródłowe:
 - src/lib/ui-utils.ts
 
 Pliki konfiguracyjne:
+
 - package.json
 - tsconfig.json
 - astro.config.mjs
@@ -783,6 +871,7 @@ Pliki konfiguracyjne:
 - .prettierrc.json
 
 Pliki dokumentacji:
+
 - docs/COMPLETE_IMPLEMENTATION_SUMMARY.md
 - docs/FINAL_VERIFICATION_REPORT.md
 - docs/ITERATION_2_FINAL_REPORT.md
@@ -791,6 +880,7 @@ Pliki dokumentacji:
 - docs/UI_IMPLEMENTATION_STATUS.md
 
 Pliki testowe:
+
 - e2e/auth.spec.ts
 - e2e/grid.spec.ts
 - e2e/sidebar.spec.ts
@@ -801,6 +891,7 @@ Pliki testowe:
 #### 1. VirtualizedGrid - Keyboard navigation (Arrow keys)
 
 Obecny kod (src/components/grid/VirtualizedGrid.tsx):
+
 ```typescript
 // Keyboard navigation state
 const [focusedCell, setFocusedCell] = useState<{ symbolIndex: number; dateIndex: number } | null>(null);
@@ -810,6 +901,7 @@ const [focusedCell, setFocusedCell] = useState<{ symbolIndex: number; dateIndex:
 ```
 
 Sugerowana poprawka:
+
 ```typescript
 const handleKeyDown = useCallback(
   (e: React.KeyboardEvent) => {
@@ -863,6 +955,7 @@ const handleKeyDown = useCallback(
 #### 2. EventTypeFilter.tsx - Brakująca implementacja
 
 Utworzyć nowy plik: src/components/grid/EventTypeFilter.tsx
+
 ```typescript
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -924,6 +1017,7 @@ export function EventTypeFilter({ selectedTypes, onFilterChange }: EventTypeFilt
 #### 3. SortOptions.tsx - Brakująca implementacja
 
 Utworzyć nowy plik: src/components/grid/SortOptions.tsx
+
 ```typescript
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -991,4 +1085,3 @@ function getSortLabel(field: SortField, order: SortOrder): string {
 ---
 
 Koniec raportu audytu UI Plan.
-

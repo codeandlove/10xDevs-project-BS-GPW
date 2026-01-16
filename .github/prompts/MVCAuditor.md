@@ -73,6 +73,7 @@ Zakres analizy: {{scope-description}}
 ## 1. Podsumowanie wykonawcze
 
 ### 1.1. Statystyki pokrycia
+
 - Elementy zaplanowane: X
 - Elementy zaimplementowane: Y (Z%)
 - Elementy częściowo zaimplementowane: N
@@ -80,12 +81,15 @@ Zakres analizy: {{scope-description}}
 - Elementy dodatkowe (poza planem): P
 
 ### 1.2. Ogólna ocena
+
 [Krótka ocena stanu implementacji: KOMPLETNA | ZAAWANSOWANA | W TRAKCIE | POCZĄTKOWA]
 
 ### 1.3. Kluczowe ustalenia
+
 [3-5 najważniejszych wniosków z audytu]
 
 ### 1.4. Priorytety działań
+
 [Lista najbardziej krytycznych elementów do uzupełnienia]
 
 ## 2. Szczegółowa analiza pokrycia
@@ -97,78 +101,95 @@ Zakres analizy: {{scope-description}}
 #### Status: [✅ KOMPLETNY | ⚠️ CZĘŚCIOWY | ❌ BRAK IMPLEMENTACJI]
 
 #### Planowane elementy:
+
 - [Element 1] - Status
 - [Element 2] - Status
 - [Element N] - Status
 
 #### Lokalizacja w projekcie:
+
 - Pliki: [lista plików]
 - Ścieżki: [lista ścieżek]
 
 #### Analiza szczegółowa:
+
 [Szczegółowy opis co zostało zaimplementowane, jak działa, co działa dobrze]
 
 #### Zidentyfikowane problemy:
+
 - [Problem 1: opis + severity + lokalizacja]
 - [Problem 2: opis + severity + lokalizacja]
 
 #### Rekomendacje:
+
 - [Akcja 1: co zrobić, gdzie, jak]
 - [Akcja 2: co zrobić, gdzie, jak]
 
 ## 3. Niezgodności i różnice
 
 ### 3.1. Brakujące elementy (❌ CRITICAL)
+
 [Lista elementów zaplanowanych ale niezaimplementowanych - priorytet wysoki]
 
 ### 3.2. Niepełne implementacje (⚠️ MEDIUM)
+
 [Lista elementów częściowo zaimplementowanych - wymagają uzupełnienia]
 
 ### 3.3. Niezgodności z planem (⚠️ MEDIUM)
+
 [Lista elementów zaimplementowanych inaczej niż w planie]
 
 ### 3.4. Odstępstwa od standardów (⚠️ LOW-MEDIUM)
+
 [Naruszenia copilot-instructions.md, tech-stack.md]
 
 ### 3.5. Elementy dodatkowe (ℹ️ INFO)
+
 [Implementacje nieobecne w planie - mogą być wartościowe lub niepotrzebne]
 
 ## 4. Analiza techniczna
 
 ### 4.1. Stack technologiczny
+
 - ✅/❌ Zgodność z tech-stack.md
 - Użyte technologie i wersje
 - Zależności (package.json analysis)
 
 ### 4.2. Typy i interfejsy (TypeScript)
+
 - Kompletność definicji typów
 - Zgodność z planem (DTO, modele, responses)
 - Type safety score
 
 ### 4.3. Obsługa błędów i walidacja
+
 - Error handling patterns
 - Input validation (Zod schemas)
 - Error responses consistency
 
 ### 4.4. Bezpieczeństwo
+
 - Autoryzacja i uwierzytelnianie
 - Walidacja danych wejściowych
 - Secrets management
 - Rate limiting (jeśli przewidziane)
 
 ### 4.5. Testy
+
 - Unit tests coverage
 - E2E tests coverage
 - Jakość testów (assertions, edge cases)
 - Brakujące testy
 
 ### 4.6. Dostępność (dla UI)
+
 - ARIA attributes
 - Keyboard navigation
 - Focus management
 - Semantic HTML
 
 ### 4.7. Performance
+
 - Optimizations (memo, useMemo, useCallback)
 - Virtualization (jeśli wymagana)
 - Bundle size considerations
@@ -177,16 +198,19 @@ Zakres analizy: {{scope-description}}
 ## 5. Jakość kodu
 
 ### 5.1. Zgodność ze standardami
+
 - ESLint/Prettier compliance
 - Copilot-instructions.md adherence
 - Code organization
 
 ### 5.2. Best practices
+
 - React patterns (hooks, functional components)
 - Astro patterns (islands, SSR)
 - Clean code principles
 
 ### 5.3. Dokumentacja
+
 - Code comments quality
 - README completeness
 - API documentation
@@ -195,38 +219,45 @@ Zakres analizy: {{scope-description}}
 
 [Tabela lub lista porównawcza plan vs. implementacja:]
 
-| Element planu | Status | Lokalizacja | Uwagi |
-|--------------|--------|-------------|-------|
-| [Element 1]  | ✅     | path/file   | OK    |
-| [Element 2]  | ⚠️     | path/file   | Niepełne: brak X |
-| [Element 3]  | ❌     | -           | Nie zaimplementowano |
+| Element planu | Status | Lokalizacja | Uwagi                |
+| ------------- | ------ | ----------- | -------------------- |
+| [Element 1]   | ✅     | path/file   | OK                   |
+| [Element 2]   | ⚠️     | path/file   | Niepełne: brak X     |
+| [Element 3]   | ❌     | -           | Nie zaimplementowano |
 
 ## 7. Rekomendacje i plan działania
 
 ### 7.1. Krytyczne (do natychmiastowej realizacji)
+
 - [ ] [Akcja 1: szczegółowy opis, szacowany effort]
 - [ ] [Akcja 2: szczegółowy opis, szacowany effort]
 
 ### 7.2. Ważne (do realizacji w najbliższym sprincie)
+
 - [ ] [Akcja 3: szczegółowy opis]
 - [ ] [Akcja 4: szczegółowy opis]
 
 ### 7.3. Opcjonalne (nice-to-have)
+
 - [ ] [Akcja 5: szczegółowy opis]
 - [ ] [Akcja 6: szczegółowy opis]
 
 ### 7.4. Sugerowane usprawnienia
+
 [Propozycje ulepszeń wykraczających poza plan - jeśli mają wartość biznesową]
 
 ## 8. Załączniki
 
 ### 8.1. Lista przeanalizowanych plików
+
 [Pełna lista plików źródłowych włączonych do audytu]
 
 ### 8.2. Fragmenty kodu wymagające uwagi
+
 [Snippety kodu z problemami + sugestie poprawek]
 
 ### 8.3. Metryki
+
 - LOC (lines of code)
 - Liczba komponentów/endpointów
 - Test coverage %

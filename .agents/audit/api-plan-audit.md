@@ -7,6 +7,7 @@ Zakres analizy: Kompletna analiza implementacji REST API względem planu archite
 ## 1. Podsumowanie wykonawcze
 
 ### 1.1. Statystyki pokrycia
+
 - Elementy zaplanowane: 12 endpointów + middleware + services
 - Elementy zaimplementowane: 11 (92%)
 - Elementy częściowo zaimplementowane: 0
@@ -14,9 +15,11 @@ Zakres analizy: Kompletna analiza implementacji REST API względem planu archite
 - Elementy dodatkowe (poza planem): 2
 
 ### 1.2. Ogólna ocena
+
 KOMPLETNA - Wszystkie kluczowe endpointy API zostały zaimplementowane zgodnie z planem. System zarządzania użytkownikami, subskrypcjami i webhookami Stripe działa w pełni. Middleware autoryzacji zaimplementowany. Rate limiting zaimplementowany. Serwisy wydzielone zgodnie z planem. Pozostał do zaimplementowania tylko PUT /api/users/me (update metadanych), który został zastąpiony przez PATCH.
 
 ### 1.3. Kluczowe ustalenia
+
 1. Wszystkie endpointy z Phase 1 (MVP Core) i Phase 2 (Subscription Flow) zostały zaimplementowane i działają
 2. Webhook Stripe z pełną idempotencją i signature verification działa prawidłowo
 3. Rate limiting zaimplementowany jako in-memory store z automatic cleanup
@@ -27,6 +30,7 @@ KOMPLETNA - Wszystkie kluczowe endpointy API zostały zaimplementowane zgodnie z
 8. Error handling z custom error classes (SubscriptionError, StripeError, UserNotFoundError, etc.)
 
 ### 1.4. Priorytety działań
+
 1. MEDIUM: Rozważyć zmianę PATCH /api/users/me na PUT zgodnie z planem (lub zaktualizować plan)
 2. LOW: Dodać E2E testy dla endpointów API (obecnie tylko manual testing)
 3. LOW: Implementacja DELETE /api/users/me może wymagać async job do cancelowania Stripe subscription
@@ -39,12 +43,14 @@ KOMPLETNA - Wszystkie kluczowe endpointy API zostały zaimplementowane zgodnie z
 #### Status: ✅ KOMPLETNY (z drobną różnicą: PATCH zamiast PUT)
 
 #### Planowane elementy:
+
 - POST /api/users/initialize - ✅ Zaimplementowany
 - GET /api/users/me - ✅ Zaimplementowany
 - PUT /api/users/me - ⚠️ Zaimplementowany jako PATCH
 - DELETE /api/users/me - ✅ Zaimplementowany
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/pages/api/users/initialize.ts
   - src/pages/api/users/me.ts (GET, PATCH, DELETE)
@@ -55,6 +61,7 @@ KOMPLETNA - Wszystkie kluczowe endpointy API zostały zaimplementowane zgodnie z
 #### Analiza szczegółowa:
 
 POST /api/users/initialize:
+
 - ✅ Walidacja auth_uid (UUID format)
 - ✅ Tworzenie rekordu app_users z 7-dniowym trialem
 - ✅ Obsługa duplicate error (409 Conflict)
@@ -63,12 +70,14 @@ POST /api/users/initialize:
 - ✅ Error handling (400, 409, 500)
 
 GET /api/users/me:
+
 - ✅ Autoryzacja przez getAuthUid (Bearer token)
 - ✅ Zwraca pełny profil użytkownika
 - ✅ Response 200 OK
 - ✅ Error handling (401 Unauthorized, 404 Not Found, 500)
 
 PATCH /api/users/me (zamiast PUT):
+
 - ✅ Autoryzacja przez getAuthUid
 - ✅ Walidacja metadata (isValidMetadata)
 - ✅ Update metadata w bazie
@@ -78,6 +87,7 @@ PATCH /api/users/me (zamiast PUT):
 - ⚠️ Różnica: Plan zakładał PUT, implementacja używa PATCH (semantycznie bardziej poprawne dla partial update)
 
 DELETE /api/users/me:
+
 - ✅ Soft-delete (ustawia deleted_at)
 - ✅ Audit log
 - ✅ Response 200 OK z deleted_at timestamp
@@ -85,6 +95,7 @@ DELETE /api/users/me:
 - ℹ️ Uwaga z planu: "Should trigger async job to cancel Stripe subscription" - do weryfikacji czy zaimplementowane
 
 Zgodność z planem:
+
 - ✅ Wszystkie endpointy działają
 - ✅ Request/Response schemas zgodne
 - ✅ Error responses zgodne z planem
@@ -92,10 +103,12 @@ Zgodność z planem:
 - ⚠️ PATCH vs PUT - minor difference
 
 #### Zidentyfikowane problemy:
+
 - MINOR: PATCH zamiast PUT dla update metadata (semantycznie lepsze ale różni się od planu)
 - LOW: Nie zweryfikowano czy DELETE /api/users/me triggeruje cancelowanie Stripe subscription
 
 #### Rekomendacje:
+
 - Zaktualizować plan aby odzwierciedlał PATCH zamiast PUT (lub zmienić implementację na PUT jeśli potrzebny pełny replace)
 - Sprawdzić czy soft-delete wywołuje webhook do Stripe do cancelowania subscription
 - Dodać E2E test dla flow: register → initialize → get profile → update metadata → soft delete
@@ -105,11 +118,13 @@ Zgodność z planem:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - GET /api/subscriptions/status - ✅ Zaimplementowany
 - POST /api/subscriptions/create-checkout - ✅ Zaimplementowany
 - POST /api/subscriptions/create-portal - ✅ Zaimplementowany
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/pages/api/subscriptions/status.ts
   - src/pages/api/subscriptions/create-checkout.ts
@@ -124,6 +139,7 @@ Zgodność z planem:
 #### Analiza szczegółowa:
 
 GET /api/subscriptions/status:
+
 - ✅ Autoryzacja przez getAuthUid
 - ✅ Pobiera status subskrypcji z app_users
 - ✅ Kalkuluje has_access (trial lub active subscription)
@@ -131,6 +147,7 @@ GET /api/subscriptions/status:
 - ✅ Error handling (401, 500)
 
 POST /api/subscriptions/create-checkout:
+
 - ✅ Autoryzacja przez getAuthUidAndToken
 - ✅ Walidacja Zod (CreateCheckoutSchema: price_id, success_url, cancel_url)
 - ✅ URL whitelist validation (isAllowedUrl)
@@ -141,6 +158,7 @@ POST /api/subscriptions/create-checkout:
 - ✅ Custom errors (SubscriptionError, InvalidUrlError)
 
 POST /api/subscriptions/create-portal:
+
 - ✅ Autoryzacja przez getAuthUidAndToken
 - ✅ Walidacja Zod (CreatePortalSchema: return_url)
 - ✅ URL whitelist validation
@@ -149,6 +167,7 @@ POST /api/subscriptions/create-portal:
 - ✅ Error handling (400, 401, 404, 500)
 
 Zgodność z planem:
+
 - ✅ Wszystkie endpointy zgodne z planem
 - ✅ Request/Response schemas zgodne
 - ✅ Zod validation zgodna z planem
@@ -156,9 +175,11 @@ Zgodność z planem:
 - ✅ Business logic w SubscriptionService
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Wszystko działa zgodnie z planem
 - Dodać E2E testy dla subscription flow: status → create-checkout → webhook → status (sprawdzić zmianę statusu)
 
@@ -167,6 +188,7 @@ Zgodność z planem:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - POST /api/webhooks/stripe - ✅ Zaimplementowany
 - Signature verification - ✅
 - Idempotency - ✅
@@ -175,6 +197,7 @@ Zgodność z planem:
 - Audit trail (subscription_audit) - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/pages/api/webhooks/stripe.ts
 - Serwisy:
@@ -189,6 +212,7 @@ Zgodność z planem:
 #### Analiza szczegółowa:
 
 POST /api/webhooks/stripe:
+
 - ✅ Raw body parsing (wymagane dla signature verification)
 - ✅ Stripe signature verification (stripe.webhooks.constructEvent)
 - ✅ Error handling dla missing signature (400)
@@ -204,6 +228,7 @@ POST /api/webhooks/stripe:
 - ✅ Async processing pattern
 
 Zgodność z planem:
+
 - ✅ Signature verification
 - ✅ Idempotency (unique constraint na event_id)
 - ✅ Database logging
@@ -212,6 +237,7 @@ Zgodność z planem:
 - ✅ Security: webhook secret z environment variables
 
 WebhookService implementation:
+
 - ✅ processEvent method
 - ✅ recordWebhookEvent (logging do stripe_webhook_events)
 - ✅ updateUserSubscription (update app_users)
@@ -220,9 +246,11 @@ WebhookService implementation:
 - ✅ Error handling z custom errors
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Wszystko zaimplementowane zgodnie z planem
 - Dokumentacja webhook guide (docs/api/stripe-webhooks-guide.md) jest doskonała
 - Dodać E2E test dla webhook flow (może być challenge ze Stripe signature verification w testach)
@@ -232,11 +260,13 @@ WebhookService implementation:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - GET /api/nocodb/grid - ✅ Zaimplementowany
 - GET /api/nocodb/events/:id - ✅ Zaimplementowany
 - GET /api/nocodb/summaries - ✅ Zaimplementowany
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/pages/api/nocodb/grid.ts
   - src/pages/api/nocodb/events/[id].ts
@@ -253,6 +283,7 @@ WebhookService implementation:
 #### Analiza szczegółowa:
 
 GET /api/nocodb/grid:
+
 - ✅ Autoryzacja przez getAuthUid
 - ✅ Subscription check (active lub trial)
 - ✅ Rate limiting (60 req/min)
@@ -264,15 +295,17 @@ GET /api/nocodb/grid:
 - ✅ Rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset)
 
 GET /api/nocodb/events/:id:
+
 - ✅ Autoryzacja
 - ✅ Subscription check
 - ✅ Rate limiting
-- ✅ Walidacja event ID (rec_* format)
+- ✅ Walidacja event ID (rec\_\* format)
 - ✅ NocoDB integration
 - ✅ Response z BlackSwanEventDetailed + first AI summary + historic data
 - ✅ Error handling (401, 403, 429, 400, 404, 500)
 
 GET /api/nocodb/summaries:
+
 - ✅ Autoryzacja
 - ✅ Subscription check
 - ✅ Rate limiting
@@ -282,6 +315,7 @@ GET /api/nocodb/summaries:
 - ✅ Error handling (401, 403, 429, 400, 500)
 
 Zgodność z planem:
+
 - ✅ Wszystkie 3 endpointy proxy zaimplementowane
 - ✅ Rate limiting zgodnie z planem (60 req/min)
 - ✅ Subscription check przed dostępem
@@ -289,6 +323,7 @@ Zgodność z planem:
 - ✅ Security: NocoDB credentials tylko server-side
 
 NocoDBService:
+
 - ✅ fetchGridData
 - ✅ fetchEventDetails
 - ✅ fetchSummaries
@@ -296,14 +331,17 @@ NocoDBService:
 - ✅ NocoDB client encapsulation
 
 NocoDBClient:
+
 - ✅ get, post methods
 - ✅ Authentication (Bearer token)
 - ✅ Error handling
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Wszystko działa zgodnie z planem
 - Rate limiting działa in-memory - rozważyć Redis dla production scale (post-MVP)
 - Dodać E2E testy dla NocoDB endpoints
@@ -313,20 +351,23 @@ NocoDBClient:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - Middleware sprawdzający session - ✅
 - Middleware sprawdzający subscription - ✅
 - Protected routes (/grid, /summary, /event) - ✅
-- Public routes (/, /auth/*, /checkout) - ✅
+- Public routes (/, /auth/\*, /checkout) - ✅
 - Redirect to login z returnUrl - ✅
 - Redirect to 403 dla expired subscription - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/middleware/index.ts
 
 #### Analiza szczegółowa:
 
 Middleware implementation:
+
 - ✅ defineMiddleware z Astro
 - ✅ Protected routes list: ["/grid", "/summary", "/event"]
 - ✅ Public routes list: ["/", "/auth/login", "/auth/register", "/checkout", "/403", "/404", "/500"]
@@ -340,15 +381,18 @@ Middleware implementation:
 - ✅ Attach user i session do context.locals
 
 Zgodność z planem (api-plan.md sekcja 3.2):
+
 - ✅ Authorization strategy zgodna z planem
 - ✅ Protected routes wymagają auth + subscription
 - ✅ Public routes dostępne bez auth
 - ✅ Webhook endpoint skip middleware (ma własną autoryzację przez Stripe signature)
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Middleware działa zgodnie z planem
 - E2E testy dla middleware są w e2e/auth.spec.ts (sprawdzają redirect flow)
 
@@ -357,6 +401,7 @@ Zgodność z planem (api-plan.md sekcja 3.2):
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - UserService - ✅
 - SubscriptionService - ✅
 - WebhookService - ✅
@@ -364,6 +409,7 @@ Zgodność z planem (api-plan.md sekcja 3.2):
 - NocoDBService - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/services/user.service.ts
   - src/services/subscription.service.ts
@@ -379,6 +425,7 @@ Zgodność z planem (api-plan.md sekcja 3.2):
 #### Analiza szczegółowa:
 
 UserService:
+
 - ✅ initializeUser (create user z trialem)
 - ✅ getUserProfile
 - ✅ updateUserMetadata
@@ -387,6 +434,7 @@ UserService:
 - ✅ Unit tests
 
 SubscriptionService:
+
 - ✅ getSubscriptionStatus
 - ✅ createCheckoutSession (Stripe integration)
 - ✅ createPortalSession (Stripe integration)
@@ -398,6 +446,7 @@ SubscriptionService:
 - ✅ Custom error handling (SubscriptionError, StripeError, UserNotFoundError, DatabaseError)
 
 WebhookService:
+
 - ✅ processEvent (main entry point)
 - ✅ recordWebhookEvent (logging)
 - ✅ updateUserSubscription
@@ -410,11 +459,13 @@ WebhookService:
 - ✅ Unit tests
 
 AuditService:
+
 - ✅ logSubscriptionChange (zapisuje do subscription_audit)
 - ✅ Dependency injection
 - ✅ Unit tests
 
 NocoDBService:
+
 - ✅ fetchGridData
 - ✅ fetchEventDetails
 - ✅ fetchSummaries
@@ -422,15 +473,18 @@ NocoDBService:
 - ✅ Unit tests
 
 Zgodność z planem (api-plan.md sekcja 5.1):
+
 - ✅ Business logic wydzielona do services
 - ✅ Endpoints są cienką warstwą (routing, validation, auth)
 - ✅ Services testowalne unit tests
 - ✅ Dependency injection pattern
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Wszystkie serwisy zaimplementowane zgodnie z best practices
 - Unit tests coverage jest dobry
 - Rozważyć dodanie integration tests dla services
@@ -440,6 +494,7 @@ Zgodność z planem (api-plan.md sekcja 5.1):
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - Rate limiter implementation - ✅
 - 60 requests per minute per user - ✅
 - Sliding window - ✅
@@ -447,6 +502,7 @@ Zgodność z planem (api-plan.md sekcja 5.1):
 - 429 Too Many Requests response - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/lib/rate-limiter.ts
 - Testy:
@@ -455,22 +511,25 @@ Zgodność z planem (api-plan.md sekcja 5.1):
 #### Analiza szczegółowa:
 
 Rate Limiter implementation:
+
 - ✅ In-memory store (Map<userId, RateLimitEntry>)
 - ✅ Sliding window (60 requests per 60000ms)
 - ✅ checkRateLimit(userId, limit=60, windowMs=60000)
 - ✅ resetRateLimit(userId) dla testów
 - ✅ getRateLimitStatus(userId)
-- ✅ getRateLimitHeaders() - generuje X-RateLimit-* headers
+- ✅ getRateLimitHeaders() - generuje X-RateLimit-\* headers
 - ✅ Automatic cleanup (setInterval co 5 min usuwa expired entries)
 - ✅ Memory leak prevention
 
 Response headers:
+
 - ✅ X-RateLimit-Limit
 - ✅ X-RateLimit-Remaining
 - ✅ X-RateLimit-Reset
 - ✅ Retry-After (przy 429)
 
 Zgodność z planem (api-plan.md sekcja 4.2):
+
 - ✅ 60 requests per minute per user
 - ✅ Sliding window algorithm
 - ✅ Standard headers
@@ -478,14 +537,17 @@ Zgodność z planem (api-plan.md sekcja 4.2):
 - ✅ Per-user limiting (auth_uid)
 
 Użycie w endpointach:
+
 - ✅ /api/nocodb/grid
 - ✅ /api/nocodb/events/:id
 - ✅ /api/nocodb/summaries
 
 #### Zidentyfikowane problemy:
+
 - INFO: In-memory rate limiter może nie skalować się dla multi-instance deployment (post-MVP: Redis)
 
 #### Rekomendacje:
+
 - Rate limiter działa zgodnie z planem dla MVP
 - Unit tests pokrywają sliding window logic
 - Dla production multi-instance: rozważyć Redis-based rate limiting
@@ -495,6 +557,7 @@ Użycie w endpointach:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - User DTOs - ✅
 - Subscription DTOs - ✅
 - Webhook DTOs - ✅
@@ -502,6 +565,7 @@ Użycie w endpointach:
 - Database types - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/types/types.ts (User DTOs, exports)
   - src/types/subscription.types.ts
@@ -513,6 +577,7 @@ Użycie w endpointach:
 #### Analiza szczegółowa:
 
 User DTOs (types.ts):
+
 - ✅ InitializeUserDTO (auth_uid, email?)
 - ✅ InitializeUserResponseDTO
 - ✅ UserProfileDTO
@@ -521,6 +586,7 @@ User DTOs (types.ts):
 - ✅ SoftDeleteUserCommand
 
 Subscription DTOs (subscription.types.ts):
+
 - ✅ CreateCheckoutDTO (price_id, success_url, cancel_url)
 - ✅ CreatePortalDTO (return_url)
 - ✅ SubscriptionStatusDTO
@@ -529,6 +595,7 @@ Subscription DTOs (subscription.types.ts):
 - ✅ AppUserSubscriptionData (internal)
 
 Webhook DTOs (webhook.types.ts):
+
 - ✅ StripeWebhookEvent
 - ✅ WebhookEventType
 - ✅ WebhookProcessingResult
@@ -537,6 +604,7 @@ Webhook DTOs (webhook.types.ts):
 - ✅ ProcessEventResult
 
 NocoDB DTOs (nocodb.types.ts):
+
 - ✅ EventType enum
 - ✅ ArticleSentiment
 - ✅ DateRange
@@ -551,18 +619,22 @@ NocoDB DTOs (nocodb.types.ts):
 - ✅ SummariesResponse
 
 Database types:
+
 - ✅ database.types.ts generated from Supabase schema
 - ✅ Tables, Enums, Functions types
 
 Zgodność z planem (api-plan.md sekcja 3):
+
 - ✅ Wszystkie DTOs z planu zdefiniowane
 - ✅ Type safety przez TypeScript
 - ✅ Reużywalne types przez export/import
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Typy kompletne i dobrze zorganizowane
 - Database types są generowane automatycznie (dobra praktyka)
 
@@ -571,11 +643,13 @@ Zgodność z planem (api-plan.md sekcja 3):
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - User validation schemas - ✅
 - Subscription validation schemas - ✅
 - NocoDB validation schemas - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/lib/validation.ts (helpers: isUUID, isValidMetadata)
   - src/lib/subscription-validation.ts (CreateCheckoutSchema, CreatePortalSchema)
@@ -584,30 +658,36 @@ Zgodność z planem (api-plan.md sekcja 3):
 #### Analiza szczegółowa:
 
 Validation helpers:
+
 - ✅ isUUID(value) - UUID format check
 - ✅ isValidMetadata(value) - Record<string, unknown> check
 
 Subscription schemas:
+
 - ✅ CreateCheckoutSchema (price_id, success_url, cancel_url)
 - ✅ CreatePortalSchema (return_url)
 - ✅ Zod validation z clear error messages
 
 NocoDB schemas:
+
 - ✅ GridQuerySchema (range: week|month|quarter, symbols?, end_date?)
-- ✅ EventIdSchema (string starting with rec_)
+- ✅ EventIdSchema (string starting with rec\_)
 - ✅ SummariesQuerySchema (symbol, occurrence_date, event_type?)
 - ✅ EventType validation
 
 Zgodność z planem:
+
 - ✅ Plan zakładał Zod validation - zaimplementowane
 - ✅ Request body validation w endpointach
 - ✅ Query params validation w endpointach
 - ✅ Clear error messages (zodErrorsToArray utility)
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Validation schemas kompletne i dobrze zorganizowane
 - Zod error formatting (zodErrorsToArray) jest eleganckie
 
@@ -616,11 +696,13 @@ Zgodność z planem:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - Custom error classes - ✅
 - Standardized error responses - ✅
 - Error utilities - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/lib/errors.ts (SubscriptionError, StripeError, UserNotFoundError, DatabaseError, InvalidUrlError, RateLimitError)
   - src/lib/webhook-errors.ts (SignatureVerificationError, MissingSignatureError, EventProcessingError, WebhookDatabaseError)
@@ -629,6 +711,7 @@ Zgodność z planem:
 #### Analiza szczegółowa:
 
 Custom error classes:
+
 - ✅ SubscriptionError (message, code, statusCode, details?)
 - ✅ StripeError extends SubscriptionError
 - ✅ UserNotFoundError extends SubscriptionError
@@ -638,11 +721,13 @@ Custom error classes:
 - ✅ Webhook-specific errors (SignatureVerificationError, etc.)
 
 API utilities:
+
 - ✅ createSuccessResponse(data, status)
 - ✅ createErrorResponse(error, status, code?, details?)
 - ✅ zodErrorsToArray(fieldErrors) - formatuje Zod errors do array
 
 Error response format:
+
 ```json
 {
   "error": "Error message",
@@ -652,15 +737,18 @@ Error response format:
 ```
 
 Zgodność z planem (api-plan.md sekcja 4.1):
+
 - ✅ Standardized error format
 - ✅ HTTP status codes zgodne z planem
 - ✅ Error codes dla specific cases
 - ✅ Details array dla validation errors
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Error handling pattern jest spójny i dobrze zaprojektowany
 - Custom error classes ułatwiają debugging
 
@@ -669,6 +757,7 @@ Zgodność z planem (api-plan.md sekcja 4.1):
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - app_users table - ✅
 - stripe_webhook_events table - ✅
 - subscription_audit table - ✅
@@ -677,6 +766,7 @@ Zgodność z planem (api-plan.md sekcja 4.1):
 - Triggers - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - supabase/migrations/20251207120000_initial_subscription_schema.sql
   - supabase/migrations/20251227130000_add_rls_policies_app_users.sql (możliwe)
@@ -684,11 +774,13 @@ Zgodność z planem (api-plan.md sekcja 4.1):
 #### Analiza szczegółowa:
 
 Tables:
+
 - ✅ app_users (auth_uid PK, role, subscription_status, trial_expires_at, current_period_end, plan_id, stripe_customer_id, stripe_subscription_id, metadata JSONB, deleted_at, created_at, updated_at)
 - ✅ stripe_webhook_events (id, event_id UNIQUE, payload JSONB, received_at, processed_at, status, error, user_id)
 - ✅ subscription_audit (id, user_id FK, change_type, previous JSONB, current JSONB, created_at)
 
 Indices:
+
 - ✅ idx_app_users_subscription_status
 - ✅ idx_app_users_current_period_end
 - ✅ idx_app_users_stripe_customer_id
@@ -700,6 +792,7 @@ Indices:
 - ✅ idx_subscription_audit_created_at
 
 RLS policies:
+
 - ✅ app_users: users can view own profile
 - ✅ app_users: admins can view all profiles
 - ✅ app_users: service role can insert/update/delete
@@ -710,19 +803,23 @@ RLS policies:
 - ✅ subscription_audit: service role can insert
 
 Triggers:
+
 - ✅ update_updated_at_column() function
 - ✅ Trigger na app_users before update
 
 Zgodność z planem (api-plan.md sekcja 1, db-plan.md):
+
 - ✅ Schema zgodna z planem
 - ✅ Indeksy zgodne z db-plan.md
 - ✅ RLS policies zgodne z security requirements
 - ✅ Audit trail zaimplementowany
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Database schema kompletna i zgodna z planem
 - Migrations są dobrze zorganizowane
 
@@ -749,6 +846,7 @@ Brak niepełnych implementacji. Wszystkie zaimplementowane endpointy są komplet
 ### 3.4. Odstępstwa od standardów (⚠️ LOW-MEDIUM)
 
 Brak odstępstw od copilot-instructions.md. Kod zgodny z best practices:
+
 - ✅ Functional components (nie dotyczy API, ale serwisy są funkcyjne)
 - ✅ TypeScript strict mode
 - ✅ Clear naming
@@ -773,7 +871,9 @@ Brak odstępstw od copilot-instructions.md. Kod zgodny z best practices:
 ## 4. Analiza techniczna
 
 ### 4.1. Stack technologiczny
+
 ✅ Zgodność z tech-stack.md:
+
 - Backend Framework: Astro 5.16.6 (API routes) ✅
 - Language: TypeScript 5.8.3 ✅
 - Database: Supabase PostgreSQL ✅
@@ -782,6 +882,7 @@ Brak odstępstw od copilot-instructions.md. Kod zgodny z best practices:
 - Validation: Zod 3.24.1 ✅
 
 Zależności (package.json):
+
 - stripe: ^17.4.0 ✅
 - @supabase/supabase-js: ^2.87.1 ✅
 - @supabase/ssr: ^0.8.0 ✅
@@ -792,6 +893,7 @@ Zależności (package.json):
 Kompletność definicji typów: ✅ DOSKONAŁA
 
 Pliki z typami:
+
 - src/types/types.ts - User DTOs, re-exports
 - src/types/subscription.types.ts - Subscription DTOs
 - src/types/webhook.types.ts - Webhook DTOs
@@ -799,12 +901,14 @@ Pliki z typami:
 - src/db/database.types.ts - Generated from Supabase (Database, Tables, Enums)
 
 Zgodność z planem:
+
 - ✅ Wszystkie DTOs z api-plan.md zdefiniowane
 - ✅ Request/Response types
 - ✅ Service types
 - ✅ Internal types
 
 Type safety score: 10/10
+
 - TypeScript strict mode: ON
 - 0 TypeScript errors w projekcie
 - Pełna typizacja endpointów, services, DTOs
@@ -813,12 +917,14 @@ Type safety score: 10/10
 ### 4.3. Obsługa błędów i walidacja
 
 Error handling patterns:
+
 - ✅ Try-catch w wszystkich endpointach
 - ✅ Custom error classes (SubscriptionError, StripeError, etc.)
 - ✅ Centralized error response creation (createErrorResponse)
 - ✅ Specific error handling per service
 
 Input validation:
+
 - ✅ Zod schemas dla wszystkich inputs (CreateCheckoutSchema, GridQuerySchema, etc.)
 - ✅ UUID validation (isUUID helper)
 - ✅ Metadata validation (isValidMetadata)
@@ -826,6 +932,7 @@ Input validation:
 - ✅ Clear error messages dla validation failures
 
 Error responses consistency:
+
 - ✅ Standardized format: { error, code?, details? }
 - ✅ HTTP status codes zgodne z REST best practices
 - ✅ Error codes dla specific cases (UNAUTHORIZED, VALIDATION_ERROR, etc.)
@@ -833,6 +940,7 @@ Error responses consistency:
 ### 4.4. Bezpieczeństwo
 
 Autoryzacja i uwierzytelnianie:
+
 - ✅ Bearer token authentication dla API endpoints
 - ✅ Supabase session verification (getAuthUid, getAuthUidAndToken)
 - ✅ Middleware guard dla protected routes
@@ -840,12 +948,14 @@ Autoryzacja i uwierzytelnianie:
 - ✅ Stripe webhook signature verification
 
 Walidacja danych wejściowych:
+
 - ✅ Zod validation dla wszystkich inputs
 - ✅ UUID format validation
 - ✅ URL whitelist validation
 - ✅ SQL injection prevention (Supabase prepared statements)
 
 Secrets management:
+
 - ✅ Environment variables (.env)
 - ✅ Stripe webhook secret
 - ✅ NocoDB API token server-side only
@@ -853,16 +963,19 @@ Secrets management:
 - ✅ .gitignore dla .env
 
 Rate limiting:
+
 - ✅ 60 requests per minute per user (NocoDB endpoints)
 - ✅ In-memory rate limiter z automatic cleanup
 - ✅ 429 Too Many Requests responses
 
 HTTPS:
+
 - ✅ Supabase hosted (HTTPS enforced)
 - ✅ Stripe hosted (HTTPS enforced)
 - Production deployment - wymaga weryfikacji HTTPS na DigitalOcean
 
 Webhook security:
+
 - ✅ Stripe signature verification
 - ✅ Reject invalid signatures (400)
 - ✅ Idempotency (unique constraint na event_id)
@@ -871,9 +984,10 @@ Webhook security:
 ### 4.5. Testy
 
 Unit tests:
+
 - Framework: Vitest ✅
 - Coverage: Comprehensive dla services
-- Lokalizacja: Testy obok source files (*.test.ts)
+- Lokalizacja: Testy obok source files (\*.test.ts)
 - Services z testami:
   - ✅ user.service.test.ts
   - ✅ webhook.service.test.ts
@@ -883,14 +997,16 @@ Unit tests:
   - ✅ rate-limiter.test.ts
 
 E2E tests:
+
 - Framework: Playwright ✅
 - E2E tests pokrywają niektóre API flows:
   - ✅ auth.spec.ts - sprawdza middleware subscription check (mock /api/users/me)
   - ✅ grid.spec.ts - sprawdza grid loading (mock /api/nocodb/grid)
-  - ✅ sidebar.spec.ts - sprawdza event details (mock /api/nocodb/events/*)
+  - ✅ sidebar.spec.ts - sprawdza event details (mock /api/nocodb/events/\*)
 - Status: Głównie UI E2E, API endpoints są mockowane
 
 Test coverage:
+
 - ✅ Unit tests dla wszystkich services
 - ⚠️ Brak dedykowanych E2E tests dla API endpoints (wszystkie są mockowane w UI tests)
 - ⚠️ Brak integration tests dla Stripe webhooks (challenge: signature verification)
@@ -898,11 +1014,13 @@ Test coverage:
 ### 4.6. API Documentation
 
 Plan zakładał dokumentację API:
+
 - ✅ docs/api/stripe-webhooks-guide.md - doskonała dokumentacja webhook integration
 - ⚠️ Brak Swagger/OpenAPI spec (nie było w MVP scope)
 - ⚠️ Brak Postman collection (nie było w MVP scope)
 
 Dokumentacja w kodzie:
+
 - ✅ JSDoc comments w endpointach
 - ✅ Inline comments dla złożonej logiki
 - ✅ Clear function names
@@ -910,19 +1028,23 @@ Dokumentacja w kodzie:
 ### 4.7. Performance & Scalability
 
 Rate limiting:
+
 - ✅ In-memory rate limiter (60 req/min per user)
 - ⚠️ Nie skaluje się dla multi-instance deployment (post-MVP: Redis)
 
 Caching:
+
 - ❌ Brak server-side cache dla NocoDB responses (plan zakładał to jako out of MVP scope)
 - ℹ️ Client-side cache zaimplementowany w UI (stale-while-revalidate)
 
 Database:
+
 - ✅ Indices zgodne z db-plan.md
 - ✅ RLS policies dla security
 - ✅ Soft-delete pattern (nie usuwamy fizycznie)
 
 Webhook processing:
+
 - ✅ Async pattern (returns 200 immediately, processing w tle)
 - ✅ Idempotency (safe to retry)
 
@@ -931,21 +1053,25 @@ Webhook processing:
 ### 5.1. Zgodność ze standardami
 
 ESLint:
+
 - ✅ ESLint 9.23.0 skonfigurowany
 - ✅ @typescript-eslint/eslint-plugin
 - Status: 0 ESLint errors (według docs)
 
 Prettier:
+
 - ✅ Prettier skonfigurowany
 - Status: Code sformatowany poprawnie
 
 Copilot-instructions.md adherence:
+
 - ✅ TypeScript strict mode
 - ✅ Clear naming conventions
 - ✅ DRY principle (api-utils, error classes)
 - ✅ Separation of concerns (endpoints → services → database)
 
 Code organization:
+
 - ✅ src/pages/api/ - endpoints pogrupowane logicznie (users, subscriptions, webhooks, nocodb)
 - ✅ src/services/ - business logic wydzielona
 - ✅ src/lib/ - utilities i helpers
@@ -955,6 +1081,7 @@ Code organization:
 ### 5.2. Best practices
 
 API design:
+
 - ✅ RESTful naming conventions
 - ✅ HTTP verbs zgodne z semantyką (GET, POST, PATCH, DELETE)
 - ✅ HTTP status codes zgodne z RFC
@@ -962,12 +1089,14 @@ API design:
 - ✅ API versioning strategy (implicit v1, plan dla v2 w przyszłości)
 
 Service layer:
+
 - ✅ Dependency injection pattern (SupabaseClient przekazywany do constructor)
 - ✅ Single Responsibility Principle
 - ✅ Testable services (mocking Supabase w unit tests)
 - ✅ Error propagation (throw custom errors, catch w endpoints)
 
 Security:
+
 - ✅ Secrets w environment variables
 - ✅ Input validation (Zod)
 - ✅ Authorization checks
@@ -977,45 +1106,48 @@ Security:
 ### 5.3. Dokumentacja
 
 Code comments:
+
 - ✅ JSDoc comments w kluczowych miejscach (endpoints, services)
 - ✅ Inline comments dla złożonej logiki
 - ✅ TODO comments gdzie potrzebne (np. async job dla cancel subscription)
 
 API documentation:
+
 - ✅ docs/api/stripe-webhooks-guide.md
 - ⚠️ Brak Swagger/OpenAPI (post-MVP)
 
 Docs folder:
+
 - ✅ COMPLETE_IMPLEMENTATION_SUMMARY.md
 - ✅ FINAL_VERIFICATION_REPORT.md
 - ✅ Implementation plans dla services i endpoints
 
 ## 6. Mapa różnic (szczegółowa)
 
-| Element planu | Status | Lokalizacja | Uwagi |
-|--------------|--------|-------------|-------|
-| POST /api/users/initialize | ✅ | src/pages/api/users/initialize.ts | OK |
-| GET /api/users/me | ✅ | src/pages/api/users/me.ts | OK |
-| PUT /api/users/me | ⚠️ | src/pages/api/users/me.ts (PATCH) | PATCH zamiast PUT |
-| DELETE /api/users/me | ✅ | src/pages/api/users/me.ts | OK, soft-delete |
-| GET /api/subscriptions/status | ✅ | src/pages/api/subscriptions/status.ts | OK |
-| POST /api/subscriptions/create-checkout | ✅ | src/pages/api/subscriptions/create-checkout.ts | OK |
-| POST /api/subscriptions/create-portal | ✅ | src/pages/api/subscriptions/create-portal.ts | OK |
-| POST /api/webhooks/stripe | ✅ | src/pages/api/webhooks/stripe.ts | OK, full idempotency |
-| GET /api/nocodb/grid | ✅ | src/pages/api/nocodb/grid.ts | OK, rate limited |
-| GET /api/nocodb/events/:id | ✅ | src/pages/api/nocodb/events/[id].ts | OK, rate limited |
-| GET /api/nocodb/summaries | ✅ | src/pages/api/nocodb/summaries.ts | OK, rate limited |
-| Middleware authorization | ✅ | src/middleware/index.ts | OK, session + subscription check |
-| UserService | ✅ | src/services/user.service.ts | OK, unit tested |
-| SubscriptionService | ✅ | src/services/subscription.service.ts | OK, Stripe integration |
-| WebhookService | ✅ | src/services/webhook.service.ts | OK, unit tested |
-| AuditService | ✅ | src/services/audit.service.ts | OK, unit tested |
-| NocoDBService | ✅ | src/services/nocodb.service.ts | OK, unit tested |
-| Rate limiter | ✅ | src/lib/rate-limiter.ts | OK, in-memory, tested |
-| DTOs | ✅ | src/types/*.ts | OK, kompletne |
-| Validation schemas | ✅ | src/lib/*-validation.ts | OK, Zod |
-| Error handling | ✅ | src/lib/errors.ts, webhook-errors.ts | OK, custom errors |
-| Database schema | ✅ | supabase/migrations/*.sql | OK, zgodne z db-plan.md |
+| Element planu                           | Status | Lokalizacja                                    | Uwagi                            |
+| --------------------------------------- | ------ | ---------------------------------------------- | -------------------------------- |
+| POST /api/users/initialize              | ✅     | src/pages/api/users/initialize.ts              | OK                               |
+| GET /api/users/me                       | ✅     | src/pages/api/users/me.ts                      | OK                               |
+| PUT /api/users/me                       | ⚠️     | src/pages/api/users/me.ts (PATCH)              | PATCH zamiast PUT                |
+| DELETE /api/users/me                    | ✅     | src/pages/api/users/me.ts                      | OK, soft-delete                  |
+| GET /api/subscriptions/status           | ✅     | src/pages/api/subscriptions/status.ts          | OK                               |
+| POST /api/subscriptions/create-checkout | ✅     | src/pages/api/subscriptions/create-checkout.ts | OK                               |
+| POST /api/subscriptions/create-portal   | ✅     | src/pages/api/subscriptions/create-portal.ts   | OK                               |
+| POST /api/webhooks/stripe               | ✅     | src/pages/api/webhooks/stripe.ts               | OK, full idempotency             |
+| GET /api/nocodb/grid                    | ✅     | src/pages/api/nocodb/grid.ts                   | OK, rate limited                 |
+| GET /api/nocodb/events/:id              | ✅     | src/pages/api/nocodb/events/[id].ts            | OK, rate limited                 |
+| GET /api/nocodb/summaries               | ✅     | src/pages/api/nocodb/summaries.ts              | OK, rate limited                 |
+| Middleware authorization                | ✅     | src/middleware/index.ts                        | OK, session + subscription check |
+| UserService                             | ✅     | src/services/user.service.ts                   | OK, unit tested                  |
+| SubscriptionService                     | ✅     | src/services/subscription.service.ts           | OK, Stripe integration           |
+| WebhookService                          | ✅     | src/services/webhook.service.ts                | OK, unit tested                  |
+| AuditService                            | ✅     | src/services/audit.service.ts                  | OK, unit tested                  |
+| NocoDBService                           | ✅     | src/services/nocodb.service.ts                 | OK, unit tested                  |
+| Rate limiter                            | ✅     | src/lib/rate-limiter.ts                        | OK, in-memory, tested            |
+| DTOs                                    | ✅     | src/types/\*.ts                                | OK, kompletne                    |
+| Validation schemas                      | ✅     | src/lib/\*-validation.ts                       | OK, Zod                          |
+| Error handling                          | ✅     | src/lib/errors.ts, webhook-errors.ts           | OK, custom errors                |
+| Database schema                         | ✅     | supabase/migrations/\*.sql                     | OK, zgodne z db-plan.md          |
 
 ## 7. Rekomendacje i plan działania
 
@@ -1104,6 +1236,7 @@ Brak krytycznych zadań. Wszystkie core API features działają.
 ### 8.1. Lista przeanalizowanych plików
 
 Pliki źródłowe - Endpoints:
+
 - src/pages/api/users/initialize.ts
 - src/pages/api/users/me.ts (GET, PATCH, DELETE)
 - src/pages/api/subscriptions/status.ts
@@ -1115,6 +1248,7 @@ Pliki źródłowe - Endpoints:
 - src/pages/api/nocodb/summaries.ts
 
 Pliki źródłowe - Services:
+
 - src/services/user.service.ts
 - src/services/subscription.service.ts
 - src/services/webhook.service.ts
@@ -1122,11 +1256,13 @@ Pliki źródłowe - Services:
 - src/services/nocodb.service.ts
 
 Pliki źródłowe - Middleware & Auth:
+
 - src/middleware/index.ts
 - src/lib/auth.ts
 - src/lib/rate-limiter.ts
 
 Pliki źródłowe - Types & Validation:
+
 - src/types/types.ts
 - src/types/subscription.types.ts
 - src/types/webhook.types.ts
@@ -1137,6 +1273,7 @@ Pliki źródłowe - Types & Validation:
 - src/lib/nocodb-validation.ts
 
 Pliki źródłowe - Utilities & Errors:
+
 - src/lib/api-utils.ts
 - src/lib/errors.ts
 - src/lib/webhook-errors.ts
@@ -1145,10 +1282,12 @@ Pliki źródłowe - Utilities & Errors:
 - src/config/allowed-domains.ts
 
 Pliki źródłowe - Database:
+
 - supabase/migrations/20251207120000_initial_subscription_schema.sql
 - supabase/migrations/20251227130000_add_rls_policies_app_users.sql
 
 Pliki testowe:
+
 - src/services/user.service.test.ts
 - src/services/webhook.service.test.ts
 - src/services/audit.service.test.ts
@@ -1157,20 +1296,23 @@ Pliki testowe:
 - src/lib/api-service.test.ts
 
 Pliki konfiguracyjne:
+
 - package.json
 - tsconfig.json
 - astro.config.mjs
 
 Pliki dokumentacji:
+
 - docs/api/stripe-webhooks-guide.md
 - .agents/api-plan.md (plan referencyjny)
-- .agents/endpoints/*.md (implementation plans)
+- .agents/endpoints/\*.md (implementation plans)
 
 ### 8.2. Fragmenty kodu wymagające uwagi
 
 #### 1. PATCH vs PUT w /api/users/me
 
 Obecny kod (src/pages/api/users/me.ts):
+
 ```typescript
 /**
  * PATCH /api/users/me
@@ -1184,6 +1326,7 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
 ```
 
 Jeśli chcemy zmienić na PUT zgodnie z planem:
+
 ```typescript
 /**
  * PUT /api/users/me
@@ -1203,11 +1346,12 @@ Rekomendacja: Pozostawić PATCH i zaktualizować plan (PATCH jest bardziej elast
 #### 2. DELETE /api/users/me - async job dla Stripe cancellation
 
 Obecny kod:
+
 ```typescript
 export const DELETE: APIRoute = async ({ request, locals }) => {
   // ...
   await userService.softDeleteUser(authUid);
-  
+
   // Audit log
   await auditService.logSubscriptionChange({
     user_id: authUid,
@@ -1220,11 +1364,12 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
 ```
 
 Sugerowane rozszerzenie:
+
 ```typescript
 export const DELETE: APIRoute = async ({ request, locals }) => {
   // ...
   await userService.softDeleteUser(authUid);
-  
+
   // Cancel Stripe subscription if exists
   const profile = await userService.getUserProfile(authUid);
   if (profile?.stripe_subscription_id) {
@@ -1236,7 +1381,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       console.error("Failed to cancel Stripe subscription:", error);
     }
   }
-  
+
   await auditService.logSubscriptionChange({
     user_id: authUid,
     change_type: "account_deleted",
@@ -1251,6 +1396,7 @@ Alternatywnie: Użyć Supabase Functions lub webhook do Stripe dla async process
 #### 3. Rate limiter - Redis migration (post-MVP)
 
 Obecny kod (src/lib/rate-limiter.ts):
+
 ```typescript
 // In-memory store
 const rateLimitStore = new Map<string, RateLimitEntry>();
@@ -1263,8 +1409,9 @@ export function checkRateLimit(userId: string, limit = 60, windowMs = 60000) {
 ```
 
 Sugerowana migracja na Redis (post-MVP):
+
 ```typescript
-import { createClient } from 'redis';
+import { createClient } from "redis";
 
 const redisClient = createClient({ url: process.env.REDIS_URL });
 await redisClient.connect();
@@ -1272,20 +1419,20 @@ await redisClient.connect();
 export async function checkRateLimit(userId: string, limit = 60, windowMs = 60000) {
   const key = `rate-limit:${userId}`;
   const now = Date.now();
-  
+
   // Redis sorted set for sliding window
   await redisClient.zRemRangeByScore(key, 0, now - windowMs);
   const count = await redisClient.zCard(key);
-  
+
   if (count >= limit) {
     const oldest = await redisClient.zRange(key, 0, 0, { REV: true });
     const resetAt = oldest[0] ? parseInt(oldest[0]) + windowMs : now + windowMs;
     return { allowed: false, resetAt };
   }
-  
+
   await redisClient.zAdd(key, [{ score: now, value: now.toString() }]);
   await redisClient.expire(key, Math.ceil(windowMs / 1000));
-  
+
   return { allowed: true, remaining: limit - count - 1, resetAt: now + windowMs };
 }
 ```
@@ -1303,4 +1450,3 @@ export async function checkRateLimit(userId: string, limit = 60, windowMs = 6000
 ---
 
 Koniec raportu audytu API Plan.
-

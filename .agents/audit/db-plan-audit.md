@@ -7,6 +7,7 @@ Zakres analizy: Kompletna analiza implementacji schematu bazy danych PostgreSQL/
 ## 1. Podsumowanie wykonawcze
 
 ### 1.1. Statystyki pokrycia
+
 - Elementy zaplanowane: 3 tabele + ENUM + indeksy + RLS policies + triggery
 - Elementy zaimplementowane: 3 tabele + ENUM + indeksy + RLS policies + triggery (100%)
 - Elementy częściowo zaimplementowane: 0
@@ -14,9 +15,11 @@ Zakres analizy: Kompletna analiza implementacji schematu bazy danych PostgreSQL/
 - Elementy dodatkowe (poza planem): 1 dodatkowa migracja RLS
 
 ### 1.2. Ogólna ocena
+
 KOMPLETNA - Schemat bazy danych został w pełni zaimplementowany zgodnie z planem db-plan.md. Wszystkie tabele (app_users, stripe_webhook_events, subscription_audit) utworzone z poprawnymi kolumnami, typami i ograniczeniami. Indeksy zgodne z planem. RLS policies kompletne i granularne. Triggery dla auto-update timestamps zaimplementowane. Generated TypeScript types z database.types.ts są aktualne.
 
 ### 1.3. Kluczowe ustalenia
+
 1. Wszystkie 3 tabele (app_users, stripe_webhook_events, subscription_audit) zaimplementowane w pełni zgodnie z db-plan.md
 2. ENUM subscription_status z 5 wartościami: trial, active, past_due, canceled, unpaid
 3. Indeksy zgodne z planem - wszystkie 9 indeksów utworzonych
@@ -29,6 +32,7 @@ KOMPLETNA - Schemat bazy danych został w pełni zaimplementowany zgodnie z plan
 10. Dodatkowa migracja 20251227130000 dla permisywnych RLS policies (anon/authenticated access)
 
 ### 1.4. Priorytety działań
+
 1. INFO: Rozważyć konsolidację RLS policies z dwóch migracji (lub udokumentować powód zmiany)
 2. LOW: Dodać opcjonalną tabelę `subscriptions` (historia subskrypcji) - zaplanowana jako post-MVP
 3. LOW: Implementować CRON job dla retencji webhooków (90 dni) - zaplanowana jako post-MVP
@@ -41,9 +45,11 @@ KOMPLETNA - Schemat bazy danych został w pełni zaimplementowany zgodnie z plan
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - ENUM z wartościami: trial, active, past_due, canceled, unpaid - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - supabase/migrations/20251207120000_initial_subscription_schema.sql (linie 15-24)
 - Generated types:
@@ -52,11 +58,13 @@ KOMPLETNA - Schemat bazy danych został w pełni zaimplementowany zgodnie z plan
 #### Analiza szczegółowa:
 
 Plan (db-plan.md sekcja 1.1):
+
 ```
 subscription_status ENUM: ('trial', 'active', 'past_due', 'canceled', 'unpaid')
 ```
 
 Implementacja (20251207120000_initial_subscription_schema.sql):
+
 ```sql
 create type subscription_status as enum (
   'trial',      -- użytkownik w okresie próbnym
@@ -68,6 +76,7 @@ create type subscription_status as enum (
 ```
 
 Generated TypeScript type:
+
 ```typescript
 Enums: {
   subscription_status: "trial" | "active" | "past_due" | "canceled" | "unpaid";
@@ -75,15 +84,18 @@ Enums: {
 ```
 
 Zgodność z planem:
+
 - ✅ Wszystkie 5 wartości zgodne z planem
 - ✅ Nazewnictwo zgodne z planem
 - ✅ Komentarze wyjaśniające każdą wartość
 - ✅ TypeScript types wygenerowane poprawnie
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - ENUM zgodny z planem
 
 ### 2.2. Tabela app_users
@@ -91,6 +103,7 @@ Zgodność z planem:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy (z db-plan.md sekcja 1.2):
+
 - auth_uid uuid PRIMARY KEY NOT NULL (FK -> auth.users) - ✅
 - role text NOT NULL DEFAULT 'user' - ✅
 - stripe_customer_id text NULL UNIQUE - ✅
@@ -105,6 +118,7 @@ Zgodność z planem:
 - updated_at timestamptz NOT NULL DEFAULT now() - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - supabase/migrations/20251207120000_initial_subscription_schema.sql (linie 29-68)
 - Generated types:
@@ -115,14 +129,17 @@ Zgodność z planem:
 Implementacja zgodna 100% z planem. Wszystkie 12 kolumn zaimplementowane z poprawnymi typami i constraints.
 
 Foreign key:
+
 - ✅ `auth_uid uuid primary key not null references auth.users(id) on delete cascade`
 - Zgodne z planem: 1:1 relation z Supabase Auth
 
 UNIQUE constraints:
+
 - ✅ `stripe_customer_id text unique`
 - ✅ `stripe_subscription_id text unique`
 
 Defaults:
+
 - ✅ `role text not null default 'user'`
 - ✅ `subscription_status subscription_status not null default 'trial'`
 - ✅ `metadata jsonb not null default '{}'::jsonb`
@@ -130,9 +147,11 @@ Defaults:
 - ✅ `updated_at timestamptz not null default now()`
 
 Soft-delete:
+
 - ✅ `deleted_at timestamptz` - nullable dla soft-delete pattern
 
 Generated TypeScript types:
+
 ```typescript
 app_users: {
   Row: {
@@ -156,15 +175,18 @@ app_users: {
 ```
 
 Zgodność z planem:
+
 - ✅ Wszystkie kolumny zgodne z db-plan.md
 - ✅ Typy danych zgodne (uuid, text, timestamptz, jsonb, enum)
 - ✅ Constraints zgodne (PK, FK, UNIQUE, NOT NULL, DEFAULT)
 - ✅ Komentarze SQL wyjaśniające logikę biznesową
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Tabela w pełni zgodna z planem
 
 ### 2.3. Tabela stripe_webhook_events
@@ -172,6 +194,7 @@ Zgodność z planem:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy (z db-plan.md sekcja 1.3):
+
 - id uuid PRIMARY KEY DEFAULT gen_random_uuid() - ✅
 - event_id text NOT NULL UNIQUE - ✅
 - payload jsonb NOT NULL - ✅
@@ -182,6 +205,7 @@ Zgodność z planem:
 - user_id uuid NULL (FK -> app_users) - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - supabase/migrations/20251207120000_initial_subscription_schema.sql (linie 73-113)
 - Generated types:
@@ -190,6 +214,7 @@ Zgodność z planem:
 #### Analiza szczegółowa:
 
 Implementacja:
+
 ```sql
 create table stripe_webhook_events (
   id uuid primary key default gen_random_uuid(),
@@ -204,12 +229,14 @@ create table stripe_webhook_events (
 ```
 
 Zgodność z planem:
+
 - ✅ Wszystkie 8 kolumn zgodne z db-plan.md
 - ✅ UNIQUE constraint na event_id (idempotencja)
 - ✅ Foreign key user_id -> app_users(auth_uid) ON DELETE SET NULL
 - ✅ Defaults dla id (gen_random_uuid()) i received_at (now())
 
 Generated TypeScript types:
+
 ```typescript
 stripe_webhook_events: {
   Row: {
@@ -237,14 +264,17 @@ stripe_webhook_events: {
 ```
 
 Idempotencja pattern:
+
 - ✅ Plan zakładał: `INSERT ... ON CONFLICT DO NOTHING`
 - ✅ Implementacja: UNIQUE constraint na event_id umożliwia idempotencję
 - ✅ Używane w WebhookService.recordWebhookEvent()
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Tabela w pełni zgodna z planem
 - Idempotencja webhooków zapewniona przez UNIQUE constraint
 
@@ -253,6 +283,7 @@ Idempotencja pattern:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy (z db-plan.md sekcja 1.4):
+
 - id uuid PRIMARY KEY DEFAULT gen_random_uuid() - ✅
 - user_id uuid NULL REFERENCES app_users(auth_uid) ON DELETE SET NULL - ✅
 - change_type text NOT NULL - ✅
@@ -261,6 +292,7 @@ Idempotencja pattern:
 - created_at timestamptz NOT NULL DEFAULT now() - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - supabase/migrations/20251207120000_initial_subscription_schema.sql (linie 118-140)
 - Generated types:
@@ -269,6 +301,7 @@ Idempotencja pattern:
 #### Analiza szczegółowa:
 
 Implementacja:
+
 ```sql
 create table subscription_audit (
   id uuid primary key default gen_random_uuid(),
@@ -281,12 +314,14 @@ create table subscription_audit (
 ```
 
 Zgodność z planem:
+
 - ✅ Wszystkie 6 kolumn zgodne z db-plan.md
 - ✅ Foreign key user_id -> app_users(auth_uid) ON DELETE SET NULL
 - ✅ Defaults dla id i created_at
 - ✅ JSONB fields dla previous/current (snapshots)
 
 Generated TypeScript types:
+
 ```typescript
 subscription_audit: {
   Row: {
@@ -312,13 +347,16 @@ subscription_audit: {
 ```
 
 Użycie w aplikacji:
+
 - ✅ AuditService.logSubscriptionChange() zapisuje do tej tabeli
 - ✅ Używane w: user initialization, metadata update, soft delete, subscription changes, webhook processing
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Tabela w pełni zgodna z planem
 - Audit trail kompletny
 
@@ -329,27 +367,32 @@ Użycie w aplikacji:
 #### Planowane elementy (z db-plan.md sekcja 3):
 
 app_users indeksy (4 indeksy):
+
 - ✅ idx_app_users_subscription_status
 - ✅ idx_app_users_current_period_end
 - ✅ idx_app_users_stripe_customer_id
 - ✅ idx_app_users_stripe_subscription_id
 
 stripe_webhook_events indeksy (3 indeksy):
+
 - ✅ ux_stripe_webhook_event_id (UNIQUE)
 - ✅ idx_stripe_webhook_user_id
 - ✅ idx_stripe_webhook_status
 
 subscription_audit indeksy (2 indeksy):
+
 - ✅ idx_subscription_audit_user_id
 - ✅ idx_subscription_audit_created_at
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - supabase/migrations/20251207120000_initial_subscription_schema.sql (linie 145-158)
 
 #### Analiza szczegółowa:
 
 Implementacja (linie 145-158):
+
 ```sql
 -- app_users indeksy
 create index idx_app_users_subscription_status on app_users(subscription_status);
@@ -368,24 +411,29 @@ create index idx_subscription_audit_created_at on subscription_audit(created_at)
 ```
 
 Zgodność z planem:
+
 - ✅ Wszystkie 9 indeksów zgodne z db-plan.md
-- ✅ Nazewnictwo zgodne (idx_* dla standardowych, ux_* dla unique)
+- ✅ Nazewnictwo zgodne (idx*\* dla standardowych, ux*\* dla unique)
 - ✅ Kolumny zgodne z planem
 
 Performance benefits:
+
 - ✅ idx_app_users_subscription_status - szybkie middleware checks (active/trial)
 - ✅ idx_app_users_stripe_customer_id - szybkie lookupy w webhook processing
 - ✅ ux_stripe_webhook_event_id - idempotencja webhooków
 - ✅ idx_subscription_audit_user_id - szybkie pobieranie audytu per user
 
 Uwaga z planu (sekcja 3):
+
 > Plan sugerował opcjonalny composite index (auth_uid, subscription_status)
 > Status: Nie zaimplementowano - pojedyncze indeksy są wystarczające dla MVP
 
 #### Zidentyfikowane problemy:
+
 - INFO: Brak composite index (auth_uid, subscription_status) - było opcjonalne w planie
 
 #### Rekomendacje:
+
 - Wszystkie zaplanowane indeksy zaimplementowane
 - Composite index można dodać później jeśli profiling pokaże bottleneck
 
@@ -396,6 +444,7 @@ Uwaga z planu (sekcja 3):
 #### Planowane elementy (z db-plan.md sekcja 4):
 
 app_users RLS:
+
 - ✅ Enable RLS
 - ✅ SELECT policy (auth.uid() = auth_uid OR role = 'admin' OR active subscription/trial)
 - ✅ INSERT policy (auth.uid() = auth_uid OR service_role)
@@ -403,6 +452,7 @@ app_users RLS:
 - ✅ DELETE policy (service_role only)
 
 stripe_webhook_events RLS:
+
 - ✅ Enable RLS
 - ✅ SELECT policy (service_role OR admin)
 - ✅ INSERT policy (service_role only)
@@ -410,12 +460,14 @@ stripe_webhook_events RLS:
 - ✅ DELETE policy (service_role only)
 
 subscription_audit RLS:
+
 - ✅ Enable RLS
 - ✅ SELECT policy (service_role OR admin OR own records)
 - ✅ INSERT policy (service_role OR admin)
 - ✅ DELETE policy (service_role only)
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - supabase/migrations/20251207120000_initial_subscription_schema.sql (linie 178-381) - Initial granularne policies
   - supabase/migrations/20251227130000_add_rls_policies_app_users.sql - Dodatkowa migracja z permisywnymi policies
@@ -423,6 +475,7 @@ subscription_audit RLS:
 #### Analiza szczegółowa:
 
 Migracja 1: Initial RLS policies (20251207120000)
+
 - ✅ Granularne policies zgodne z planem db-plan.md sekcja 4
 - ✅ Osobne policies dla SELECT, INSERT, UPDATE, DELETE per tabela
 - ✅ app_users: 7 policies (authenticated own record, admin all, service role all, etc.)
@@ -430,6 +483,7 @@ Migracja 1: Initial RLS policies (20251207120000)
 - ✅ subscription_audit: 6 policies (service role + admin + users own audit)
 
 Przykład z initial migration:
+
 ```sql
 -- authenticated users can view own record
 create policy "authenticated users can view own record"
@@ -453,6 +507,7 @@ create policy "admins can view all records"
 ```
 
 Migracja 2: Permisywne RLS policies (20251227130000)
+
 - ⚠️ Dodatkowa migracja z permisywnymi policies dla anon/authenticated
 - Reason (z komentarza): "API używa anon key dla operacji backendowych"
 - Policies:
@@ -462,6 +517,7 @@ Migracja 2: Permisywne RLS policies (20251227130000)
   - "Allow soft delete for anon and authenticated users" - USING (true)
 
 Security note z migracji 2:
+
 ```sql
 -- Te polityki są permisywne i pozwalają na wszystkie operacje dla anon/authenticated.
 -- Jest to zamierzone dla uproszczenia API backendowego.
@@ -479,16 +535,19 @@ Security note z migracji 2:
 ```
 
 Zgodność z planem:
+
 - ✅ Initial policies zgodne z db-plan.md sekcja 4
 - ⚠️ Dodatkowa migracja z permisywnymi policies (nie było w oryginalnym planie)
 - ℹ️ Permisywne policies dla uproszczenia API backend (anon key usage)
 
 #### Zidentyfikowane problemy:
+
 - INFO: Dwie migracje z policies dla app_users - mogą kolidować lub nadpisywać się
 - INFO: Permisywne policies (anon access) różnią się od granularnych policies z planu
 - MEDIUM: Niejasne które policies są aktywne (obie migracje czy tylko druga?)
 
 #### Rekomendacje:
+
 - Zweryfikować które policies są aktywnie używane (obie czy tylko z drugiej migracji)
 - Jeśli obie: rozważyć konsolidację do jednej migracji
 - Jeśli druga nadpisuje pierwszą: udokumentować powód zmiany strategii RLS
@@ -499,16 +558,19 @@ Zgodność z planem:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy (z db-plan.md sekcja 5.6):
+
 - Trigger update_updated_at_column() - ✅
 - Auto-update timestamps dla app_users - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - supabase/migrations/20251207120000_initial_subscription_schema.sql (linie 163-176)
 
 #### Analiza szczegółowa:
 
 Function implementation (linie 163-169):
+
 ```sql
 create or replace function update_updated_at_column()
 returns trigger as $$
@@ -520,6 +582,7 @@ $$ language plpgsql;
 ```
 
 Trigger implementation (linie 174-176):
+
 ```sql
 create trigger update_app_users_updated_at
   before update on app_users
@@ -528,8 +591,9 @@ create trigger update_app_users_updated_at
 ```
 
 Zgodność z planem (db-plan.md sekcja 5.6):
-> Rekomendowane dodanie prostego triggera `update_updated_at_column()` 
-> ustawiającego `NEW.updated_at = now()` przed UPDATE dla tabel `app_users` 
+
+> Rekomendowane dodanie prostego triggera `update_updated_at_column()`
+> ustawiającego `NEW.updated_at = now()` przed UPDATE dla tabel `app_users`
 > i (opcjonalnie) `subscriptions`.
 
 - ✅ Function utworzona zgodnie z planem
@@ -537,9 +601,11 @@ Zgodność z planem (db-plan.md sekcja 5.6):
 - ℹ️ Trigger dla subscription nie utworzony (tabela subscriptions jest opcjonalna i nie zaimplementowana w MVP)
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Trigger zgodny z planem
 - Jeśli tabela subscriptions zostanie dodana, należy dodać analogiczny trigger
 
@@ -550,10 +616,11 @@ Zgodność z planem (db-plan.md sekcja 5.6):
 #### Planowane relacje (z db-plan.md sekcja 2):
 
 1. auth.users 1:1 -> app_users (auth.users.id = app_users.auth_uid) - ✅
-2. app_users 1:* -> subscription_audit - ✅
-3. app_users 1:* -> stripe_webhook_events (opcjonalne) - ✅
+2. app_users 1:\* -> subscription_audit - ✅
+3. app_users 1:\* -> stripe_webhook_events (opcjonalne) - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - supabase/migrations/20251207120000_initial_subscription_schema.sql
 - Generated types:
@@ -562,29 +629,36 @@ Zgodność z planem (db-plan.md sekcja 5.6):
 #### Analiza szczegółowa:
 
 FK 1: app_users -> auth.users
+
 ```sql
 auth_uid uuid primary key not null references auth.users(id) on delete cascade
 ```
+
 - ✅ 1:1 relationship
 - ✅ ON DELETE CASCADE (jeśli auth user usunięty, app_users również)
 - ✅ Plan: "źródło prawdy dla tożsamości: auth.users"
 
 FK 2: subscription_audit -> app_users
+
 ```sql
 user_id uuid references app_users(auth_uid) on delete set null
 ```
+
 - ✅ 1:many relationship
 - ✅ ON DELETE SET NULL (audit zachowany nawet po usunięciu usera)
 
 FK 3: stripe_webhook_events -> app_users
+
 ```sql
 user_id uuid references app_users(auth_uid) on delete set null
 ```
+
 - ✅ 1:many relationship
 - ✅ ON DELETE SET NULL (logi webhooków zachowane)
 - ✅ Opcjonalne (user_id może być NULL jeśli webhook nie zmapowany do usera)
 
 Generated TypeScript relationships:
+
 ```typescript
 // stripe_webhook_events
 Relationships: [
@@ -610,14 +684,17 @@ Relationships: [
 ```
 
 Zgodność z planem:
+
 - ✅ Wszystkie FK zgodne z db-plan.md sekcja 2
 - ✅ CASCADE vs SET NULL zgodne z planem
 - ✅ Kardynalności zgodne (1:1, 1:many)
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Foreign keys zgodne z planem
 - ON DELETE behavior poprawny dla każdego use case
 
@@ -626,18 +703,21 @@ Zgodność z planem:
 #### Status: ✅ KOMPLETNY
 
 #### Planowane elementy:
+
 - Database types generated from Supabase schema - ✅
 - Tables types (Row, Insert, Update) - ✅
 - Enums types - ✅
 - Relationships types - ✅
 
 #### Lokalizacja w projekcie:
+
 - Pliki:
   - src/db/database.types.ts (273 linie)
 
 #### Analiza szczegółowa:
 
 Generated file structure:
+
 ```typescript
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -660,6 +740,7 @@ export interface Database {
 ```
 
 Type coverage:
+
 - ✅ All 3 tables represented (app_users, stripe_webhook_events, subscription_audit)
 - ✅ Row types dla reading (SELECT)
 - ✅ Insert types dla creating (INSERT)
@@ -668,6 +749,7 @@ Type coverage:
 - ✅ Enum types (subscription_status)
 
 Usage w projekcie:
+
 - ✅ UserService używa Database types
 - ✅ SubscriptionService używa Database types
 - ✅ WebhookService używa Database types
@@ -675,6 +757,7 @@ Usage w projekcie:
 - ✅ Type safety w całym projekcie dzięki generated types
 
 Example usage:
+
 ```typescript
 import type { Database } from "../db/database.types";
 
@@ -683,15 +766,18 @@ type SubscriptionStatus = Database["public"]["Enums"]["subscription_status"];
 ```
 
 Zgodność z schematem:
+
 - ✅ Types są aktualne (wygenerowane z aktualnego schematu Supabase)
 - ✅ Wszystkie kolumny reprezentowane
 - ✅ Nullability poprawna (string | null)
 - ✅ Json type dla JSONB columns
 
 #### Zidentyfikowane problemy:
+
 - Brak problemów
 
 #### Rekomendacje:
+
 - Generated types są kompletne i aktualne
 - Przy zmianach schematu: pamiętać o regeneracji types (supabase gen types typescript)
 
@@ -700,16 +786,19 @@ Zgodność z schematem:
 #### Status: ❌ NIE ZAIMPLEMENTOWANO (zgodnie z planem MVP)
 
 #### Plan (z db-plan.md sekcja 1.5):
+
 > (Opcjonalnie) `subscriptions` — lekka historia subskrypcji (można dodać później)
-> Uwaga: dla MVP przechowujemy kluczowy stan w `app_users`; 
+> Uwaga: dla MVP przechowujemy kluczowy stan w `app_users`;
 > tabelę `subscriptions` dodać gdy będzie potrzebna historia/analiza.
 
 #### Analiza:
+
 - ✅ Decyzja zgodna z planem MVP
 - ℹ️ Obecny stan subskrypcji w app_users jest wystarczający dla MVP
 - ℹ️ Historia zmian subskrypcji jest rejestrowana w subscription_audit
 
 #### Rekomendacje:
+
 - Post-MVP: Rozważyć dodanie tabeli subscriptions jeśli potrzebna analiza historii
 - Post-MVP: Migracja danych z subscription_audit do subscriptions
 
@@ -737,6 +826,7 @@ Brak niepełnych implementacji. Wszystkie zaimplementowane elementy są kompletn
 ### 3.4. Odstępstwa od standardów (⚠️ LOW-MEDIUM)
 
 Brak odstępstw od copilot-instructions.md. Schema zgodny z PostgreSQL best practices:
+
 - ✅ Consistent naming (snake_case)
 - ✅ Proper use of timestamptz
 - ✅ JSONB dla semi-structured data
@@ -765,7 +855,9 @@ Brak odstępstw od copilot-instructions.md. Schema zgodny z PostgreSQL best prac
 ## 4. Analiza techniczna
 
 ### 4.1. Stack technologiczny
+
 ✅ Zgodność z tech-stack.md:
+
 - Database: Supabase PostgreSQL ✅
 - Version: PostgreSQL 15+ (Supabase hosted) ✅
 - ORM: Supabase client (JavaScript SDK) ✅
@@ -775,12 +867,14 @@ Brak odstępstw od copilot-instructions.md. Schema zgodny z PostgreSQL best prac
 ### 4.2. Schema design
 
 Normalizacja:
+
 - ✅ 3NF (Third Normal Form) osiągnięta
 - ✅ Brak redundancji danych
 - ✅ Atomic columns
 - ✅ Proper use of JSONB dla semi-structured data (metadata, audit snapshots)
 
 Data types:
+
 - ✅ UUID dla wszystkich PKs (gen_random_uuid())
 - ✅ timestamptz dla wszystkich timestamps (UTC aware)
 - ✅ text dla string columns (PostgreSQL best practice)
@@ -788,6 +882,7 @@ Data types:
 - ✅ ENUM dla subscription_status (type safety)
 
 Constraints:
+
 - ✅ PRIMARY KEY na wszystkich tabelach
 - ✅ FOREIGN KEY z proper CASCADE/SET NULL
 - ✅ UNIQUE constraints (event_id, stripe IDs)
@@ -797,6 +892,7 @@ Constraints:
 ### 4.3. Performance considerations
 
 Indeksy:
+
 - ✅ 9 indeksów zgodnie z planem
 - ✅ Coverage dla frequent lookups:
   - subscription_status check w middleware
@@ -807,16 +903,18 @@ Indeksy:
 - Performance score: 9/10 (doskonały dla MVP)
 
 Query patterns:
+
 - ✅ Middleware query: SELECT subscription_status, trial_expires_at WHERE auth_uid = ? AND deleted_at IS NULL
   - Optymalizacja: PK index (auth_uid) + partial index możliwość (deleted_at IS NULL)
 - ✅ Webhook processing: SELECT auth_uid WHERE stripe_customer_id = ?
   - Optymalizacja: idx_app_users_stripe_customer_id
-- ✅ Audit queries: SELECT * WHERE user_id = ? ORDER BY created_at DESC
+- ✅ Audit queries: SELECT \* WHERE user_id = ? ORDER BY created_at DESC
   - Optymalizacja: idx_subscription_audit_user_id + idx_subscription_audit_created_at
 
 ### 4.4. Security
 
 RLS (Row Level Security):
+
 - ✅ Włączone dla wszystkich 3 tabel
 - ⚠️ Dwie strategie policies (granularne vs permisywne) - wymaga wyjaśnienia
 - ✅ Service role policies dla backend operations
@@ -824,18 +922,21 @@ RLS (Row Level Security):
 - ✅ User own record policies dla authenticated users
 
 Soft-delete:
+
 - ✅ deleted_at column w app_users
 - ✅ Soft-delete policy (UPDATE zamiast DELETE)
 - ✅ GDPR compliance pattern
 - ℹ️ Plan zakładał CRON job dla purge po 30 dniach - nie zaimplementowano w MVP
 
 Webhook security:
+
 - ✅ event_id UNIQUE constraint dla idempotencji
 - ✅ payload JSONB dla full event storage
 - ✅ status tracking (received, processing, processed, failed)
 - ✅ error column dla debugging
 
 Audit trail:
+
 - ✅ subscription_audit tabela dla compliance
 - ✅ JSONB snapshots (previous, current)
 - ✅ change_type dla kategoryzacji
@@ -844,11 +945,13 @@ Audit trail:
 ### 4.5. Scalability considerations
 
 Partitioning:
+
 - ❌ Nie zaimplementowano (plan zakładał jako upgrade path)
 - Plan (db-plan.md sekcja 5.5): "rozważyć partycjonowanie (RANGE na `current_period_end`)"
 - Ocena: Nie potrzebne dla MVP, można dodać później
 
 Data retention:
+
 - ℹ️ Plan zakładał (db-plan.md sekcja 5.3):
   - stripe_webhook_events: Retain 90 dni (CRON job)
   - deleted_at users: Purge po 30 dniach (GDPR)
@@ -856,6 +959,7 @@ Data retention:
 - Rekomendacja: Dodać w post-MVP
 
 Connection pooling:
+
 - ✅ Supabase obsługuje connection pooling automatycznie
 - ✅ Transaction pooler (6543) dla transakcji krótkoterminowych
 - ✅ Session pooler (5432) dla persistent connections
@@ -863,11 +967,13 @@ Connection pooling:
 ### 4.6. Backup & disaster recovery
 
 Supabase features:
+
 - ✅ Automatic daily backups (Supabase hosted)
 - ✅ Point-in-time recovery (PITR) - 7 dni retention na Free tier, więcej na Pro/Enterprise
 - ✅ Multi-region replication (Pro tier)
 
 Migration strategy:
+
 - ✅ SQL migrations w supabase/migrations/
 - ✅ Timestamp-based naming (YYYYMMDDHHmmss)
 - ✅ Idempotent migrations (CREATE IF NOT EXISTS pattern możliwy)
@@ -878,20 +984,23 @@ Migration strategy:
 ### 5.1. Zgodność ze standardami
 
 SQL formatting:
+
 - ✅ Consistent indentation
 - ✅ Lowercase keywords (PostgreSQL convention)
 - ✅ Comments dla złożonej logiki
 - ✅ Section headers dla czytelności
 
 Naming conventions:
+
 - ✅ snake_case dla wszystkich identifiers
 - ✅ Descriptive names (app_users, subscription_audit, stripe_webhook_events)
-- ✅ Consistent prefixes (idx_ dla indexes, ux_ dla unique indexes)
+- ✅ Consistent prefixes (idx* dla indexes, ux* dla unique indexes)
 - ✅ FK naming convention (table_column_fkey)
 
 ### 5.2. Best practices
 
 PostgreSQL best practices:
+
 - ✅ Use timestamptz zamiast timestamp (timezone aware)
 - ✅ Use text zamiast varchar (PostgreSQL recommendation)
 - ✅ Use ENUM dla fixed set of values
@@ -900,6 +1009,7 @@ PostgreSQL best practices:
 - ✅ Use triggers dla auto-update columns (DRY principle)
 
 RLS best practices:
+
 - ✅ Enable RLS dla wszystkich user-facing tables
 - ✅ Granularne policies (osobne dla SELECT, INSERT, UPDATE, DELETE)
 - ✅ Use EXISTS subqueries dla role checks
@@ -908,12 +1018,14 @@ RLS best practices:
 ### 5.3. Dokumentacja
 
 Comments w SQL:
+
 - ✅ Header comment na początku migracji (purpose, affected tables, notes)
 - ✅ Section comments (sekcja 1-10)
 - ✅ Inline comments dla logiki biznesowej
 - ✅ Notes dla future considerations
 
 Migration summary:
+
 ```sql
 -- ============================================================================
 -- Koniec migracji
@@ -937,25 +1049,25 @@ Migration summary:
 
 ## 6. Mapa różnic (szczegółowa)
 
-| Element planu | Status | Lokalizacja | Uwagi |
-|--------------|--------|-------------|-------|
-| ENUM subscription_status | ✅ | 20251207120000 (linie 15-24) | OK, 5 wartości zgodnie z planem |
-| app_users table | ✅ | 20251207120000 (linie 29-68) | OK, wszystkie 12 kolumn |
-| stripe_webhook_events table | ✅ | 20251207120000 (linie 73-113) | OK, wszystkie 8 kolumn |
-| subscription_audit table | ✅ | 20251207120000 (linie 118-140) | OK, wszystkie 6 kolumn |
-| app_users indeksy (4) | ✅ | 20251207120000 (linie 145-148) | OK |
-| stripe_webhook_events indeksy (3) | ✅ | 20251207120000 (linie 151-153) | OK, incl. UNIQUE |
-| subscription_audit indeksy (2) | ✅ | 20251207120000 (linie 156-157) | OK |
-| Trigger update_updated_at_column | ✅ | 20251207120000 (linie 163-176) | OK |
-| app_users RLS policies (granularne) | ✅ | 20251207120000 (linie 178-264) | OK, 7 policies |
-| app_users RLS policies (permisywne) | ⚠️ | 20251227130000 (wszystko) | Dodatkowa migracja |
-| stripe_webhook_events RLS | ✅ | 20251207120000 (linie 269-316) | OK, 5 policies |
-| subscription_audit RLS | ✅ | 20251207120000 (linie 321-381) | OK, 6 policies |
-| Generated TypeScript types | ✅ | src/db/database.types.ts | OK, aktualne |
-| Composite index (auth_uid, subscription_status) | ❌ | - | Opcjonalne, nie zaimplementowano |
-| Tabela subscriptions (history) | ❌ | - | Post-MVP, zgodnie z planem |
-| CRON job retencja webhooków (90 dni) | ❌ | - | Post-MVP |
-| CRON job purge deleted users (30 dni) | ❌ | - | Post-MVP |
+| Element planu                                   | Status | Lokalizacja                    | Uwagi                            |
+| ----------------------------------------------- | ------ | ------------------------------ | -------------------------------- |
+| ENUM subscription_status                        | ✅     | 20251207120000 (linie 15-24)   | OK, 5 wartości zgodnie z planem  |
+| app_users table                                 | ✅     | 20251207120000 (linie 29-68)   | OK, wszystkie 12 kolumn          |
+| stripe_webhook_events table                     | ✅     | 20251207120000 (linie 73-113)  | OK, wszystkie 8 kolumn           |
+| subscription_audit table                        | ✅     | 20251207120000 (linie 118-140) | OK, wszystkie 6 kolumn           |
+| app_users indeksy (4)                           | ✅     | 20251207120000 (linie 145-148) | OK                               |
+| stripe_webhook_events indeksy (3)               | ✅     | 20251207120000 (linie 151-153) | OK, incl. UNIQUE                 |
+| subscription_audit indeksy (2)                  | ✅     | 20251207120000 (linie 156-157) | OK                               |
+| Trigger update_updated_at_column                | ✅     | 20251207120000 (linie 163-176) | OK                               |
+| app_users RLS policies (granularne)             | ✅     | 20251207120000 (linie 178-264) | OK, 7 policies                   |
+| app_users RLS policies (permisywne)             | ⚠️     | 20251227130000 (wszystko)      | Dodatkowa migracja               |
+| stripe_webhook_events RLS                       | ✅     | 20251207120000 (linie 269-316) | OK, 5 policies                   |
+| subscription_audit RLS                          | ✅     | 20251207120000 (linie 321-381) | OK, 6 policies                   |
+| Generated TypeScript types                      | ✅     | src/db/database.types.ts       | OK, aktualne                     |
+| Composite index (auth_uid, subscription_status) | ❌     | -                              | Opcjonalne, nie zaimplementowano |
+| Tabela subscriptions (history)                  | ❌     | -                              | Post-MVP, zgodnie z planem       |
+| CRON job retencja webhooków (90 dni)            | ❌     | -                              | Post-MVP                         |
+| CRON job purge deleted users (30 dni)           | ❌     | -                              | Post-MVP                         |
 
 ## 7. Rekomendacje i plan działania
 
@@ -1050,13 +1162,16 @@ Brak krytycznych zadań. Schema zgodny z planem MVP.
 ### 8.1. Lista przeanalizowanych plików
 
 Pliki migracji:
+
 - supabase/migrations/20251207120000_initial_subscription_schema.sql (396 linii)
 - supabase/migrations/20251227130000_add_rls_policies_app_users.sql (84 linie)
 
 Pliki generated types:
+
 - src/db/database.types.ts (273 linie)
 
 Pliki referencyjne:
+
 - .agents/db-plan.md (214 linii) - Plan referencyjny
 
 ### 8.2. Fragmenty kodu wymagające uwagi
@@ -1064,6 +1179,7 @@ Pliki referencyjne:
 #### 1. Wyjaśnienie strategii RLS policies
 
 Sprawdzenie aktywnych policies:
+
 ```sql
 -- Query do weryfikacji aktywnych policies
 SELECT schemaname, tablename, policyname, roles, cmd, qual, with_check
@@ -1073,11 +1189,13 @@ ORDER BY policyname;
 ```
 
 Jeśli obie migracje są aktywne, może być konflikt policies. Decision:
+
 - Opcja A: Rollback drugiej migracji i zostaw tylko granularne policies
 - Opcja B: Rollback pierwszych policies i zostaw tylko permisywne
 - Opcja C: Merge obu strategii w jedną spójną migrację
 
 Rekomendacja: Rozważyć Opcję B dla production z dodatkowymi checks w API layer:
+
 ```typescript
 // API endpoint middleware
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -1086,18 +1204,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (!authUid) {
     return createErrorResponse("Unauthorized", 401);
   }
-  
+
   // Verify user owns the resource or is admin
   const { data: user } = await locals.supabase
     .from("app_users")
     .select("auth_uid, role")
     .eq("auth_uid", authUid)
     .single();
-  
-  if (!user || (user.auth_uid !== resourceAuthUid && user.role !== 'admin')) {
+
+  if (!user || (user.auth_uid !== resourceAuthUid && user.role !== "admin")) {
     return createErrorResponse("Forbidden", 403);
   }
-  
+
   // Proceed with operation
 };
 ```
@@ -1105,47 +1223,49 @@ export const POST: APIRoute = async ({ request, locals }) => {
 #### 2. CRON job dla retencji webhooków (template)
 
 Supabase Edge Function (`cleanup-old-webhooks.ts`):
+
 ```typescript
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
 Deno.serve(async (req) => {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  
-  const supabase = createClient(supabaseUrl, supabaseServiceKey)
-  
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
   // Delete webhooks older than 90 days
-  const cutoffDate = new Date()
-  cutoffDate.setDate(cutoffDate.getDate() - 90)
-  
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - 90);
+
   const { data, error } = await supabase
-    .from('stripe_webhook_events')
+    .from("stripe_webhook_events")
     .delete()
-    .lt('received_at', cutoffDate.toISOString())
-  
+    .lt("received_at", cutoffDate.toISOString());
+
   if (error) {
-    console.error('Failed to delete old webhooks:', error)
+    console.error("Failed to delete old webhooks:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    })
+      headers: { "Content-Type": "application/json" },
+    });
   }
-  
-  console.log(`Deleted old webhooks`, data)
+
+  console.log(`Deleted old webhooks`, data);
   return new Response(JSON.stringify({ success: true }), {
-    headers: { 'Content-Type': 'application/json' }
-  })
-})
+    headers: { "Content-Type": "application/json" },
+  });
+});
 ```
 
 Pg_cron schedule:
+
 ```sql
 -- Schedule daily at 2 AM UTC
 SELECT cron.schedule(
   'cleanup-old-webhooks',
   '0 2 * * *',
   $$
-  DELETE FROM stripe_webhook_events 
+  DELETE FROM stripe_webhook_events
   WHERE received_at < now() - interval '90 days'
   $$
 );
@@ -1154,69 +1274,70 @@ SELECT cron.schedule(
 #### 3. CRON job dla purge deleted users (template)
 
 Supabase Edge Function (`purge-deleted-users.ts`):
-```typescript
-import { createClient } from '@supabase/supabase-js'
-import Stripe from 'stripe'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-  apiVersion: '2023-10-16'
-})
+```typescript
+import { createClient } from "@supabase/supabase-js";
+import Stripe from "stripe";
+
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
+  apiVersion: "2023-10-16",
+});
 
 Deno.serve(async (req) => {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  
-  const supabase = createClient(supabaseUrl, supabaseServiceKey)
-  
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
   // Find users deleted more than 30 days ago
-  const cutoffDate = new Date()
-  cutoffDate.setDate(cutoffDate.getDate() - 30)
-  
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - 30);
+
   const { data: deletedUsers, error } = await supabase
-    .from('app_users')
-    .select('auth_uid, stripe_subscription_id')
-    .not('deleted_at', 'is', null)
-    .lt('deleted_at', cutoffDate.toISOString())
-  
+    .from("app_users")
+    .select("auth_uid, stripe_subscription_id")
+    .not("deleted_at", "is", null)
+    .lt("deleted_at", cutoffDate.toISOString());
+
   if (error) {
-    console.error('Failed to fetch deleted users:', error)
+    console.error("Failed to fetch deleted users:", error);
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500
-    })
+      status: 500,
+    });
   }
-  
-  let purgedCount = 0
-  let canceledSubscriptions = 0
-  
+
+  let purgedCount = 0;
+  let canceledSubscriptions = 0;
+
   for (const user of deletedUsers || []) {
     try {
       // Cancel Stripe subscription if exists
       if (user.stripe_subscription_id) {
-        await stripe.subscriptions.cancel(user.stripe_subscription_id)
-        canceledSubscriptions++
+        await stripe.subscriptions.cancel(user.stripe_subscription_id);
+        canceledSubscriptions++;
       }
-      
+
       // Physically delete user (CASCADE deletes related records)
-      await supabase
-        .from('app_users')
-        .delete()
-        .eq('auth_uid', user.auth_uid)
-      
-      purgedCount++
+      await supabase.from("app_users").delete().eq("auth_uid", user.auth_uid);
+
+      purgedCount++;
     } catch (err) {
-      console.error(`Failed to purge user ${user.auth_uid}:`, err)
+      console.error(`Failed to purge user ${user.auth_uid}:`, err);
     }
   }
-  
-  console.log(`Purged ${purgedCount} users, canceled ${canceledSubscriptions} subscriptions`)
-  return new Response(JSON.stringify({ 
-    success: true, 
-    purgedCount, 
-    canceledSubscriptions 
-  }), {
-    headers: { 'Content-Type': 'application/json' }
-  })
-})
+
+  console.log(`Purged ${purgedCount} users, canceled ${canceledSubscriptions} subscriptions`);
+  return new Response(
+    JSON.stringify({
+      success: true,
+      purgedCount,
+      canceledSubscriptions,
+    }),
+    {
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+});
 ```
 
 ### 8.3. Metryki
@@ -1236,4 +1357,3 @@ Deno.serve(async (req) => {
 ---
 
 Koniec raportu audytu Database Plan.
-
