@@ -107,7 +107,7 @@ export function AuthForm({ mode, returnUrl = "/grid" }: AuthFormProps) {
 
   return (
     <div className="rounded-lg border bg-white p-6 shadow-sm">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {/* Email field */}
         <div>
           <label htmlFor="email" className="block text-sm font-medium">
@@ -179,7 +179,7 @@ export function AuthForm({ mode, returnUrl = "/grid" }: AuthFormProps) {
         {/* Password reset link (login only) */}
         {mode === "login" && (
           <div className="text-center">
-            <a href="/auth/reset-password" className="text-xs text-muted-foreground hover:underline">
+            <a href="/auth/forgot-password" className="text-xs text-muted-foreground hover:underline">
               Zapomniałeś hasła?
             </a>
           </div>

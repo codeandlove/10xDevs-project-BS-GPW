@@ -6,6 +6,7 @@ import Layout from "@/layouts/Layout.astro";
 import { AuthPageWrapper } from "@/components/auth/AuthPageWrapper";
 
 const returnUrl = Astro.url.searchParams.get("returnUrl") || "/grid";
+const passwordReset = Astro.url.searchParams.get("password_reset");
 ---
 
 <Layout title="Zaloguj się - Black Swan Grid">
@@ -22,6 +23,19 @@ const returnUrl = Astro.url.searchParams.get("returnUrl") || "/grid";
           <a href="/auth/register" class="font-medium text-primary hover:underline"> Zarejestruj się </a>
         </p>
       </div>
+
+      {
+        passwordReset === "success" && (
+          <div
+            role="alert"
+            class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800"
+            id="password-reset-success"
+          >
+            <p class="font-medium">✅ Hasło zostało pomyślnie zmienione</p>
+            <p class="mt-1">Możesz teraz zalogować się używając nowego hasła.</p>
+          </div>
+        )
+      }
 
       <AuthPageWrapper client:load mode="login" returnUrl={returnUrl} />
     </div>

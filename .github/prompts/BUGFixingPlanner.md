@@ -1,15 +1,16 @@
-````markdown
+`````markdown
 Jestes doswiadczonym architektem oprogramowania i specjalista od debugowania, ktorego zadaniem jest przeprowadzenie kompleksowej analizy zgloszonego bledu, zidentyfikowanie przyczyny oraz zaplanowanie jego naprawy w sposob zgodny ze standardami projektu.
 
 <bug_description>
 {{opis-bledu}} <- szczegolowy opis bledu od uzytkownika:
+
 - Tytul bledu
 - Kroki reprodukcji
 - Oczekiwane zachowanie
 - Rzeczywiste zachowanie
 - Srodowisko (przegladarka, OS, itp.)
 - Dodatkowe informacje (screenshoty, logi, error messages)
-</bug_description>
+  </bug_description>
 
 <tech_stack_reference>
 @tech-stack.md <- stack technologiczny projektu (jesli dostepny)
@@ -60,25 +61,25 @@ Wykonaj nastepujace kroki, aby przeprowadzic kompleksowa analize bledu i zaplano
 
 5. PROPOZYCJE ROZWIAZAŃ - Zaproponuj 2-3 alternatywne podejscia naprawy (jesli blad wymaga zmian w wiekszej ilosci plikow):
    a. ROZWIAZANIE A: [opis krotki]
-      - Zakres zmian (pliki, moduły)
-      - Zalety
-      - Wady
-      - Szacowany effort (XS | S | M | L | XL)
-      - Ryzyko regresji (LOW | MEDIUM | HIGH)
-   
+   - Zakres zmian (pliki, moduły)
+   - Zalety
+   - Wady
+   - Szacowany effort (XS | S | M | L | XL)
+   - Ryzyko regresji (LOW | MEDIUM | HIGH)
+
    b. ROZWIAZANIE B: [opis krotki]
-      - Zakres zmian (pliki, moduły)
-      - Zalety
-      - Wady
-      - Szacowany effort (XS | S | M | L | XL)
-      - Ryzyko regresji (LOW | MEDIUM | HIGH)
-   
+   - Zakres zmian (pliki, moduły)
+   - Zalety
+   - Wady
+   - Szacowany effort (XS | S | M | L | XL)
+   - Ryzyko regresji (LOW | MEDIUM | HIGH)
+
    c. ROZWIAZANIE C (opcjonalnie): [opis krotki]
-      - Zakres zmian (pliki, moduły)
-      - Zalety
-      - Wady
-      - Szacowany effort (XS | S | M | L | XL)
-      - Ryzyko regresji (LOW | MEDIUM | HIGH)
+   - Zakres zmian (pliki, moduły)
+   - Zalety
+   - Wady
+   - Szacowany effort (XS | S | M | L | XL)
+   - Ryzyko regresji (LOW | MEDIUM | HIGH)
 
 6. REKOMENDACJA - Wybierz najlepsze rozwiazanie z uzasadnieniem:
    a. Dlaczego to rozwiazanie jest optymalne
@@ -88,7 +89,7 @@ Wykonaj nastepujace kroki, aby przeprowadzic kompleksowa analize bledu i zaplano
 
 Przygotuj szczegolowy plan naprawy z nastepujaca struktura:
 
-```markdown
+````markdown
 # Plan Naprawy Bledu - {{bug-name}}
 
 Data utworzenia: {{current-date}}
@@ -99,34 +100,43 @@ Typ bledu: {{UI | Business Logic | Integration | Security | Performance | Other}
 ## 1. Podsumowanie wykonawcze
 
 ### 1.1. Opis bledu
+
 [Krotki opis problemu w 2-3 zdaniach]
 
 ### 1.2. Root cause
+
 [Podstawowa przyczyna bledu - konkretnie i technicznie]
 
 ### 1.3. Zakres wpływu
+
 - Dotknięte komponenty/moduły: [lista]
 - Dotknięci uzytkownicy: [zakres - np. wszyscy, tylko trial users, tylko premium]
 - Dotknięte srodowiska: [production, staging, development]
 
 ### 1.4. Priorytet naprawy
+
 [IMMEDIATE | HIGH | NORMAL | LOW] - uzasadnienie priorytetu
 
 ## 2. Szczegolowa analiza bledu
 
 ### 2.1. Kroki reprodukcji
+
 1. [Krok 1]
 2. [Krok 2]
 3. [Krok N]
 
 ### 2.2. Oczekiwane zachowanie
+
 [Jak powinien działać system]
 
 ### 2.3. Rzeczywiste zachowanie
+
 [Jak system faktycznie działa - blad]
 
 ### 2.4. Root cause analysis
+
 [Szczegolowe wyjasnienie przyczyny bledu:]
+
 - Lokalizacja bledu: [plik:linia lub komponent/funkcja]
 - Przyczyna techniczna: [co dokladnie jest nie tak w kodzie]
 - Brakujące warunki/sprawdzenia: [jesli dotyczy]
@@ -134,26 +144,33 @@ Typ bledu: {{UI | Business Logic | Integration | Security | Performance | Other}
 - Problemy integracji: [jesli dotyczy]
 
 ### 2.5. Analiza zasiegu
+
 [Wszystkie miejsca w kodzie dotknięte bledem lub wymagajace zmian:]
 
 #### Komponenty frontend:
+
 - [sciezka/do/Komponent1.tsx] - [opis czego dotyczy blad/naprawa]
 - [sciezka/do/Komponent2.tsx] - [opis czego dotyczy blad/naprawa]
 
 #### Serwisy/hooki:
+
 - [sciezka/do/service.ts] - [opis czego dotyczy blad/naprawa]
 - [sciezka/do/useHook.ts] - [opis czego dotyczy blad/naprawa]
 
 #### Typy/interfejsy:
+
 - [sciezka/do/types.ts] - [jakie typy wymagaja aktualizacji]
 
 #### Backend/API (jesli dotyczy):
+
 - [sciezka/do/endpoint.ts] - [opis zmian]
 
 #### Baza danych (jesli dotyczy):
+
 - [migracja/schema] - [opis zmian]
 
 #### Testy:
+
 - [sciezka/do/test.spec.ts] - [jakie testy wymagaja aktualizacji]
 - [nowe testy do dodania]
 
@@ -162,30 +179,37 @@ Typ bledu: {{UI | Business Logic | Integration | Security | Performance | Other}
 ### 3.1. Rozwiazanie A (REKOMENDOWANE)
 
 #### Opis:
+
 [Szczegolowy opis podejscia do naprawy]
 
 #### Zakres zmian:
+
 - Frontend: [lista plikow i zmian]
 - Backend: [lista plikow i zmian]
 - Database: [migracje/schema changes]
 - Testy: [nowe/zaktualizowane testy]
 
 #### Zalety:
+
 - [Zaleta 1]
 - [Zaleta 2]
 - [Zaleta N]
 
 #### Wady:
+
 - [Wada 1]
 - [Wada 2]
 
 #### Effort: [XS | S | M | L | XL]
+
 [Uzasadnienie estymacji]
 
 #### Ryzyko regresji: [LOW | MEDIUM | HIGH]
+
 [Uzasadnienie poziomu ryzyka]
 
 #### Zgodnosc ze standardami:
+
 - Copilot-instructions.md: [✅/⚠️/❌] - [komentarz]
 - Tech-stack.md: [✅/⚠️/❌] - [komentarz]
 - Best practices: [✅/⚠️/❌] - [komentarz]
@@ -201,10 +225,13 @@ Typ bledu: {{UI | Business Logic | Integration | Security | Performance | Other}
 ## 4. Rekomendacja i uzasadnienie
 
 ### 4.1. Wybrane rozwiazanie
+
 [ROZWIAZANIE A/B/C]
 
 ### 4.2. Uzasadnienie wyboru
+
 [Szczegolowe wyjasnienie dlaczego to rozwiazanie jest optymalne:]
+
 - Minimalizuje ryzyko regresji poprzez: [...]
 - Jest zgodne ze standardami projektu: [...]
 - Optymalizuje effort vs. wartosc: [...]
@@ -214,6 +241,7 @@ Typ bledu: {{UI | Business Logic | Integration | Security | Performance | Other}
 ## 5. Szczegolowy plan implementacji
 
 ### 5.1. Faza 1: Przygotowanie
+
 - [ ] Utworzenie brancha: `fix/{{bug-name}}`
 - [ ] Backup/snapshot istniejacych danych (jesli dotyczy)
 - [ ] Przygotowanie srodowiska testowego
@@ -222,17 +250,22 @@ Typ bledu: {{UI | Business Logic | Integration | Security | Performance | Other}
 ### 5.2. Faza 2: Zmiany w kodzie
 
 #### Krok 1: [Nazwa kroku]
+
 Plik: `{{sciezka/do/pliku}}`
 
 Opis zmian:
 [Szczegolowy opis co nalezy zmienic]
 
 Kod przed zmiana:
+
 ```typescript
 // Aktualny kod (fragment)
 ```
+````
+`````
 
 Kod po zmianie:
+
 ```typescript
 // Nowy kod (fragment)
 ```
@@ -241,9 +274,11 @@ Uzasadnienie:
 [Dlaczego ta zmiana naprawia blad]
 
 #### Krok 2: [Nazwa kroku]
+
 [Ta sama struktura co Krok 1]
 
 #### Krok N: [Nazwa kroku]
+
 [Ta sama struktura co Krok 1]
 
 ### 5.3. Faza 3: Aktualizacja typow i interfejsow
@@ -270,6 +305,7 @@ Plik migracji: `{{nazwa-migracji}}.sql`
 ```
 
 Rollback plan:
+
 ```sql
 -- SQL rollback script
 ```
@@ -277,11 +313,12 @@ Rollback plan:
 ### 5.5. Faza 5: Aktualizacja/dodanie testow
 
 #### Test jednostkowy 1:
+
 Plik: `{{sciezka/do/test.spec.ts}}`
 
 ```typescript
-describe('{{test-suite}}', () => {
-  it('{{test-case}}', () => {
+describe("{{test-suite}}", () => {
+  it("{{test-case}}", () => {
     // Test implementation
   });
 });
@@ -291,10 +328,11 @@ Cel testu:
 [Co test weryfikuje - szczegolnie edge cases]
 
 #### Test E2E (jesli wymagany):
+
 Plik: `{{sciezka/do/e2e.spec.ts}}`
 
 ```typescript
-test('{{test-name}}', async ({ page }) => {
+test("{{test-name}}", async ({ page }) => {
   // E2E test implementation
 });
 ```
@@ -305,19 +343,23 @@ Cel testu:
 ## 6. Plan weryfikacji i testowania
 
 ### 6.1. Unit tests
+
 - [ ] [Test 1: opis co sprawdza]
 - [ ] [Test 2: opis co sprawdza]
 - [ ] [Test N: opis co sprawdza]
 
 ### 6.2. Integration tests
+
 - [ ] [Test 1: opis scenariusza]
 - [ ] [Test 2: opis scenariusza]
 
 ### 6.3. E2E tests
+
 - [ ] [Test 1: opis user journey]
 - [ ] [Test 2: opis user journey]
 
 ### 6.4. Manual testing checklist
+
 - [ ] Reprodukcja oryginalnego bledu - sprawdzenie czy naprawiony
 - [ ] Testowanie edge cases: [lista przypadkow]
 - [ ] Testowanie w roznych przeglądarkach: [lista]
@@ -327,7 +369,9 @@ Cel testu:
 - [ ] Testowanie performance (loading time, bundle size)
 
 ### 6.5. Regression testing
+
 [Lista obszarow do przetestowania w poszukiwaniu regresji:]
+
 - [ ] [Obszar 1: funkcjonalnosc A]
 - [ ] [Obszar 2: funkcjonalnosc B]
 - [ ] [Obszar N: funkcjonalnosc X]
@@ -337,15 +381,18 @@ Cel testu:
 ### 7.1. Zidentyfikowane ryzyka
 
 #### Ryzyko 1: [Nazwa ryzyka]
+
 - Severity: [HIGH | MEDIUM | LOW]
 - Prawdopodobienstwo: [HIGH | MEDIUM | LOW]
 - Wpływ: [opis potencjalnego wpływu]
 - Mitigation: [jak minimalizujemy to ryzyko]
 
 #### Ryzyko 2: [Nazwa ryzyka]
+
 [Ta sama struktura co Ryzyko 1]
 
 ### 7.2. Rollback plan
+
 [Szczegolowy plan jak wycofac zmiany w razie problemu:]
 
 1. [Krok 1 rollbacku]
@@ -353,7 +400,9 @@ Cel testu:
 3. [Krok N rollbacku]
 
 ### 7.3. Monitoring post-deployment
+
 [Co monitorowac po wdrozeniu naprawy:]
+
 - [Metryka 1: jaka wartosc sprawdzac]
 - [Metryka 2: jaka wartosc sprawdzac]
 - [Logi: jakie logi analizowac]
@@ -362,6 +411,7 @@ Cel testu:
 ## 8. Zgodnosc ze standardami
 
 ### 8.1. Copilot-instructions.md compliance
+
 [Sprawdzenie zgodnosci naprawy ze standardami kodowania:]
 
 - React patterns: [✅/⚠️/❌] - [komentarz]
@@ -371,6 +421,7 @@ Cel testu:
 - Testing patterns: [✅/⚠️/❌] - [komentarz]
 
 ### 8.2. Tech-stack.md compliance
+
 [Sprawdzenie zgodnosci z stackiem technologicznym:]
 
 - Uzyty framework/library: [✅/⚠️/❌] - [wersja, komentarz]
@@ -378,6 +429,7 @@ Cel testu:
 - Build tools: [✅/⚠️/❌] - [komentarz]
 
 ### 8.3. Security checklist
+
 - [ ] Input validation - wszystkie inputy sa walidowane
 - [ ] Authorization - sprawdzanie uprawnien uzytkownika
 - [ ] Authentication - weryfikacja tozsamosci (jesli dotyczy)
@@ -388,6 +440,7 @@ Cel testu:
 - [ ] Rate limiting - ograniczenia requestow (jesli dotyczy)
 
 ### 8.4. Performance checklist
+
 - [ ] Bundle size impact - minimalizacja wpływu na rozmiar bundla
 - [ ] Rendering optimization - React.memo, useMemo, useCallback (jesli dotyczy)
 - [ ] Loading states - odpowiednie stany loading
@@ -395,6 +448,7 @@ Cel testu:
 - [ ] Code splitting - lazy loading (jesli dotyczy)
 
 ### 8.5. Accessibility checklist (dla UI)
+
 - [ ] ARIA attributes - poprawne uzycie
 - [ ] Keyboard navigation - wszystko dostepne z klawiatury
 - [ ] Focus management - logiczne przesuniecie focus
@@ -405,19 +459,25 @@ Cel testu:
 ## 9. Dokumentacja zmian
 
 ### 9.1. Changelog entry
+
 ```markdown
 ### Fixed
+
 - [{{bug-title}}] {{krotki opis naprawy}}
 ```
 
 ### 9.2. Aktualizacja README (jesli wymagana)
+
 [Jesli naprawa zmienia API, sposob uzycia, konfiguracje itp.]
 
 ### 9.3. Dokumentacja techniczna (jesli wymagana)
+
 [Jesli naprawa wprowadza nowe wzorce, utilities, itp.]
 
 ### 9.4. Release notes
+
 [Informacja dla uzytkownikow koncowych (jesli dotyczy):]
+
 - Co zostało naprawione
 - Jak wpływa to na doswiadczenie uzytkownika
 - Czy wymagane sa jakies akcje po stronie uzytkownika
@@ -425,6 +485,7 @@ Cel testu:
 ## 10. Timeline i effort estimation
 
 ### 10.1. Estymacja czasu
+
 - Implementacja: [X godzin/dni]
 - Testowanie: [X godzin/dni]
 - Code review: [X godzin]
@@ -434,11 +495,14 @@ Cel testu:
 Łącznie: [X godzin/dni]
 
 ### 10.2. Zaleznosci
+
 [Czy naprawa wymaga czekania na cos lub blokuje cos innego:]
+
 - Blokujace: [lista zależności blokujących]
 - Blokowane: [lista zależności blokowanych przez ta naprawe]
 
 ### 10.3. Sugerowany timeline
+
 - Start: [data]
 - Code complete: [data]
 - Testing complete: [data]
@@ -449,7 +513,9 @@ Cel testu:
 ## 11. Załączniki
 
 ### 11.1. Dotknięte pliki (lista pelna)
+
 [Pelna lista wszystkich plikow wymagajacych zmian:]
+
 ```
 sciezka/do/pliku1.ts
 sciezka/do/pliku2.tsx
@@ -458,15 +524,19 @@ sciezka/do/pliku3.spec.ts
 ```
 
 ### 11.2. Referencje
+
 [Linki do zwiazanych issuow, PRow, dokumentacji:]
+
 - Issue #XXX: [opis]
 - Related PR #XXX: [opis]
 - Documentation: [link]
 
 ### 11.3. Screenshoty/diagramy
+
 [Jesli przydatne - diagramy przepływu, screenshoty bledu, mock-upy naprawy]
 
 ### 11.4. Error logs/stack traces
+
 [Jesli dotyczy - pełne stack traces, logi bledow]
 
 ```
@@ -506,6 +576,8 @@ DODATKOWE WYTYCZNE:
   - HIGH: Zmiana dotyka core functionality, duzy zakres wpływu
 
 Ostateczny wynik powinien skladac sie wylacznie z planu naprawy bledu zgodnego ze wskazanym formatem w markdown, gotowego do bezposredniej implementacji przez developera.
+```
 
-````
+```
 
+```
