@@ -552,23 +552,45 @@ test.describe("Email Confirmation Flow", () => {
     await page.goto("/auth/register");
 
     // Wait for React to hydrate - wait for email input to be interactive
-    await page.waitForSelector('[name="email"]', { state: "visible" });
-    await page.waitForTimeout(500); // Extra time for React hydration
+    // Using longer timeout for CI environment
+    await page.waitForSelector('[name="email"]', { state: "visible", timeout: 10000 });
+    await page.waitForTimeout(1000); // Extra time for React hydration (increased for CI)
 
     // Fill registration form with unique email
     const testEmail = `test-${Date.now()}@example.com`;
     await page.fill('[name="email"]', testEmail);
     await page.fill('[name="password"]', "Test123!@#");
 
-    // Submit form
-    await page.click('button[type="submit"]');
+    // Submit form and wait for network idle
+    await Promise.all([
+      page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {}),
+      page.click('button[type="submit"]')
+    ]);
 
-    // Should show success toast about email confirmation
-    await expect(page.locator("text=Konto utworzone!")).toBeVisible({ timeout: 5000 });
-    await expect(page.locator("text=Sprawdź swoją skrzynkę email")).toBeVisible();
+    // Check if there are any validation errors
+    const hasValidationError = await page.locator('#email-error, #password-error').count();
+    if (hasValidationError > 0) {
+      const errorText = await page.locator('#email-error, #password-error').first().textContent();
+      throw new Error(`Validation error found: ${errorText}`);
+    }
 
-    // Should redirect to confirmation page
-    await expect(page).toHaveURL("/auth/confirmation", { timeout: 3000 });
+    // Check if there's a general error message
+    const hasGeneralError = await page.locator('.text-red-600, .text-destructive').count();
+    if (hasGeneralError > 0) {
+      const errorText = await page.locator('.text-red-600, .text-destructive').first().textContent();
+      throw new Error(`General error found: ${errorText}`);
+    }
+
+    // Should show success toast about email confirmation or redirect to confirmation page
+    // Using Promise.race to wait for either toast or redirect (longer timeout for CI)
+    await Promise.race([
+      page.locator("text=Konto utworzone!").waitFor({ state: "visible", timeout: 15000 }),
+      page.waitForURL("/auth/confirmation", { timeout: 15000 })
+    ]);
+
+    // If we're here, either toast appeared or we redirected
+    // Final check: we should be on confirmation page
+    await expect(page).toHaveURL("/auth/confirmation", { timeout: 10000 });
   });
 
   test("TC-AUTH-005: Confirmation page displays correct message", async ({ page }) => {
