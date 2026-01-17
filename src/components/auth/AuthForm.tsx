@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { supabaseClient } from "@/db/supabase.client";
 import { useToast } from "@/contexts/ToastContext";
 
+/**
+ * Configuration: Email confirmation requirement
+ * Set to true to redirect users to /auth/confirmation after registration
+ * Set to false to redirect users directly to the app after registration
+ */
+const NEEDS_CONFIRM_EMAIL = true;
+
 interface AuthFormProps {
   mode: "login" | "register";
   returnUrl?: string;
@@ -58,7 +65,8 @@ export function AuthForm({ mode, returnUrl = "/grid" }: AuthFormProps) {
         if (signUpError) throw signUpError;
 
         if (data.user) {
-          // Initialize user with trial
+          // Initialize user with trial (always, before email confirmation)
+          // This prevents multiple initialization attempts for the same user
           const initResponse = await fetch("/api/users/initialize", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -73,12 +81,22 @@ export function AuthForm({ mode, returnUrl = "/grid" }: AuthFormProps) {
             throw new Error(errorData.error || errorData.message || "Failed to initialize user profile");
           }
 
-          toast.success("Konto utworzone!", "Witaj w Black Swan Grid. Twój 7-dniowy trial właśnie się rozpoczął.");
+          // Check if we should show email confirmation page
+          if (NEEDS_CONFIRM_EMAIL) {
+            // Redirect to confirmation page
+            toast.success("Konto utworzone!", "Sprawdź swoją skrzynkę email i potwierdź adres, aby móc się zalogować.");
 
-          // Redirect to grid
-          setTimeout(() => {
-            window.location.href = returnUrl;
-          }, 1000);
+            setTimeout(() => {
+              window.location.href = "/auth/confirmation";
+            }, 1500);
+          } else {
+            // Direct access - redirect to app
+            toast.success("Konto utworzone!", "Witaj w Black Swan Grid. Twój 7-dniowy trial właśnie się rozpoczął.");
+
+            setTimeout(() => {
+              window.location.href = returnUrl;
+            }, 1000);
+          }
         }
       } else {
         // Login existing user

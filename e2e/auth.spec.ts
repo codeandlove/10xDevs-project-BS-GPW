@@ -411,6 +411,10 @@ test.describe("Password Reset Flow", () => {
   test("TC-AUTH-004: Forgot password form validation", async ({ page }) => {
     await page.goto("/auth/forgot-password");
 
+    // Wait for React component to render (client:only)
+    await page.waitForSelector('[name="email"]', { state: "visible" });
+    await page.waitForTimeout(300); // Extra time for React to be fully interactive
+
     // Try to submit with invalid email
     await page.fill('[name="email"]', "invalid-email");
     await page.click('button[type="submit"]');
@@ -476,6 +480,10 @@ test.describe("Password Reset Flow", () => {
   test("TC-AUTH-005: Reset password form validation", async ({ page }) => {
     await page.goto("/auth/reset-password");
 
+    // Wait for React component to render (client:only)
+    await page.waitForSelector('[name="password"]', { state: "visible" });
+    await page.waitForTimeout(300); // Extra time for React to be fully interactive
+
     const passwordInput = page.locator('[name="password"]');
     const confirmInput = page.locator('[name="password-confirm"]');
     const submitBtn = page.locator('button[type="submit"]');
@@ -502,6 +510,9 @@ test.describe("Password Reset Flow", () => {
   test("TC-AUTH-005: Reset password with expired token shows error", async ({ page }) => {
     // Navigate with error params (simulating expired token from Supabase)
     await page.goto("/auth/reset-password?error=expired&error_description=Token%20expired");
+
+    // Wait for React component to render (client:only)
+    await page.waitForSelector("text=Link wygasł lub jest nieprawidłowy", { state: "visible" });
 
     // Should show error message
     await expect(page.locator("text=Link wygasł lub jest nieprawidłowy")).toBeVisible();
@@ -530,5 +541,83 @@ test.describe("Password Reset Flow", () => {
     await expect(page.locator("#password-reset-success")).toBeVisible();
     await expect(page.locator("text=Hasło zostało pomyślnie zmienione")).toBeVisible();
     await expect(page.locator("text=Możesz teraz zalogować się")).toBeVisible();
+  });
+});
+
+test.describe("Email Confirmation Flow", () => {
+  test("TC-AUTH-004: Registration with NEEDS_CONFIRM_EMAIL=true redirects to /auth/confirmation", async ({ page }) => {
+    // NOTE: This test assumes NEEDS_CONFIRM_EMAIL is set to true in AuthForm.tsx
+
+    // Navigate to register page
+    await page.goto("/auth/register");
+
+    // Wait for React to hydrate - wait for email input to be interactive
+    await page.waitForSelector('[name="email"]', { state: "visible" });
+    await page.waitForTimeout(500); // Extra time for React hydration
+
+    // Fill registration form with unique email
+    const testEmail = `test-${Date.now()}@example.com`;
+    await page.fill('[name="email"]', testEmail);
+    await page.fill('[name="password"]', "Test123!@#");
+
+    // Submit form
+    await page.click('button[type="submit"]');
+
+    // Should show success toast about email confirmation
+    await expect(page.locator("text=Konto utworzone!")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=Sprawdź swoją skrzynkę email")).toBeVisible();
+
+    // Should redirect to confirmation page
+    await expect(page).toHaveURL("/auth/confirmation", { timeout: 3000 });
+  });
+
+  test("TC-AUTH-005: Confirmation page displays correct message", async ({ page }) => {
+    // Navigate to confirmation page directly
+    await page.goto("/auth/confirmation");
+
+    // Should display confirmation page
+    await expect(page).toHaveURL("/auth/confirmation");
+
+    // Should display heading
+    await expect(page.locator("h1")).toHaveText("Sprawdź swoją skrzynkę email");
+
+    // Should display email sent message
+    await expect(page.locator("h2")).toHaveText("Email został wysłany");
+
+    // Should display helpful tips
+    await expect(page.locator("text=Sprawdź folder spam/promocje")).toBeVisible();
+    await expect(page.locator("text=Link weryfikacyjny jest ważny przez 24 godziny")).toBeVisible();
+
+    // Should have link back to login
+    await expect(page.locator('a[href="/auth/login"]')).toBeVisible();
+
+    // Should have link to register again
+    await expect(page.locator('a[href="/auth/register"]')).toBeVisible();
+  });
+
+  test.skip("TC-AUTH-006: Registration with NEEDS_CONFIRM_EMAIL=false redirects to /grid", async ({ page }) => {
+    // NOTE: This test should be run when NEEDS_CONFIRM_EMAIL is set to false in AuthForm.tsx
+    // To run this test, change the flag to false, then unskip this test
+
+    // Setup: Mock NocoDB responses
+    await setupNocoDBMocks(page);
+
+    // Navigate to register page
+    await page.goto("/auth/register");
+
+    // Fill registration form with unique email
+    const testEmail = `test-${Date.now()}@example.com`;
+    await page.fill('[name="email"]', testEmail);
+    await page.fill('[name="password"]', "Test123!@#");
+
+    // Submit form
+    await page.click('button[type="submit"]');
+
+    // Should show success toast without email confirmation message
+    await expect(page.locator("text=Konto utworzone!")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=Witaj w Black Swan Grid")).toBeVisible();
+
+    // Should redirect to grid (not confirmation)
+    await expect(page).toHaveURL("/grid", { timeout: 3000 });
   });
 });

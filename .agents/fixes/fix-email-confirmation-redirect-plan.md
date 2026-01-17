@@ -14,6 +14,7 @@ Aktualnie po zarejestrowaniu nowego konta, uzytkownik otrzymuje toast z powodzen
 ### 1.2. Root cause
 
 Komponent AuthForm.tsx po udanej rejestracji (signUp) zawsze przekierowuje na returnUrl (/grid), niezaleznie od ustawienia enable_confirmations w Supabase. Brak jest:
+
 - Flagi konfiguracyjnej NEEDS_CONFIRM_EMAIL kontrolujacej przekierowanie
 - Strony /auth/confirmation informujacej o wyslaniu emaila weryfikacyjnego i koniecznosci klikniecia w link
 
@@ -42,6 +43,7 @@ NORMAL - Blad nie blokuje rejestracji, ale pogarsza UX i moze powodowac pomylki 
 ### 2.2. Oczekiwane zachowanie
 
 Po rejestracji, jesli NEEDS_CONFIRM_EMAIL=true, uzytkownik powinien:
+
 1. Uzytkownik zostaje zainicjalizowany przez /api/users/initialize (profil w bazie utworzony)
 2. Otrzymac toast z informacja o wyslaniu emaila weryfikacyjnego
 3. Zostac przekierowany na strone /auth/confirmation
@@ -54,6 +56,7 @@ Jesli NEEDS_CONFIRM_EMAIL=false, zachowanie pozostaje jak obecnie - uzytkownik j
 ### 2.3. Rzeczywiste zachowanie
 
 Aktualnie po rejestracji:
+
 1. Uzytkownik zostaje zainicjalizowany (profil w bazie utworzony)
 2. Uzytkownik otrzymuje toast "Konto utworzone! Witaj w Black Swan Grid. Twoj 7-dniowy trial wlasnie się rozpoczal."
 3. Uzytkownik zostaje przekierowany na /grid (ale nie ma dostepu bo Supabase blokuje sesje do momentu potwierdzenia emaila)
@@ -65,15 +68,18 @@ Aktualnie po rejestracji:
 Lokalizacja bledu: src/components/auth/AuthForm.tsx, linie 52-81
 
 Przyczyna techniczna:
+
 1. Brak flagi konfiguracyjnej NEEDS_CONFIRM_EMAIL na gorze pliku kontrolujacej przekierowanie
 2. Kod zawsze wykonuje przekierowanie do returnUrl bez wzgledu na to czy chcemy informowac uzytkownika o potwierdzeniu emaila
 3. Brak strony /auth/confirmation
 
 Brakujące warunki/sprawdzenia:
+
 - Warunek if (NEEDS_CONFIRM_EMAIL) -> redirect confirmation
 - Warunek if (!NEEDS_CONFIRM_EMAIL) -> redirect grid
 
 Nieprawidlowa logika:
+
 - Brak rozroznienia miedzy flow z informacja o potwierdzeniu emaila a flow z natychmiastowym przekierowaniem
 
 UWAGA: Inicjalizacja uzytkownika (/api/users/initialize) POZOSTAJE przed potwierdzeniem emaila - wykonuje sie zawsze po rejestracji. To unika wielokrotnej inicjalizacji tego samego uzytkownika.
@@ -130,7 +136,6 @@ Inicjalizacja uzytkownika (/api/users/initialize) wykonuje sie ZAWSZE po rejestr
 - Frontend:
   - src/components/auth/AuthForm.tsx: dodac flage NEEDS_CONFIRM_EMAIL (const) na gorze pliku, zmodyfikowac logike po signUp aby sprawdzic tylko flage (bez sprawdzania data.user.identities), inicjalizacja uzytkownika ZAWSZE nastepuje przed przekierowaniem, dostosowac toast i przekierowanie
   - src/pages/auth/confirmation.astro: utworzyc nowa strone z informacja o wyslaniu emaila
-  
 - Backend: Brak zmian
 
 - Database: Brak zmian
@@ -160,6 +165,7 @@ Inicjalizacja uzytkownika (/api/users/initialize) wykonuje sie ZAWSZE po rejestr
 #### Effort: S (2-3 godziny)
 
 Uzasadnienie estymacji:
+
 - 10 min: Dodanie flagi w AuthForm.tsx
 - 30 min: Prosta logika if/else w AuthForm.tsx
 - 45 min: Utworzenie strony /auth/confirmation
@@ -170,6 +176,7 @@ Uzasadnienie estymacji:
 #### Ryzyko regresji: LOW
 
 Uzasadnienie poziomu ryzyka:
+
 - Zmiana jest warunkowa (if NEEDS_CONFIRM_EMAIL) - istniejacy flow nie jest naruszany gdy flaga = false
 - Nowa strona nie wplywa na istniejace funkcjonalnosci
 - Kod jest dobrze odizolowany w AuthForm.tsx
@@ -211,6 +218,7 @@ Podobne do Rozwiazania A, ale NEEDS_CONFIRM_EMAIL jest zmienna srodowiskowa (imp
 #### Effort: S (3-5 godzin)
 
 Dodatkowy czas na:
+
 - Aktualizacje .env.example
 - Aktualizacje env.d.ts
 - Dodatkowa dokumentacje
@@ -421,10 +429,7 @@ if (mode === "register") {
     // Check if we should show email confirmation page
     if (NEEDS_CONFIRM_EMAIL) {
       // Redirect to confirmation page
-      toast.success(
-        "Konto utworzone!", 
-        "Sprawdź swoją skrzynkę email i potwierdź adres, aby móc się zalogować."
-      );
+      toast.success("Konto utworzone!", "Sprawdź swoją skrzynkę email i potwierdź adres, aby móc się zalogować.");
 
       setTimeout(() => {
         window.location.href = "/auth/confirmation";
@@ -476,19 +481,13 @@ import Layout from "@/layouts/Layout.astro";
       <div class="rounded-lg border bg-white p-6 shadow-sm">
         <div class="mb-4 text-center">
           <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-            <svg 
-              class="h-8 w-8 text-blue-600" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path 
-                stroke-linecap="round" 
-                stroke-linejoin="round" 
-                stroke-width="2" 
+            <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
+              ></path>
             </svg>
           </div>
           <h2 class="text-xl font-semibold text-gray-900">Email został wysłany</h2>
@@ -496,8 +495,8 @@ import Layout from "@/layouts/Layout.astro";
 
         <div class="space-y-4 text-sm text-gray-600">
           <p>
-            Wysłaliśmy email z linkiem weryfikacyjnym na Twój adres. 
-            Kliknij w link w emailu, aby potwierdzić swoje konto i rozpocząć korzystanie z Black Swan Grid.
+            Wysłaliśmy email z linkiem weryfikacyjnym na Twój adres. Kliknij w link w emailu, aby potwierdzić swoje
+            konto i rozpocząć korzystanie z Black Swan Grid.
           </p>
 
           <div class="rounded-md bg-blue-50 p-4">
@@ -511,7 +510,7 @@ import Layout from "@/layouts/Layout.astro";
 
           <div class="border-t pt-4">
             <p class="text-xs text-gray-500">
-              Nie otrzymałeś emaila? 
+              Nie otrzymałeś emaila?
               <a href="/auth/register" class="font-medium text-primary hover:underline">
                 Spróbuj zarejestrować się ponownie
               </a>
@@ -521,9 +520,7 @@ import Layout from "@/layouts/Layout.astro";
       </div>
 
       <div class="mt-6 text-center">
-        <a href="/auth/login" class="text-sm text-muted-foreground hover:underline">
-          Wróć do logowania
-        </a>
+        <a href="/auth/login" class="text-sm text-muted-foreground hover:underline"> Wróć do logowania </a>
       </div>
     </div>
   </div>
@@ -532,7 +529,6 @@ import Layout from "@/layouts/Layout.astro";
 
 Uzasadnienie:
 Strona jest spójna stylistycznie z reszta aplikacji (uzywamy tych samych klas Tailwind). Komunikat jest jasny i pomocny. Dodajemy wskazowki co robic jesli email nie dotarl. Ikona emaila (SVG) jest accessible (aria-hidden, dekoracyjna). Layout jest responsywny i dostepny. Link do ponownej rejestracji i logowania.
-
 
 ### 5.3. Faza 3: Aktualizacja typow i interfejsow
 
@@ -552,7 +548,7 @@ Plik: `e2e/auth.spec.ts`
 test.describe("Email Confirmation Flow", () => {
   test("TC-AUTH-004: Registration with NEEDS_CONFIRM_EMAIL=true redirects to /auth/confirmation", async ({ page }) => {
     // NOTE: This test assumes NEEDS_CONFIRM_EMAIL is set to true in AuthForm.tsx
-    
+
     // Navigate to register page
     await page.goto("/auth/register");
 
@@ -621,7 +617,7 @@ test.describe("Email Confirmation Flow", () => {
   test.skip("TC-AUTH-006: Registration with NEEDS_CONFIRM_EMAIL=false redirects to /grid", async ({ page }) => {
     // NOTE: This test should be run when NEEDS_CONFIRM_EMAIL is set to false in AuthForm.tsx
     // To run this test, change the flag to false, then unskip this test
-    
+
     // Setup: Mock NocoDB responses
     await setupNocoDBMocks(page);
 
@@ -729,7 +725,7 @@ Lista obszarow do przetestowania w poszukiwaniu regresji:
 - Severity: LOW
 - Prawdopodobienstwo: MEDIUM
 - Wpływ: Rekord uzytkownika pozostanie w bazie ale uzytkownik nie bedzie mogl sie zalogowac. Nie bedzie to problemem poniewaz Supabase blokuje logowanie do momentu potwierdzenia.
-- Mitigation: 
+- Mitigation:
   - Komunikat na stronie confirmation jasno informuje o koniecznosci klikniecia w link
   - Wskazowki o sprawdzeniu folderu spam
   - W przyszlosci mozna dodac mechanizm czyszczenia niezweryfikowanych kont po X dniach (post-MVP)
@@ -766,6 +762,7 @@ Szczegolowy plan jak wycofac zmiany w razie problemu:
 4. Jesli potrzebny pelny rollback - revert commit
 
 Kroki rollbacku:
+
 1. git log --oneline - znalezc commit przed zmianami
 2. git revert <commit-hash> lub git reset --hard <commit-hash> (jesli nie ma innych commitow)
 3. npm run build
@@ -914,11 +911,9 @@ Informacja dla uzytkownikow koncowych:
   - Krok 2: Logika w AuthForm (prosta - tylko sprawdzenie flagi) - 30 min
   - Krok 3: Strona confirmation - 45 min
   - Testowanie lokalne - 5 min
-  
 - Testowanie: 1 godzina
   - E2E testy - 30 min
   - Manual testing - 30 min
-  
 - Code review: 20 min
 
 - Deployment: 10 min (local, staging, production)
@@ -930,9 +925,11 @@ Informacja dla uzytkownikow koncowych:
 ### 10.2. Zaleznosci
 
 Blokujace:
+
 - Brak zaleznosci blokujacych
 
 Blokowane:
+
 - Brak - naprawa nie blokuje innych feature'ow
 
 ### 10.3. Sugerowany timeline
@@ -1032,7 +1029,7 @@ Potencjalne logi jesli cos pojdzie nie tak:
 ```
 Error: Failed to initialize user profile
   at AuthForm.handleSubmit (AuthForm.tsx:71)
-  
+
 // To powinno zostac obsluzone w try/catch i wyswietlone jako toast error
 ```
 
@@ -1043,6 +1040,7 @@ Error: Failed to initialize user profile
 Plan naprawy jest kompletny i gotowy do implementacji. Wszystkie kroki sa dokladnie opisane, ryzyka zidentyfikowane i zmitigowane, testy zaplanowane. Implementacja jest maksymalnie prosta (S effort), backward compatible i zgodna ze standardami projektu.
 
 Kluczowe punkty:
+
 1. Flaga NEEDS_CONFIRM_EMAIL na gorze AuthForm.tsx - latwa konfiguracja, prosta logika
 2. Inicjalizacja uzytkownika ZAWSZE nastepuje po rejestracji, przed przekierowaniem - zapobiega wielokrotnej inicjalizacji
 3. Logika sprawdza TYLKO flage - bez sprawdzania data.user.identities czy statusu w bazie

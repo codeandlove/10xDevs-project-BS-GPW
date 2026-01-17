@@ -1,0 +1,66 @@
+---
+/**
+ * Email Confirmation Page
+ * Displayed after registration when email confirmation is required
+ */
+import Layout from "@/layouts/Layout.astro";
+---
+
+<Layout title="Potwierdź swój email - Black Swan Grid">
+  <div class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+    <div class="w-full max-w-md">
+      <div class="mb-8 text-center">
+        <a href="/" class="mb-6 inline-flex items-center gap-2">
+          <span class="text-3xl">🦢</span>
+          <span class="text-2xl font-bold">Black Swan Grid</span>
+        </a>
+        <h1 class="mt-6 text-3xl font-bold">Sprawdź swoją skrzynkę email</h1>
+      </div>
+
+      <div class="rounded-lg border bg-white p-6 shadow-sm">
+        <div class="mb-4 text-center">
+          <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+            <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              ></path>
+            </svg>
+          </div>
+          <h2 class="text-xl font-semibold text-gray-900">Email został wysłany</h2>
+        </div>
+
+        <div class="space-y-4 text-sm text-gray-600">
+          <p>
+            Wysłaliśmy email z linkiem weryfikacyjnym na Twój adres. Kliknij w link w emailu, aby potwierdzić swoje
+            konto i rozpocząć korzystanie z Black Swan Grid.
+          </p>
+
+          <div class="rounded-md bg-blue-50 p-4">
+            <p class="text-sm font-medium text-blue-900">💡 Wskazówki:</p>
+            <ul class="mt-2 space-y-1 text-xs text-blue-700">
+              <li>• Sprawdź folder spam/promocje, jeśli nie widzisz emaila</li>
+              <li>• Link weryfikacyjny jest ważny przez 24 godziny</li>
+              <li>• Po potwierdzeniu email będziesz mógł się zalogować</li>
+            </ul>
+          </div>
+
+          <div class="border-t pt-4">
+            <p class="text-xs text-gray-500">
+              Nie otrzymałeś emaila?
+              <a href="/auth/register" class="font-medium text-primary hover:underline">
+                Spróbuj zarejestrować się ponownie
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 text-center">
+        <a href="/auth/login" class="text-sm text-muted-foreground hover:underline"> Wróć do logowania </a>
+      </div>
+    </div>
+  </div>
+</Layout>

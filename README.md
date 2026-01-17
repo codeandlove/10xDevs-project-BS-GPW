@@ -202,6 +202,27 @@ npm run preview
 - Advanced data visualizations
 - Admin dashboard
 
+## Email Confirmation
+
+Po rejestracji nowego użytkownika możesz skonfigurować czy użytkownik powinien zobaczyć stronę informującą o konieczności potwierdzenia emaila.
+
+### Konfiguracja
+
+1. W pliku `src/components/auth/AuthForm.tsx` ustaw flagę `NEEDS_CONFIRM_EMAIL`:
+   - `true` - użytkownik zostanie przekierowany na stronę /auth/confirmation z informacją o wysłaniu emaila weryfikacyjnego
+   - `false` - użytkownik zostanie przekierowany bezpośrednio do aplikacji (/grid)
+
+2. W Supabase (plik `supabase/config.toml`):
+   - Opcja `auth.email.enable_confirmations` kontroluje czy Supabase wymaga potwierdzenia emaila przed zezwoleniem na logowanie
+   - Obecnie ustawione na `true` na wszystkich środowiskach
+
+### Ważne
+
+- Inicjalizacja użytkownika w bazie danych odbywa się zawsze po rejestracji, przed potwierdzeniem emaila
+- To zapobiega wielokrotnej inicjalizacji tego samego użytkownika
+- Supabase automatycznie blokuje logowanie do momentu potwierdzenia emaila (gdy enable_confirmations = true)
+- Użytkownik musi kliknąć w link weryfikacyjny w emailu aby móc się zalogować
+
 ## Testing
 
 **Unit Tests:**
