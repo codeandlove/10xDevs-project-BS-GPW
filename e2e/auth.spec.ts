@@ -563,21 +563,23 @@ test.describe("Email Confirmation Flow", () => {
 
     // Submit form and wait for network idle
     await Promise.all([
-      page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {}),
-      page.click('button[type="submit"]')
+      page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {
+        // Ignore network idle timeout - not critical for test
+      }),
+      page.click('button[type="submit"]'),
     ]);
 
     // Check if there are any validation errors
-    const hasValidationError = await page.locator('#email-error, #password-error').count();
+    const hasValidationError = await page.locator("#email-error, #password-error").count();
     if (hasValidationError > 0) {
-      const errorText = await page.locator('#email-error, #password-error').first().textContent();
+      const errorText = await page.locator("#email-error, #password-error").first().textContent();
       throw new Error(`Validation error found: ${errorText}`);
     }
 
     // Check if there's a general error message
-    const hasGeneralError = await page.locator('.text-red-600, .text-destructive').count();
+    const hasGeneralError = await page.locator(".text-red-600, .text-destructive").count();
     if (hasGeneralError > 0) {
-      const errorText = await page.locator('.text-red-600, .text-destructive').first().textContent();
+      const errorText = await page.locator(".text-red-600, .text-destructive").first().textContent();
       throw new Error(`General error found: ${errorText}`);
     }
 
@@ -585,7 +587,7 @@ test.describe("Email Confirmation Flow", () => {
     // Using Promise.race to wait for either toast or redirect (longer timeout for CI)
     await Promise.race([
       page.locator("text=Konto utworzone!").waitFor({ state: "visible", timeout: 15000 }),
-      page.waitForURL("/auth/confirmation", { timeout: 15000 })
+      page.waitForURL("/auth/confirmation", { timeout: 15000 }),
     ]);
 
     // If we're here, either toast appeared or we redirected
