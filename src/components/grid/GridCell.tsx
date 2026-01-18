@@ -11,14 +11,14 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
   if (data.eventId === null) {
     return (
       <div
-        className="flex h-full min-h-[60px] items-center justify-center border border-gray-200 bg-gray-50/50"
+        className="flex h-full min-h-[50px] items-center justify-center border border-gray-200 bg-gray-50/50 md:min-h-[60px]"
         role="gridcell"
         aria-label={`${data.symbol} ${data.date} - brak zdarzenia`}
         data-symbol={data.symbol}
         data-date={data.date}
         data-has-event="false"
       >
-        <span className="text-xs text-gray-400">-</span>
+        <span className="text-[10px] text-gray-400 md:text-xs">-</span>
       </div>
     );
   }
@@ -32,8 +32,9 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
     return (
       <div
         className={`
-          flex h-full min-h-[60px] w-full flex-col items-center justify-center
-          border p-2
+          flex h-full min-h-[50px] w-full flex-col items-center justify-center
+          border p-1
+          md:min-h-[60px] md:p-2
           ${colorClass}
         `}
         role="gridcell"
@@ -43,10 +44,10 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
         data-has-event="true"
         data-event-id={data.eventId || undefined}
       >
-        <span className="text-xs font-semibold">{data.symbol}</span>
-        <span className="text-lg font-bold">{percentText}</span>
+        <span className="text-[10px] font-semibold md:text-xs">{data.symbol}</span>
+        <span className="text-base font-bold md:text-lg">{percentText}</span>
         {data.hasSummary && (
-          <span className="mt-1 text-xs opacity-70" aria-label="Posiada podsumowanie AI">
+          <span className="mt-0.5 text-[10px] opacity-70 md:mt-1 md:text-xs" aria-label="Posiada podsumowanie AI">
             AI ✓
           </span>
         )}
@@ -58,12 +59,13 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
     <button
       onClick={onClick}
       className={`
-        flex h-full min-h-[60px] w-full flex-col items-center justify-center
-        border p-2 transition-all
-        hover:shadow-md hover:scale-105
-        focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
+        flex h-full min-h-[50px] w-full flex-col items-center justify-center
+        border p-1 transition-all
+        hover:shadow-md active:scale-95 md:hover:scale-105
+        focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1
+        md:min-h-[60px] md:p-2 md:focus:ring-offset-2
         ${colorClass}
-        ${isSelected ? "ring-2 ring-primary ring-offset-2" : ""}
+        ${isSelected ? "ring-2 ring-primary ring-offset-1 md:ring-offset-2" : ""}
       `}
       role="gridcell"
       aria-label={`${data.symbol} ${data.date} ${data.eventType} ${percentText}`}
@@ -73,10 +75,10 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
       data-has-event="true"
       data-event-id={data.eventId || undefined}
     >
-      <span className="text-xs font-semibold">{data.symbol}</span>
-      <span className="text-lg font-bold">{percentText}</span>
+      <span className="text-[10px] font-semibold md:text-xs">{data.symbol}</span>
+      <span className="text-base font-bold md:text-lg">{percentText}</span>
       {data.hasSummary && (
-        <span className="mt-1 text-xs opacity-70" aria-label="Posiada podsumowanie AI">
+        <span className="mt-0.5 text-[10px] opacity-70 md:mt-1 md:text-xs" aria-label="Posiada podsumowanie AI">
           AI ✓
         </span>
       )}
