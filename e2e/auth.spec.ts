@@ -557,7 +557,8 @@ test.describe("Email Confirmation Flow", () => {
     await page.waitForTimeout(1000); // Extra time for React hydration (increased for CI)
 
     // Fill registration form with unique email
-    const testEmail = `test-${Date.now()}@example.com`;
+    // Use realistic domain that passes Supabase validation (not @example.com)
+    const testEmail = `playwright-test-${Date.now()}@test-automation.dev`;
     await page.fill('[name="email"]', testEmail);
     await page.fill('[name="password"]', "Test123!@#");
 
@@ -630,7 +631,8 @@ test.describe("Email Confirmation Flow", () => {
     await page.goto("/auth/register");
 
     // Fill registration form with unique email
-    const testEmail = `test-${Date.now()}@example.com`;
+    // Use realistic domain that passes Supabase validation (not @example.com)
+    const testEmail = `playwright-test-${Date.now()}@test-automation.dev`;
     await page.fill('[name="email"]', testEmail);
     await page.fill('[name="password"]', "Test123!@#");
 
