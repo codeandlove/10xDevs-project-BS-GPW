@@ -1,0 +1,72 @@
+---
+/**
+ * Checkout Success Page
+ * Displayed after successful Stripe Checkout completion
+ */
+
+import Layout from "@/layouts/Layout.astro";
+
+const pageTitle = "Płatność zakończona - Black Swan Grid";
+const sessionId = Astro.url.searchParams.get("session_id");
+---
+
+<Layout title={pageTitle}>
+  <main class="container mx-auto flex min-h-screen items-center justify-center px-4 py-12">
+    <div class="w-full max-w-2xl text-center">
+      <div class="mb-8 flex justify-center">
+        <div class="rounded-full bg-green-100 p-6">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-16 w-16 text-green-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <h1 class="mb-4 text-3xl font-bold text-gray-900">Dziękujemy za zakup!</h1>
+
+      <p class="mb-8 text-lg text-gray-600">
+        Twoja subskrypcja została aktywowana. Możesz teraz korzystać z pełnego dostępu do Black Swan Grid.
+      </p>
+
+      <div class="mb-8 rounded-lg bg-blue-50 p-6">
+        <h2 class="mb-2 text-lg font-semibold text-gray-900">Co dalej?</h2>
+        <ul class="space-y-2 text-left text-sm text-gray-700">
+          <li class="flex items-start gap-2">
+            <span class="mt-1 text-blue-600">✓</span>
+            <span>Twoja subskrypcja jest już aktywna</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-1 text-blue-600">✓</span>
+            <span>Otrzymasz potwierdzenie na adres email</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="flex justify-center">
+        <a
+          href="/grid"
+          class="inline-flex items-center justify-center rounded-md bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Przejdź do aplikacji
+        </a>
+      </div>
+
+      {
+        sessionId && (
+          <p class="mt-8 text-xs text-gray-500">
+            ID sesji: <code class="rounded bg-gray-100 px-2 py-1">{sessionId}</code>
+          </p>
+        )
+      }
+    </div>
+  </main>
+</Layout>

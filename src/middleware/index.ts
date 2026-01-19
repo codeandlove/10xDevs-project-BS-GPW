@@ -9,8 +9,11 @@ import { supabaseClient } from "../db/supabase.client";
 // Protected routes that require authentication + active subscription
 const PROTECTED_ROUTES = ["/grid", "/summary", "/event"];
 
+// Routes that require authentication but NOT subscription
+const AUTH_ONLY_ROUTES = ["/checkout"];
+
 // Public routes (accessible without authentication)
-const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/register", "/checkout", "/403", "/404", "/500"];
+const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/register", "/403", "/404", "/500"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, redirect } = context;
@@ -18,6 +21,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Check if current route requires authentication
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => url.pathname.startsWith(route));
+  const isAuthOnlyRoute = AUTH_ONLY_ROUTES.some((route) => url.pathname.startsWith(route));
   const isPublicRoute = PUBLIC_ROUTES.some((route) => url.pathname.startsWith(route));
 
   // Skip middleware for API webhooks and public routes
@@ -25,8 +29,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // Protected routes: verify session and subscription
-  if (isProtectedRoute) {
+  // Routes that require authentication (with or without subscription check)
+  if (isProtectedRoute || isAuthOnlyRoute) {
     const {
       data: { session },
       error: sessionError,
@@ -51,15 +55,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
       return redirect("/auth/login");
     }
 
-    // Check subscription access
-    const now = new Date();
-    const trialExpiresAt = user.trial_expires_at ? new Date(user.trial_expires_at) : null;
-    const hasActiveSubscription = user.subscription_status === "active" || user.subscription_status === "trial";
-    const hasValidTrial = trialExpiresAt && trialExpiresAt > now;
+    // For protected routes, check subscription access
+    if (isProtectedRoute) {
+      const now = new Date();
+      const trialExpiresAt = user.trial_expires_at ? new Date(user.trial_expires_at) : null;
+      const hasActiveSubscription = user.subscription_status === "active" || user.subscription_status === "trial";
+      const hasValidTrial = trialExpiresAt && trialExpiresAt > now;
 
-    if (!hasActiveSubscription && !hasValidTrial) {
-      // No active subscription or expired trial - redirect to 403
-      return redirect("/403?reason=subscription_required");
+      if (!hasActiveSubscription && !hasValidTrial) {
+        // No active subscription or expired trial - redirect to 403
+        return redirect("/403?reason=subscription_required");
+      }
     }
 
     // Attach user context for use in pages/API routes

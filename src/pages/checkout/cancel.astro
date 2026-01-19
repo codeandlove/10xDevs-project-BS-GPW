@@ -1,0 +1,67 @@
+---
+/**
+ * Checkout Cancel Page
+ * Displayed when user cancels Stripe Checkout
+ */
+
+import Layout from "@/layouts/Layout.astro";
+
+const pageTitle = "Płatność anulowana - Black Swan Grid";
+---
+
+<Layout title={pageTitle}>
+  <main class="container mx-auto flex min-h-screen items-center justify-center px-4 py-12">
+    <div class="w-full max-w-2xl text-center">
+      <div class="mb-8 flex justify-center">
+        <div class="rounded-full bg-yellow-100 p-6">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-16 w-16 text-yellow-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <h1 class="mb-4 text-3xl font-bold text-gray-900">Płatność anulowana</h1>
+
+      <p class="mb-8 text-lg text-gray-600">
+        Proces płatności został przerwany. Twoja subskrypcja nie została aktywowana.
+      </p>
+
+      <div class="mb-8 rounded-lg bg-gray-50 p-6">
+        <h2 class="mb-2 text-lg font-semibold text-gray-900">Potrzebujesz pomocy?</h2>
+        <p class="text-sm text-gray-700">
+          Jeśli napotkałeś problem podczas płatności lub masz pytania dotyczące subskrypcji, skontaktuj się z naszym
+          zespołem wsparcia.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-4 sm:flex-row sm:justify-center">
+        <a
+          href="/checkout"
+          class="inline-flex items-center justify-center rounded-md bg-blue-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Spróbuj ponownie
+        </a>
+        <a
+          href="/grid"
+          class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-6 py-3 text-base font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Kontynuuj z trialem
+        </a>
+      </div>
+
+      <p class="mt-8 text-sm text-gray-500">
+        Płatność jest bezpieczna i szyfrowana przez Stripe. Żadne dane karty nie są przechowywane w naszej aplikacji.
+      </p>
+    </div>
+  </main>
+</Layout>

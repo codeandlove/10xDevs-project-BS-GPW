@@ -1,0 +1,24 @@
+---
+/**
+ * Checkout Page
+ * Automatically initiates Stripe Checkout session for subscription
+ */
+
+import Layout from "@/layouts/Layout.astro";
+import CheckoutLoader from "@/components/checkout/CheckoutLoader";
+
+// Middleware ensures user is authenticated and sets locals.user
+// Get default plan from config
+import { getDefaultPlan } from "@/config/plans";
+const defaultPlan = getDefaultPlan();
+
+const pageTitle = "Przejdź do płatności - Black Swan Grid";
+---
+
+<Layout title={pageTitle}>
+  <main class="container mx-auto flex min-h-screen items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+      <CheckoutLoader client:only="react" priceId={defaultPlan.price_id} />
+    </div>
+  </main>
+</Layout>
