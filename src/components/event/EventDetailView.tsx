@@ -68,8 +68,11 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
 
   return (
     <ErrorBoundary>
-      <AppLayout header={<Header showRangeSelector={false} showFilters={false} avatarMenu={<AvatarMenu />} />}>
-        <div className="py-6">
+      <AppLayout
+        scrollable={true}
+        header={<Header showRangeSelector={false} showFilters={false} avatarMenu={<AvatarMenu />} />}
+      >
+        <div className="container mx-auto max-w-5xl px-4 py-6 md:px-6">
           {/* Back button */}
           <div className="mb-6">
             <Button onClick={handleBack} variant="ghost" className="gap-2">
