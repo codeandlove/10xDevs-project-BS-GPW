@@ -23,10 +23,10 @@ function AppLayoutContent({ children, header, showSubscriptionBanner = true }: A
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
       {header}
       {showSubscriptionBanner && profile && <SubscriptionBanner profile={profile} onUpgrade={handleUpgrade} />}
-      <main>{children}</main>
+      <main className="flex-1 overflow-hidden">{children}</main>
       <ToastContainer />
     </div>
   );

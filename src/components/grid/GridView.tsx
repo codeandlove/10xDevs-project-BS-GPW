@@ -133,7 +133,7 @@ export function GridView() {
           />
         }
       >
-        <div>
+        <div className="flex h-full flex-col p-4">
           {error && (
             <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-center">
               <p className="text-sm font-medium text-red-800">Wystąpił błąd podczas ładowania danych</p>
@@ -147,23 +147,27 @@ export function GridView() {
             </div>
           )}
 
-          {isLoading ? (
-            <GridSkeleton />
-          ) : events.length > 0 ? (
-            <VirtualizedGrid
-              events={events}
-              range={gridState.range}
-              onCellClick={handleCellClick}
-              selectedEventId={gridState.eventId}
-            />
-          ) : (
-            <div className="flex h-[400px] items-center justify-center">
-              <div className="text-center">
-                <p className="text-lg font-medium text-muted-foreground">Brak zdarzeń w wybranym zakresie</p>
-                <p className="mt-2 text-sm text-muted-foreground">Spróbuj zmienić zakres czasowy lub filtry tickerów</p>
+          <div className="min-h-0 flex-1">
+            {isLoading ? (
+              <GridSkeleton />
+            ) : events.length > 0 ? (
+              <VirtualizedGrid
+                events={events}
+                range={gridState.range}
+                onCellClick={handleCellClick}
+                selectedEventId={gridState.eventId}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                  <p className="text-lg font-medium text-muted-foreground">Brak zdarzeń w wybranym zakresie</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Spróbuj zmienić zakres czasowy lub filtry tickerów
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Summary Sidebar/Drawer */}
