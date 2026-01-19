@@ -516,7 +516,7 @@ test.describe("Password Reset Flow", () => {
 
     // Should show error message
     await expect(page.locator("text=Link wygasł lub jest nieprawidłowy")).toBeVisible();
-    await expect(page.locator("text=Token expired")).toBeVisible();
+    await expect(page.locator("p").filter({ hasText: "Token expired" })).toBeVisible();
 
     // Should show link to request new reset
     await expect(page.locator('a[href="/auth/forgot-password"]')).toBeVisible();
