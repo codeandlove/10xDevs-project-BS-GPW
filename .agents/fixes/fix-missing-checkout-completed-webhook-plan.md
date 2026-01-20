@@ -43,6 +43,7 @@ Rzeczywiste: stripe_subscription_id=null, subscription_status="trial"
 ### 2.2. Oczekiwane zachowanie
 
 Po zakonczeniu platnosci w Stripe Checkout:
+
 - Webhook /api/webhooks/stripe otrzymuje event checkout.session.completed
 - Event jest przetwarzany w max 2-3 sekundy
 - W tabeli app_users:
@@ -57,6 +58,7 @@ Po zakonczeniu platnosci w Stripe Checkout:
 ### 2.3. Rzeczywiste zachowanie
 
 Po zakonczeniu platnosci w Stripe Checkout:
+
 - Webhook /api/webhooks/stripe otrzymuje event checkout.session.completed
 - Event jest ignorowany (nie znajduje sie na liscie SUPPORTED_EVENTS)
 - Event jest oznaczany jako "processed" ale bez zmian w danych uzytkownika
@@ -73,12 +75,14 @@ Po zakonczeniu platnosci w Stripe Checkout:
 Lokalizacja bledu: src/services/webhook.service.ts (linia 17-23), src/types/webhook.types.ts (linia 16-21)
 
 Przyczyna techniczna:
+
 1. W webhook.types.ts typ WebhookEventType nie zawiera "checkout.session.completed"
 2. W webhook.service.ts stala SUPPORTED_EVENTS nie zawiera "checkout.session.completed"
 3. W metodzie handleEventType() brak case dla "checkout.session.completed"
 4. Brak handlera handleCheckoutCompleted()
 
 Przepływ eventow Stripe podczas checkout:
+
 - Event 1: checkout.session.completed (IGNOROWANY) - zawiera subscription_id, customer_id
 - Event 2: customer.subscription.created (OBSLUGIWANY) - zawiera pelne dane subskrypcji
 - Event 3: invoice.payment_succeeded (OBSLUGIWANY) - potwierdza platnosc
@@ -86,28 +90,35 @@ Przepływ eventow Stripe podczas checkout:
 Problem: Jesli aplikacja czeka na Event 2, moze to spowodowac opoznienie 5-30 sekund lub wiecej. W przypadku problemow z siecia Event 2 moze nie dotrzec w ogole.
 
 Brakujace warunki/sprawdzenia:
+
 - Brak sprawdzenia czy checkout session jest typu "subscription" (powinien ignorowac "payment")
 - Brak pobrania pelnych danych subscription z Stripe API (checkout session nie zawiera wszystkich pol)
 
 ### 2.5. Analiza zasiegu
 
 #### Komponenty frontend:
+
 Brak zmian - frontend nie wymaga modyfikacji
 
 #### Serwisy/hooki:
+
 - src/services/webhook.service.ts - dodanie nowego handlera handleCheckoutCompleted()
 - src/services/webhook.service.ts - aktualizacja SUPPORTED_EVENTS i handleEventType()
 
 #### Typy/interfejsy:
+
 - src/types/webhook.types.ts - dodanie "checkout.session.completed" do WebhookEventType
 
 #### Backend/API:
+
 - src/pages/api/webhooks/stripe.ts - brak zmian (juz obsluguje wszystkie eventy)
 
 #### Baza danych:
+
 Brak zmian - schemat jest kompletny
 
 #### Testy:
+
 - src/services/webhook.service.test.ts - dodanie testow dla checkout.session.completed
 - src/services/webhook.service.test.ts - dodanie mocka dla stripe.subscriptions.retrieve()
 
@@ -118,6 +129,7 @@ Brak zmian - schemat jest kompletny
 #### Opis:
 
 Dodanie pelnej obslugi eventu checkout.session.completed jako PRIMARY source of truth dla danych subskrypcji po checkout. Handler bedzie:
+
 1. Sprawdzal czy session.mode === "subscription" (pomijac one-time payments)
 2. Pobral pelne dane subscription z Stripe API (stripe.subscriptions.retrieve)
 3. Zaktualizowal app_users z wszystkimi danymi (subscription_id, status, period_end, plan_id)
@@ -130,6 +142,7 @@ Customer.subscription.created bedzie dalej obslugiwany jako fallback/redundancja
 Frontend: Brak zmian
 
 Backend:
+
 - src/types/webhook.types.ts - dodanie "checkout.session.completed" do typu (1 linia)
 - src/services/webhook.service.ts - dodanie do SUPPORTED_EVENTS (1 linia)
 - src/services/webhook.service.ts - dodanie case w handleEventType() (2 linie)
@@ -137,11 +150,13 @@ Backend:
 - src/services/webhook.service.ts - implementacja handleCheckoutCompleted() (~55 linii)
 
 Testy:
+
 - src/services/webhook.service.test.ts - dodanie mocka stripe API (~10 linii)
 - src/services/webhook.service.test.ts - dodanie helpera createMockCheckoutSessionEvent (~25 linii)
 - src/services/webhook.service.test.ts - dodanie 3 test cases (~80 linii)
 
 Konfiguracja:
+
 - Stripe Dashboard - dodanie checkout.session.completed do webhook endpoint
 
 #### Zalety:
@@ -163,6 +178,7 @@ Konfiguracja:
 #### Effort: S (3-4 godziny)
 
 Szczegolowa estymacja:
+
 - Implementacja handlera: 1 godzina
 - Testy jednostkowe: 1 godzina
 - Testy manualne/E2E: 1 godzina
@@ -171,6 +187,7 @@ Szczegolowa estymacja:
 #### Ryzyko regresji: LOW
 
 Uzasadnienie:
+
 - Dodajemy nowa funkcjonalnosc bez modyfikacji istniejacego kodu
 - Istniejace handlery pozostaja niezmienione
 - Idempotencja chroni przed duplikatami
@@ -192,6 +209,7 @@ Implementacja lightweight handlera dla checkout.session.completed ktory TYLKO za
 #### Zakres zmian:
 
 Podobny jak Rozwiazanie A ale:
+
 - Brak wywolania stripe.subscriptions.retrieve()
 - Handler zapisuje tylko stripe_subscription_id i subscription_status="active"
 - current_period_end i plan_id bylyby uzupelniane przez customer.subscription.created
@@ -269,35 +287,41 @@ ROZWIAZANIE A - Pelna obsluga checkout.session.completed z pobieraniem danych z 
 Rozwiazanie A jest optymalne z nastepujacych powodow:
 
 Minimalizuje ryzyko regresji poprzez:
+
 - Dodawanie nowej funkcjonalnosci zamiast modyfikacji istniejacego kodu
 - Zachowanie wszystkich istniejacych handlerów bez zmian
 - Wykorzystanie tej samej architektury co inne handlery (wzorzec jest sprawdzony)
 - Idempotencje zapewniana przez unique constraint na event_id w bazie danych
 
 Jest zgodne ze standardami projektu:
+
 - Wykorzystuje istniejaca strukture WebhookService i wzorzec handlera
 - Zgodne z Stripe best practices (checkout.session.completed jest rekomendowany)
 - Zachowuje audit trail dla kazdej zmiany
 - Pelna coverage testow jednostkowych
 
 Optymalizuje effort vs. wartosc:
+
 - Niski effort (3-4 godziny) vs. krytyczny impact (odblokowanie systemu platnosci)
 - 90% kodu to standardowy boilerplate (testy, typy)
 - Minimalna ilosc nowej logiki biznesowej
 - Szybkie time-to-market
 
 Zapewnia skalowalnosc:
+
 - Handler jest niezalezny i moze byc latwo rozszerzany
 - Nie wprowadza dodatkowych zaleznosci
 - Mozliwosc dodania cache dla stripe.subscriptions.retrieve jesli potrzebne
 
 Ulatwia przyszle utrzymanie:
+
 - Kod jest czytelny i self-documenting
 - Zgodny z istniejacymi wzorcami w projekcie
 - Pelna coverage testow zapewnia protection przed regresja
 - Dokumentacja w komentarzach wyjaśnia intencje
 
 Dodatkowe argumenty:
+
 - Rozwiazuje problem u zrodla (obsługa PRIMARY eventu)
 - Eliminuje zaleznosc od niepewnych opoznien customer.subscription.created
 - Koszt dodatkowego API call do Stripe jest znikomy (<0.01$ per checkout)
@@ -470,7 +494,7 @@ Kod (nowy):
  * Handle checkout.session.completed event
  * This is the FIRST event sent after successful payment in Stripe Checkout
  * PRIORITY: Process immediately to provide instant subscription activation
- * 
+ *
  * Flow:
  * 1. Verify session mode is "subscription" (skip one-time payments)
  * 2. Find user by customer_id
@@ -478,7 +502,7 @@ Kod (nowy):
  * 4. Fetch full subscription details from Stripe API
  * 5. Update user with complete subscription data
  * 6. Create audit trail
- * 
+ *
  * @param event - Stripe checkout.session.completed event
  * @returns Processing result with user_id and changes_applied flag
  */
@@ -544,6 +568,7 @@ private async handleCheckoutCompleted(event: Stripe.Event): Promise<Omit<Process
 
 Uzasadnienie:
 Handler implementuje pelna logike przetwarzania checkout.session.completed:
+
 - Filtruje tylko subscription checkouts (ignoruje one-time payments)
 - Wykorzystuje istniejaca metode findUserByCustomer() dla spójnosci
 - Pobiera pelne dane z Stripe API poniewaz checkout session nie zawiera wszystkich pol
@@ -750,6 +775,7 @@ describe("WebhookService - checkout.session.completed", () => {
 
 Uzasadnienie:
 Testy pokrywaja:
+
 1. Happy path - prawidlowe przetworzenie eventu
 2. Filtrowanie non-subscription sessions
 3. Edge case - brak subscription_id
@@ -762,6 +788,7 @@ Kazdym test weryfikuje oczekiwane zachowanie i side effects (wywolania Stripe AP
 Nie wymaga zmian w kodzie - konfiguracja w Stripe Dashboard
 
 Kroki manualne:
+
 1. Przejsc do Stripe Dashboard → Developers → Webhooks
 2. Znalezc istniejacy webhook endpoint (np. https://10xdevs.app/api/webhooks/stripe)
 3. Kliknac "..." → "Update details"
@@ -769,6 +796,7 @@ Kroki manualne:
 5. Zapisac zmiany
 
 Weryfikacja:
+
 - W Stripe Dashboard sprawdzic czy event jest zaznaczony
 - Wykonac test checkout i sprawdzic w "Events & logs" czy event jest wysylany
 
@@ -943,6 +971,7 @@ W przypadku problemow po wdrozeniu:
 Co monitorowac po wdrozeniu naprawy:
 
 Metryki:
+
 - Ilosc przetworzonych checkout.session.completed eventow (powinna byc > 0)
 - Sredni czas od checkout do update w bazie (<3 sekundy)
 - Success rate dla checkout.session.completed (powinien byc >99%)
@@ -950,23 +979,27 @@ Metryki:
 - Ilosc duplikatow (idempotent rejections) - akceptowalne
 
 Logi do analizowania:
+
 - stripe_webhook_events tabela - wszystkie eventy z status="processed"
 - subscription_audit tabela - wpisy z change_type="checkout_completed"
 - Application logs - szukac ERROR/WARN zwiazanych z webhook processing
 - Stripe Dashboard → Events & logs - weryfikacja delivery status
 
 User feedback:
+
 - Support tickets zwiazane z brakiem dostepu po platnosci (powinny spasc do 0)
 - Czas pierwszego uzycia premium features po checkout (powinien byc <5 sekund)
 - Complaints o opoznieniach w aktywacji subskrypcji (powinny zniknac)
 
 Alerty do ustawienia:
+
 - Alert: Failed checkout.session.completed events (threshold: >5 w ciagu 1h)
 - Alert: Average checkout-to-activation time >10 sekund
 - Alert: Stripe API errors (stripe.subscriptions.retrieve failures)
 - Alert: Missing checkout.session.completed events (comparison vs. customer.subscription.created count)
 
 Timeline monitoringu:
+
 - Pierwsze 24h: Continuous monitoring (co godzine)
 - Dni 2-7: Daily monitoring
 - Po tygodniu: Weekly monitoring + automated alerts
@@ -979,12 +1012,13 @@ React patterns: N/A - Backend webhook handler
 Astro patterns: N/A - Backend webhook handler
 Accessibility (ARIA, WCAG): N/A - Backend webhook handler
 TypeScript best practices: ✅
+
 - Strict typing dla wszystkich funkcji
 - Proper error handling z try/catch
 - Async/await pattern
 - Type guards (sprawdzanie session.mode)
 - Explicit return types
-Testing patterns: ✅
+  Testing patterns: ✅
 - Unit tests z vitest
 - Proper mocking
 - Test coverage dla happy path i edge cases
@@ -993,13 +1027,14 @@ Testing patterns: ✅
 ### 8.2. Tech-stack.md compliance
 
 Uzyty framework/library: ✅
+
 - Stripe SDK (istniejaca dependency) - wersja zgodna z package.json
 - Supabase client (istniejaca dependency)
 - TypeScript (istniejacy)
-Dependencies: ✅
+  Dependencies: ✅
 - Brak nowych dependencies
 - Wykorzystanie istniejacego @stripe/stripe-js
-Build tools: ✅
+  Build tools: ✅
 - Brak zmian w konfiguracji build
 - TypeScript compilation dziala
 
@@ -1074,16 +1109,19 @@ Informacja dla uzytkownikow koncowych:
 Naprawilismy krytyczny blad ktory powodowal opoznienia w aktywacji subskrypcji po platnosci.
 
 Co zostalo naprawione:
+
 - Subskrypcja jest teraz aktywowana natychmiast po zakonczeniu platnosci (< 3 sekundy)
 - Brak opoznien w dostepe do premium features
 - Eliminacja problemow z "utknieciem" w statusie trial po oplaceniu
 
 Jak to wplywa na Ciebie:
+
 - Po zakonczeniu platnosci w Stripe natychmiast otrzymujesz dostep do premium features
 - Nie musisz odswiezac strony ani czekac na aktywacje
 - Twoj status subskrypcji jest zawsze aktualny
 
 Wymagane akcje:
+
 - Brak - zmiana jest transparentna dla uzytkownikow
 ```
 
@@ -1126,12 +1164,14 @@ Wymagane akcje:
 ### 10.2. Zaleznosci
 
 Blokujace:
+
 - Brak - mozna rozpoczac implementacje natychmiast
 - Dostep do Stripe Dashboard (konfiguracja webhook endpoint)
 
 Blokowane przez ta naprawe:
+
 - Brak - inne features moga byc rozwijane rownolegle
-- Mozliwosc dodania dodatkowych eventow checkout.* w przyszlosci
+- Mozliwosc dodania dodatkowych eventow checkout.\* w przyszlosci
 
 ### 10.3. Sugerowany timeline
 
@@ -1165,16 +1205,19 @@ Total: 3 pliki, ~176 linii dodanych
 ### 11.2. Referencje
 
 Dokumentacja zwiazana:
+
 - .agents/endpoints/stripe-webhooks-implementation-plan.md - plan implementacji webhookow
 - .agents/prd.md - Product Requirements Document dla systemu subskrypcji
 - .agents/api-plan.md - Plan implementacji API endpointow
 
 Stripe Documentation:
+
 - https://stripe.com/docs/webhooks/checkout - Dokumentacja checkout webhooks
 - https://stripe.com/docs/api/checkout/sessions/object - Struktura checkout session
 - https://stripe.com/docs/api/subscriptions/retrieve - API stripe.subscriptions.retrieve
 
 Wewnetrzne issue:
+
 - Bug discovered: 2026-01-20 (user report)
 - Severity: CRITICAL
 - Impact: 100% uzytkownikow przechodzacych przez checkout

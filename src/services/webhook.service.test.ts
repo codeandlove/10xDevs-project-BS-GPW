@@ -13,8 +13,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../db/database.types";
 import type Stripe from "stripe";
 
-// Mock Stripe API
-const mockStripeRetrieve = vi.fn();
+// Mock Stripe API - use vi.hoisted to ensure mock is available before vi.mock
+const { mockStripeRetrieve } = vi.hoisted(() => {
+  return {
+    mockStripeRetrieve: vi.fn(),
+  };
+});
+
 vi.mock("../lib/stripe", () => ({
   stripe: {
     subscriptions: {
