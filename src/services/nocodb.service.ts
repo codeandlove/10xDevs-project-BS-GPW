@@ -111,18 +111,19 @@ function transformSummary(record: NocoDBSummaryRecord): AISummary {
 
   // Map recommended_action
   let recommendedAction: { action: "BUY" | "SELL" | "HOLD"; justification: string } | undefined;
-  if (data.recommended_action) {
-    const action = data.recommended_action.action?.toUpperCase();
+  const recAction = record.response?.recommended_action;
+  if (recAction) {
+    const action = recAction.action?.toUpperCase();
     if (action === "BUY" || action === "SELL" || action === "HOLD") {
       recommendedAction = {
         action: action as "BUY" | "SELL" | "HOLD",
-        justification: data.recommended_action.justification || "",
+        justification: recAction.justification || "",
       };
     }
   }
 
   // Get keywords
-  const keywords = data.keywords || record.response?.keywords;
+  const keywords = record.response?.keywords;
 
   return {
     id: String(record.Id),
@@ -183,9 +184,9 @@ export class NocoDBService {
 
     try {
       eventsResponse = await this.client.queryRecords<NocoDBEventRecord>(NOCODB_TABLES.BLACK_SWANS, queryBuilder);
-    } catch {
+    } catch (err) {
       // If NocoDB returns 422 (field name issue), fallback to fetching all and filtering in memory
-      if (error && typeof error === "object" && "statusCode" in error && error.statusCode === 422) {
+      if (err && typeof err === "object" && "statusCode" in err && (err as { statusCode: number }).statusCode === 422) {
         needsMemoryFiltering = true;
 
         // Fetch without date filters
@@ -197,7 +198,7 @@ export class NocoDBService {
 
         eventsResponse = await this.client.queryRecords<NocoDBEventRecord>(NOCODB_TABLES.BLACK_SWANS, fallbackQuery);
       } else {
-        throw error;
+        throw err;
       }
     }
 

@@ -190,7 +190,7 @@ export class SubscriptionService {
       if (error instanceof Error && "type" in error) {
         // Stripe error
         const stripeError = error as StripeErrorType;
-        throw new StripeError("Failed to create Stripe customer", stripeError.message);
+        throw new StripeError("Failed to create Stripe customer", [stripeError.message]);
       }
 
       throw new SubscriptionError("Failed to create customer", "UNKNOWN_ERROR", 500);
@@ -249,7 +249,7 @@ export class SubscriptionService {
       if (error instanceof Error && "type" in error) {
         // Stripe error
         const stripeError = error as StripeErrorType;
-        throw new StripeError("Failed to create checkout session", stripeError.message || "Unknown Stripe error");
+        throw new StripeError("Failed to create checkout session", [stripeError.message || "Unknown Stripe error"]);
       }
 
       throw new SubscriptionError("Failed to create checkout session", "UNKNOWN_ERROR", 500);
@@ -289,7 +289,7 @@ export class SubscriptionService {
       if (error instanceof Error && "type" in error) {
         // Stripe error
         const stripeError = error as StripeErrorType;
-        throw new StripeError("Failed to create portal session", stripeError.message || "Unknown Stripe error");
+        throw new StripeError("Failed to create portal session", [stripeError.message || "Unknown Stripe error"]);
       }
 
       throw new SubscriptionError("Failed to create portal session", "UNKNOWN_ERROR", 500);

@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { UserInfo } from "./UserInfo";
 import { SubscriptionStatus } from "./SubscriptionStatus";
 import { ManageSubscriptionButton } from "./ManageSubscriptionButton";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AccountModalProps {
   onClose: () => void;
@@ -131,16 +131,16 @@ function ModalSkeleton() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Skeleton width={48} height={48} className="rounded-full" />
+        <Skeleton className="h-12 w-12 rounded-full" />
         <div className="flex-1 space-y-2">
-          <Skeleton width="60%" height={20} />
-          <Skeleton width="40%" height={16} />
+          <Skeleton className="h-5 w-3/5" />
+          <Skeleton className="h-4 w-2/5" />
         </div>
       </div>
-      <Skeleton width="100%" height={100} />
+      <Skeleton className="h-25 w-full" />
       <div className="space-y-3">
-        <Skeleton width="100%" height={40} />
-        <Skeleton width="100%" height={40} />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
       </div>
     </div>
   );

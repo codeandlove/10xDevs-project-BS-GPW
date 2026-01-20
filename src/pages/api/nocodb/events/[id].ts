@@ -70,10 +70,11 @@ export const GET: APIRoute = async ({ params, request, locals }) => {
     // [3] Check rate limit
     const rateLimitResult = checkRateLimit(authUid);
     if (!rateLimitResult.allowed) {
+      const retryAfter = rateLimitResult.resetAt ? Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000) : 60;
       return new Response(
         JSON.stringify({
           error: "Rate limit exceeded",
-          message: `Too many requests. Please try again in ${rateLimitResult.retryAfter} seconds.`,
+          message: `Too many requests. Please try again in ${retryAfter} seconds.`,
         }),
         {
           status: 429,

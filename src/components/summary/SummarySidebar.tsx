@@ -10,7 +10,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EventHeader } from "./EventHeader";
 import { SummaryCard } from "./SummaryCard";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { BlackSwanEventDetailed } from "@/types/nocodb.types";
 
 interface SummarySidebarProps {
@@ -183,15 +183,15 @@ function SidebarSkeleton() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Skeleton width="60%" height={32} />
-        <Skeleton width="40%" height={20} />
+        <Skeleton className="h-8 w-3/5" />
+        <Skeleton className="h-5 w-2/5" />
       </div>
       <div className="space-y-2">
-        <Skeleton width="100%" height={80} />
+        <Skeleton className="h-20 w-full" />
       </div>
       <div className="space-y-2">
-        <Skeleton width="30%" height={20} />
-        <Skeleton width="100%" height={40} />
+        <Skeleton className="h-5 w-3/10" />
+        <Skeleton className="h-10 w-full" />
       </div>
     </div>
   );

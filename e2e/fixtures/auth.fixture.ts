@@ -3,7 +3,7 @@
  * Provides helper functions to mock authentication
  */
 
-import { Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 export interface MockUser {
   id: string;
