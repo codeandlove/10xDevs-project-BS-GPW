@@ -6,6 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../db/database.types";
 import type Stripe from "stripe";
+import { stripe } from "../lib/stripe";
 import { EventProcessingError, WebhookDatabaseError } from "../lib/webhook-errors";
 import type { ProcessEventResult, SubscriptionUpdateData, WebhookEventType } from "../types/webhook.types";
 
@@ -15,6 +16,7 @@ type AppUser = Database["public"]["Tables"]["app_users"]["Row"];
  * Supported webhook event types
  */
 const SUPPORTED_EVENTS: WebhookEventType[] = [
+  "checkout.session.completed",
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",
@@ -162,6 +164,9 @@ export class WebhookService {
    */
   private async handleEventType(event: Stripe.Event): Promise<Omit<ProcessEventResult, "success">> {
     switch (event.type) {
+      case "checkout.session.completed":
+        return this.handleCheckoutCompleted(event);
+
       case "customer.subscription.created":
         return this.handleSubscriptionCreated(event);
 
@@ -180,6 +185,81 @@ export class WebhookService {
       default:
         return { changes_applied: false };
     }
+  }
+
+  /**
+   * Handle checkout.session.completed event
+   * This is the FIRST event sent after successful payment in Stripe Checkout
+   * PRIORITY: Process immediately to provide instant subscription activation
+   *
+   * Flow:
+   * 1. Verify session mode is "subscription" (skip one-time payments)
+   * 2. Find user by customer_id
+   * 3. Extract subscription_id from session
+   * 4. Fetch full subscription details from Stripe API
+   * 5. Update user with complete subscription data
+   * 6. Create audit trail
+   *
+   * @param event - Stripe checkout.session.completed event
+   * @returns Processing result with user_id and changes_applied flag
+   */
+  private async handleCheckoutCompleted(event: Stripe.Event): Promise<Omit<ProcessEventResult, "success">> {
+    const session = event.data.object as Stripe.Checkout.Session;
+
+    // [1] Only handle subscription checkouts (skip one-time payments)
+    if (session.mode !== "subscription") {
+      return { changes_applied: false };
+    }
+
+    // [2] Find user by Stripe customer ID
+    const user = await this.findUserByCustomer(session.customer as string);
+    if (!user) {
+      return { changes_applied: false };
+    }
+
+    // [3] Get current state for audit trail
+    const previousState = {
+      subscription_status: user.subscription_status,
+      stripe_subscription_id: user.stripe_subscription_id,
+      current_period_end: user.current_period_end,
+      plan_id: user.plan_id,
+    };
+
+    // [4] Extract subscription ID from checkout session
+    const subscriptionId = session.subscription as string;
+    if (!subscriptionId) {
+      // Edge case: subscription not yet created (very rare)
+      // Will be handled by customer.subscription.created fallback
+      return { changes_applied: false };
+    }
+
+    // [5] Fetch full subscription details from Stripe API
+    // IMPORTANT: Checkout session doesn't include all subscription fields
+    // We need: current_period_end, plan_id (price_id), status
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+    // [6] Calculate new state
+    const newState: SubscriptionUpdateData = {
+      stripe_subscription_id: subscription.id,
+      subscription_status: "active", // Checkout completed = active subscription
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      plan_id: subscription.items.data[0]?.price?.id || undefined,
+      trial_expires_at: null, // Clear trial when subscription activates
+      updated_at: new Date().toISOString(),
+    };
+
+    // [7] Update user with audit trail
+    await this.updateUserWithAudit(
+      user.auth_uid,
+      previousState,
+      newState,
+      "checkout_completed" // New audit change_type
+    );
+
+    return {
+      user_id: user.auth_uid,
+      changes_applied: true,
+    };
   }
 
   /**
