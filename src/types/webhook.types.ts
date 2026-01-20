@@ -15,6 +15,7 @@ export type StripeWebhookEvent = Stripe.Event;
  * Supported webhook event types
  */
 export type WebhookEventType =
+  | "checkout.session.completed"
   | "customer.subscription.created"
   | "customer.subscription.updated"
   | "customer.subscription.deleted"

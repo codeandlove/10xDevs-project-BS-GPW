@@ -13,6 +13,21 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../db/database.types";
 import type Stripe from "stripe";
 
+// Mock Stripe API - use vi.hoisted to ensure mock is available before vi.mock
+const { mockStripeRetrieve } = vi.hoisted(() => {
+  return {
+    mockStripeRetrieve: vi.fn(),
+  };
+});
+
+vi.mock("../lib/stripe", () => ({
+  stripe: {
+    subscriptions: {
+      retrieve: mockStripeRetrieve,
+    },
+  },
+}));
+
 // Mock Supabase client with proper query builder chaining
 const createMockSupabaseClient = () => {
   const mockSingle = vi.fn().mockResolvedValue({ data: null, error: null });
@@ -105,6 +120,34 @@ const createMockStripeEvent = (type: string, data: Partial<Stripe.Subscription> 
   } as Stripe.Event;
 };
 
+// Helper to create mock Stripe checkout session events
+const createMockCheckoutSessionEvent = (subscriptionId?: string): Stripe.Event => {
+  return {
+    id: `evt_${Date.now()}`,
+    object: "event",
+    api_version: "2023-10-16",
+    created: Math.floor(Date.now() / 1000),
+    type: "checkout.session.completed",
+    data: {
+      object: {
+        id: `cs_${Date.now()}`,
+        object: "checkout.session",
+        customer: "cus_test123",
+        mode: "subscription",
+        subscription: subscriptionId || `sub_${Date.now()}`,
+        payment_status: "paid",
+        status: "complete",
+        metadata: {
+          auth_uid: "user123",
+        },
+      } as any, // Use 'any' to bypass strict type checking in tests
+    },
+    livemode: false,
+    pending_webhooks: 1,
+    request: { id: null, idempotency_key: null },
+  } as Stripe.Event;
+};
+
 // Helper to set up standard event processing mocks
 const setupEventProcessingMocks = (
   mockSupabase: ReturnType<typeof createMockSupabaseClient>,
@@ -160,6 +203,114 @@ describe("WebhookService - Event Processing", () => {
   beforeEach(() => {
     mockSupabase = createMockSupabaseClient();
     service = new WebhookService(mockSupabase);
+    vi.clearAllMocks();
+  });
+
+  it("should process checkout.session.completed event successfully", async () => {
+    const event = createMockCheckoutSessionEvent("sub_test123");
+
+    // Mock Stripe API - return full subscription data
+    mockStripeRetrieve.mockResolvedValueOnce({
+      id: "sub_test123",
+      object: "subscription",
+      customer: "cus_test123",
+      status: "active",
+      current_period_end: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+      items: {
+        data: [
+          {
+            price: { id: "price_test123" },
+          },
+        ],
+      },
+    });
+
+    setupEventProcessingMocks(mockSupabase, {
+      eventExists: false,
+      userData: {
+        auth_uid: "user123",
+        subscription_status: "trial",
+        stripe_subscription_id: null,
+        current_period_end: null,
+        plan_id: null,
+        stripe_customer_id: "cus_test123",
+      },
+    });
+
+    const result = await service.processEvent(event);
+
+    expect(result.success).toBe(true);
+    expect(result.changes_applied).toBe(true);
+    expect(result.user_id).toBe("user123");
+    expect(mockStripeRetrieve).toHaveBeenCalledWith("sub_test123");
+  });
+
+  it("should skip checkout.session.completed for non-subscription mode", async () => {
+    const event = createMockCheckoutSessionEvent();
+    // Change mode to "payment" (one-time payment)
+    (event.data.object as any).mode = "payment";
+
+    setupEventProcessingMocks(mockSupabase, {
+      eventExists: false,
+      userData: {
+        auth_uid: "user123",
+        subscription_status: "trial",
+        stripe_customer_id: "cus_test123",
+      },
+    });
+
+    const result = await service.processEvent(event);
+
+    expect(result.success).toBe(true);
+    expect(result.changes_applied).toBe(false);
+    expect(mockStripeRetrieve).not.toHaveBeenCalled();
+  });
+
+  it("should handle missing subscription ID in checkout session gracefully", async () => {
+    const event = createMockCheckoutSessionEvent();
+    // Remove subscription ID (edge case)
+    (event.data.object as any).subscription = null;
+
+    setupEventProcessingMocks(mockSupabase, {
+      eventExists: false,
+      userData: {
+        auth_uid: "user123",
+        stripe_customer_id: "cus_test123",
+      },
+    });
+
+    const result = await service.processEvent(event);
+
+    expect(result.success).toBe(true);
+    expect(result.changes_applied).toBe(false);
+    expect(mockStripeRetrieve).not.toHaveBeenCalled();
+  });
+
+  it("should handle user not found in checkout.session.completed", async () => {
+    const event = createMockCheckoutSessionEvent("sub_test123");
+
+    const builder = (mockSupabase.from as any)();
+
+    // Mock: checkEventExists - not exists
+    mockSupabase._mockEq.mockReturnValueOnce(builder);
+    mockSupabase._mockSingle.mockResolvedValueOnce({ data: null, error: { code: "PGRST116" } });
+
+    // Mock: Insert webhook event log
+    mockSupabase._mockInsert.mockResolvedValueOnce({ data: {}, error: null });
+
+    // Mock: User not found by customer_id
+    mockSupabase._mockEq.mockReturnValueOnce(builder);
+    mockSupabase._mockIs.mockReturnValueOnce(builder);
+    mockSupabase._mockSingle.mockResolvedValueOnce({ data: null, error: { code: "PGRST116" } });
+
+    // Mock: Mark as processed
+    mockSupabase._mockEq.mockResolvedValueOnce({ data: {}, error: null });
+
+    const result = await service.processEvent(event);
+
+    expect(result.success).toBe(true);
+    expect(result.changes_applied).toBe(false);
+    expect(mockStripeRetrieve).not.toHaveBeenCalled();
   });
 
   it("should process subscription.created event successfully", async () => {
