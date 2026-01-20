@@ -72,6 +72,7 @@ export class WebhookService {
     } catch (error) {
       // [6] Mark as failed
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
       await this.markEventFailed(event.id, errorMessage);
 
       throw new EventProcessingError(errorMessage);
@@ -228,33 +229,24 @@ export class WebhookService {
     // [4] Extract subscription ID from checkout session
     const subscriptionId = session.subscription as string;
     if (!subscriptionId) {
-      // Edge case: subscription not yet created (very rare)
-      // Will be handled by customer.subscription.created fallback
       return { changes_applied: false };
     }
 
     // [5] Fetch full subscription details from Stripe API
-    // IMPORTANT: Checkout session doesn't include all subscription fields
-    // We need: current_period_end, plan_id (price_id), status
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
     // [6] Calculate new state
     const newState: SubscriptionUpdateData = {
       stripe_subscription_id: subscription.id,
-      subscription_status: "active", // Checkout completed = active subscription
+      subscription_status: "active",
       current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
       plan_id: subscription.items.data[0]?.price?.id || undefined,
-      trial_expires_at: null, // Clear trial when subscription activates
+      trial_expires_at: null,
       updated_at: new Date().toISOString(),
     };
 
     // [7] Update user with audit trail
-    await this.updateUserWithAudit(
-      user.auth_uid,
-      previousState,
-      newState,
-      "checkout_completed" // New audit change_type
-    );
+    await this.updateUserWithAudit(user.auth_uid, previousState, newState, "checkout_completed");
 
     return {
       user_id: user.auth_uid,

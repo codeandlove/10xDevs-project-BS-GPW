@@ -16,7 +16,7 @@ import { EventTypeFilter } from "./EventTypeFilter";
 import { SortOptions } from "./SortOptions";
 import { ClearFiltersButton } from "./ClearFiltersButton";
 import { VirtualizedGrid } from "./VirtualizedGrid";
-import { GridSkeleton } from "@/components/ui/Skeleton";
+import { GridSkeleton } from "@/components/ui/skeleton";
 import { SummaryView } from "@/components/summary/SummaryView";
 import { fetchGridData } from "@/lib/api-service";
 import type { EventType } from "@/types/nocodb.types";

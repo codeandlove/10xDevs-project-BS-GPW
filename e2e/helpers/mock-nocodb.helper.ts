@@ -3,7 +3,7 @@
  * This ensures grid renders with test data
  */
 
-import { Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { mockGridResponse, mockEventDetailsResponse, mockSummariesResponse } from "../fixtures/nocodb-mock.fixture";
 
 /**

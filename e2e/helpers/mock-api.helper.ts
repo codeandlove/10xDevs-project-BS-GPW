@@ -2,7 +2,7 @@
  * Helper for mocking API responses in E2E tests
  */
 
-import { Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { mockGridData, mockEventDetails, mockSummaries } from "../fixtures/grid-data.fixture";
 
 /**

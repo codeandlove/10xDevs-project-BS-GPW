@@ -10,7 +10,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EventHeader } from "./EventHeader";
 import { SummaryCard } from "./SummaryCard";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { BlackSwanEventDetailed } from "@/types/nocodb.types";
 
 interface SummaryDrawerProps {
@@ -229,15 +229,15 @@ function DrawerSkeleton() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Skeleton width="60%" height={24} />
-        <Skeleton width="40%" height={16} />
+        <Skeleton className="h-6 w-3/5" />
+        <Skeleton className="h-4 w-2/5" />
       </div>
       <div className="space-y-2">
-        <Skeleton width="100%" height={60} />
+        <Skeleton className="h-15 w-full" />
       </div>
       <div className="space-y-2">
-        <Skeleton width="30%" height={16} />
-        <Skeleton width="100%" height={32} />
+        <Skeleton className="h-4 w-3/10" />
+        <Skeleton className="h-8 w-full" />
       </div>
     </div>
   );

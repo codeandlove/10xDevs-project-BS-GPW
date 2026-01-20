@@ -164,15 +164,15 @@ describe("Auth Helpers", () => {
     it("should return true for active paid subscription", () => {
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "active",
         trial_expires_at: null,
+        current_period_end: "2025-01-01T00:00:00Z",
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: "cus_123",
-        stripe_subscription_id: "sub_123",
-        subscription_current_period_end: "2025-01-01T00:00:00Z",
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(hasActiveSubscription(profile)).toBe(true);
@@ -184,15 +184,15 @@ describe("Auth Helpers", () => {
 
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "trial",
         trial_expires_at: futureDate.toISOString(),
+        current_period_end: null,
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: null,
-        stripe_subscription_id: null,
-        subscription_current_period_end: null,
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(hasActiveSubscription(profile)).toBe(true);
@@ -204,15 +204,15 @@ describe("Auth Helpers", () => {
 
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "trial",
         trial_expires_at: pastDate.toISOString(),
+        current_period_end: null,
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: null,
-        stripe_subscription_id: null,
-        subscription_current_period_end: null,
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(hasActiveSubscription(profile)).toBe(false);
@@ -221,15 +221,15 @@ describe("Auth Helpers", () => {
     it("should return false for canceled subscription", () => {
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "canceled",
         trial_expires_at: null,
+        current_period_end: "2025-01-01T00:00:00Z",
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: "cus_123",
-        stripe_subscription_id: null,
-        subscription_current_period_end: null,
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(hasActiveSubscription(profile)).toBe(false);
@@ -238,15 +238,15 @@ describe("Auth Helpers", () => {
     it("should return false for soft-deleted user", () => {
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "active",
         trial_expires_at: null,
+        current_period_end: "2025-01-01T00:00:00Z",
+        plan_id: null,
         deleted_at: "2024-01-15T00:00:00Z",
         stripe_customer_id: "cus_123",
-        stripe_subscription_id: "sub_123",
-        subscription_current_period_end: "2025-01-01T00:00:00Z",
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(hasActiveSubscription(profile)).toBe(false);
@@ -259,15 +259,15 @@ describe("Auth Helpers", () => {
     it("should return false for trial without trial_expires_at", () => {
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "trial",
         trial_expires_at: null,
+        current_period_end: null,
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: null,
-        stripe_subscription_id: null,
-        subscription_current_period_end: null,
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(hasActiveSubscription(profile)).toBe(false);
@@ -281,15 +281,15 @@ describe("Auth Helpers", () => {
 
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "trial",
         trial_expires_at: futureDate.toISOString(),
+        current_period_end: null,
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: null,
-        stripe_subscription_id: null,
-        subscription_current_period_end: null,
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(isTrialActive(profile)).toBe(true);
@@ -301,15 +301,15 @@ describe("Auth Helpers", () => {
 
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "trial",
         trial_expires_at: pastDate.toISOString(),
+        current_period_end: null,
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: null,
-        stripe_subscription_id: null,
-        subscription_current_period_end: null,
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(isTrialActive(profile)).toBe(false);
@@ -322,15 +322,15 @@ describe("Auth Helpers", () => {
     it("should return false for trial without trial_expires_at", () => {
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "trial",
         trial_expires_at: null,
+        current_period_end: null,
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: null,
-        stripe_subscription_id: null,
-        subscription_current_period_end: null,
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(isTrialActive(profile)).toBe(false);
@@ -342,15 +342,15 @@ describe("Auth Helpers", () => {
 
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "active",
         trial_expires_at: futureDate.toISOString(),
+        current_period_end: null,
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: "cus_123",
-        stripe_subscription_id: "sub_123",
-        subscription_current_period_end: "2025-01-01T00:00:00Z",
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(isTrialActive(profile)).toBe(false);
@@ -361,15 +361,15 @@ describe("Auth Helpers", () => {
     it("should return true for active paid subscription", () => {
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "active",
         trial_expires_at: null,
+        current_period_end: "2025-01-01T00:00:00Z",
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: "cus_123",
-        stripe_subscription_id: "sub_123",
-        subscription_current_period_end: "2025-01-01T00:00:00Z",
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(canAccessPremiumFeatures(profile)).toBe(true);
@@ -381,15 +381,15 @@ describe("Auth Helpers", () => {
 
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "trial",
         trial_expires_at: futureDate.toISOString(),
+        current_period_end: null,
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: null,
-        stripe_subscription_id: null,
-        subscription_current_period_end: null,
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(canAccessPremiumFeatures(profile)).toBe(true);
@@ -398,15 +398,15 @@ describe("Auth Helpers", () => {
     it("should return false for expired subscription", () => {
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "canceled",
         trial_expires_at: null,
+        current_period_end: "2025-01-01T00:00:00Z",
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: "cus_123",
-        stripe_subscription_id: null,
-        subscription_current_period_end: null,
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(canAccessPremiumFeatures(profile)).toBe(false);
@@ -419,15 +419,15 @@ describe("Auth Helpers", () => {
     it("should be an alias for hasActiveSubscription", () => {
       const profile: UserProfileDTO = {
         auth_uid: "user-123",
-        email: "user@example.com",
+        role: "user",
         subscription_status: "active",
         trial_expires_at: null,
+        current_period_end: "2025-01-01T00:00:00Z",
+        plan_id: null,
         deleted_at: null,
         stripe_customer_id: "cus_123",
-        stripe_subscription_id: "sub_123",
-        subscription_current_period_end: "2025-01-01T00:00:00Z",
+        metadata: {},
         created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
       };
 
       expect(canAccessPremiumFeatures(profile)).toBe(hasActiveSubscription(profile));

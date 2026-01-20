@@ -32,7 +32,7 @@ import { apiClient } from "@/lib/api-client";
 
 describe("API Client - GET requests", () => {
   it("should successfully fetch grid data", async () => {
-    const response = await apiClient.get("/api/nocodb/grid?range=week");
+    const response = (await apiClient.get("/api/nocodb/grid?range=week")) as Record<string, unknown>;
 
     expect(response).toHaveProperty("events");
     expect(response.events).toBeInstanceOf(Array);
@@ -40,19 +40,19 @@ describe("API Client - GET requests", () => {
   });
 
   it("should filter by symbols parameter", async () => {
-    const response = await apiClient.get("/api/nocodb/grid?range=week&symbols=CPD,PKN");
+    const response = (await apiClient.get("/api/nocodb/grid?range=week&symbols=CPD,PKN")) as Record<string, unknown>;
 
     expect(response.events).toBeInstanceOf(Array);
     expect(response.symbols).toEqual(["CPD", "PKN"]);
     // All events should be CPD or PKN
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    response.events.forEach((event: any) => {
+    (response.events as any[]).forEach((event: any) => {
       expect(["CPD", "PKN"]).toContain(event.symbol);
     });
   });
 
   it("should fetch event details by ID", async () => {
-    const response = await apiClient.get("/api/nocodb/events/rec_1");
+    const response = (await apiClient.get("/api/nocodb/events/rec_1")) as Record<string, unknown>;
 
     expect(response).toHaveProperty("event");
     expect(response.event).toHaveProperty("id", "rec_1");
@@ -61,11 +61,14 @@ describe("API Client - GET requests", () => {
   });
 
   it("should fetch summaries with filters", async () => {
-    const response = await apiClient.get("/api/nocodb/summaries?symbol=CPD&occurrence_date=2025-01-15");
+    const response = (await apiClient.get("/api/nocodb/summaries?symbol=CPD&occurrence_date=2025-01-15")) as Record<
+      string,
+      unknown
+    >;
 
     expect(response).toHaveProperty("summaries");
     expect(response.summaries).toBeInstanceOf(Array);
-    expect(response.summaries.length).toBeGreaterThan(0);
+    expect((response.summaries as unknown[]).length).toBeGreaterThan(0);
   });
 });
 
@@ -224,7 +227,7 @@ describe("API Client - POST requests", () => {
       })
     );
 
-    const response = await apiClient.post("/api/test-post", { test: "data" });
+    const response = (await apiClient.post("/api/test-post", { test: "data" })) as Record<string, unknown>;
     expect(response).toHaveProperty("received");
     expect(response.received).toEqual({ test: "data" });
   }, 10000);
@@ -240,7 +243,7 @@ describe("API Client - POST requests", () => {
       })
     );
 
-    const response = await apiClient.post("/api/test-post-headers", { test: "data" });
+    const response = (await apiClient.post("/api/test-post-headers", { test: "data" })) as Record<string, unknown>;
     expect(response.contentType).toBe("application/json");
   }, 10000);
 });

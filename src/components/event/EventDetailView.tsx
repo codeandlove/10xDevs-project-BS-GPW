@@ -13,7 +13,7 @@ import { AvatarMenu } from "@/components/layout/AvatarMenu";
 import { EventHeader } from "@/components/summary/EventHeader";
 import { Timeline } from "@/components/event/Timeline";
 import { PriceChart } from "@/components/event/PriceChart";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { fetchEventDetails, fetchSummaries } from "@/lib/api-service";
 import type { BlackSwanEventDetailed, AISummary } from "@/types/nocodb.types";
 
@@ -150,19 +150,19 @@ function DetailViewSkeleton() {
   return (
     <div className="space-y-8">
       <div className="rounded-lg border p-6">
-        <Skeleton width="40%" height={32} className="mb-4" />
+        <Skeleton className="mb-4 h-8 w-2/5" />
         <div className="grid grid-cols-4 gap-4">
-          <Skeleton width="100%" height={60} />
-          <Skeleton width="100%" height={60} />
-          <Skeleton width="100%" height={60} />
-          <Skeleton width="100%" height={60} />
+          <Skeleton className="h-15 w-full" />
+          <Skeleton className="h-15 w-full" />
+          <Skeleton className="h-15 w-full" />
+          <Skeleton className="h-15 w-full" />
         </div>
       </div>
-      <Skeleton width="100%" height={300} />
+      <Skeleton className="h-75 w-full" />
       <div className="space-y-4">
-        <Skeleton width="30%" height={32} />
-        <Skeleton width="100%" height={200} />
-        <Skeleton width="100%" height={200} />
+        <Skeleton className="h-8 w-3/10" />
+        <Skeleton className="h-50 w-full" />
+        <Skeleton className="h-50 w-full" />
       </div>
     </div>
   );
