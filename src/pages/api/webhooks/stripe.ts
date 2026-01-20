@@ -3,12 +3,16 @@
  *
  * Stripe webhook endpoint for processing subscription events
  * Requires Stripe signature verification (NOT Bearer token auth)
+ *
+ * Reference: stripe-webhooks-implementation-plan.md (Section 9.4, line 866-920)
+ * This implementation follows the original plan exactly.
  */
 
 import type { APIRoute } from "astro";
 import { stripe } from "@/lib/stripe";
 import { WebhookService } from "@/services/webhook.service";
 import { SignatureVerificationError, MissingSignatureError } from "@/lib/webhook-errors";
+import { createSupabaseServiceClient } from "@/lib/supabase-service";
 
 export const prerender = false;
 
@@ -19,11 +23,14 @@ const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET;
  * Receives and processes Stripe webhook events
  *
  * Security: Verifies Stripe signature before processing
+ * Database: Uses Service Role client to bypass RLS (webhooks have no user session)
  * Idempotency: Prevents duplicate event processing via database constraint
  * Always returns 200 OK to Stripe (errors logged internally)
  */
-export const POST: APIRoute = async ({ request, locals }) => {
-  const { supabase } = locals;
+export const POST: APIRoute = async ({ request }) => {
+  // Create service client with admin privileges for webhook processing
+  // IMPORTANT: This bypasses RLS - required for writing subscription data without user session
+  const supabase = createSupabaseServiceClient();
   let eventId = "unknown";
 
   try {
