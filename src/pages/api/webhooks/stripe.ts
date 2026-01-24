@@ -9,12 +9,11 @@
  */
 
 import type { APIRoute } from "astro";
+import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { WebhookService } from "@/services/webhook.service";
 import { SignatureVerificationError, MissingSignatureError } from "@/lib/webhook-errors";
 import { createSupabaseServiceClient } from "@/lib/supabase-service";
-
-export const prerender = false;
 
 const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET;
 
@@ -28,9 +27,6 @@ const webhookSecret = import.meta.env.STRIPE_WEBHOOK_SECRET;
  * Always returns 200 OK to Stripe (errors logged internally)
  */
 export const POST: APIRoute = async ({ request }) => {
-  // Create service client with admin privileges for webhook processing
-  // IMPORTANT: This bypasses RLS - required for writing subscription data without user session
-  const supabase = createSupabaseServiceClient();
   let eventId = "unknown";
 
   try {
@@ -40,7 +36,12 @@ export const POST: APIRoute = async ({ request }) => {
     // [2] Get Stripe signature from headers
     const signature = request.headers.get("stripe-signature");
     if (!signature) {
-      throw new MissingSignatureError();
+      return new Response(
+        JSON.stringify({
+          error: "Missing stripe-signature header",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     // [3] Verify webhook signature
@@ -48,15 +49,48 @@ export const POST: APIRoute = async ({ request }) => {
     try {
       event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
       eventId = event.id;
-    } catch {
-      throw new SignatureVerificationError();
+    } catch (err) {
+      return new Response(
+        JSON.stringify({
+          error: "Webhook signature verification failed",
+          message: err instanceof Error ? err.message : "Unknown error",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    // [4] Process event with service layer
+    // [4] DEBUG - Return diagnostic info for checkout.session.completed
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      return new Response(
+        JSON.stringify({
+          received: true,
+          debug: {
+            hasServiceKey: !!import.meta.env.SUPABASE_SERVICE_ROLE_KEY,
+            serviceKeyLength: import.meta.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0,
+            hasSupabaseUrl: !!import.meta.env.PUBLIC_SUPABASE_URL,
+            supabaseUrl: import.meta.env.PUBLIC_SUPABASE_URL,
+            customer: session.customer,
+            authUid: session.metadata?.auth_uid,
+            subscription: session.subscription,
+            eventId: event.id,
+            mode: session.mode,
+          },
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // [5] For other events, process normally
+    const supabase = createSupabaseServiceClient();
     const webhookService = new WebhookService(supabase);
     const result = await webhookService.processEvent(event);
 
-    // [5] Return 200 OK with result
+    // [6] Return 200 OK with result
     return new Response(
       JSON.stringify({
         received: true,
