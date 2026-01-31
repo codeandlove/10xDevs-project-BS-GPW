@@ -15,6 +15,9 @@ const AUTH_ONLY_ROUTES = ["/api/users", "/api/subscriptions"];
 // Public routes (accessible without authentication)
 const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/register", "/403", "/404", "/500"];
 
+// Public API routes (no authentication required)
+const PUBLIC_API_ROUTES = ["/api/users/initialize"];
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, redirect } = context;
 
@@ -31,8 +34,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return url.pathname.startsWith(route);
   });
 
-  // Skip middleware for API webhooks and public routes
-  if (url.pathname === "/api/webhooks/stripe" || isPublicRoute) {
+  // Check if this is a public API route
+  const isPublicApiRoute = PUBLIC_API_ROUTES.some((route) => url.pathname === route);
+
+  // Skip middleware for API webhooks, public routes, and public API routes
+  if (url.pathname === "/api/webhooks/stripe" || isPublicRoute || isPublicApiRoute) {
     return next();
   }
 
