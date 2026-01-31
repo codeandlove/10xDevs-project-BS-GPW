@@ -1,9 +1,10 @@
 /**
  * Grid Page Wrapper
- * Wraps GridView with GridProvider to ensure context is available
+ * Wraps GridView with AuthProvider and GridProvider to ensure contexts are available
  * This is necessary in Astro because each client:load creates a separate React island
  */
 
+import { AuthProvider } from "@/contexts/AuthContext";
 import { GridProvider } from "@/contexts/GridContext";
 import { GridView } from "./GridView";
 import type { DateRange, EventType } from "@/types/nocodb.types";
@@ -28,15 +29,17 @@ export function GridPageWrapper({
   const eventId = initialEventId || undefined;
 
   return (
-    <GridProvider
-      initialState={{
-        range,
-        symbols,
-        eventTypes,
-        eventId,
-      }}
-    >
-      <GridView />
-    </GridProvider>
+    <AuthProvider>
+      <GridProvider
+        initialState={{
+          range,
+          symbols,
+          eventTypes,
+          eventId,
+        }}
+      >
+        <GridView />
+      </GridProvider>
+    </AuthProvider>
   );
 }
