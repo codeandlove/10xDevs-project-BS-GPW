@@ -132,18 +132,6 @@ export function useClientCache<T>(key: string, fetcher: () => Promise<T>, option
         setInCache(key, result, opts.ttl ?? DEFAULT_TTL);
         return result;
       } catch (err) {
-        // Don't retry on client errors (4xx) - user action required
-        if (err instanceof Error && err.message) {
-          const statusMatch = err.message.match(/HTTP (\d{3})/);
-          if (statusMatch) {
-            const status = parseInt(statusMatch[1]);
-            if (status >= 400 && status < 500) {
-              // Client error (401, 403, 404, etc.) - don't retry
-              throw err;
-            }
-          }
-        }
-
         const maxRetries = opts.retry ?? DEFAULT_OPTIONS.retry ?? 3;
         if (retryCount < maxRetries) {
           // Exponential backoff
@@ -277,8 +265,8 @@ export function clearGridCache(): void {
     const keys = Object.keys(localStorage);
     keys.forEach((key) => {
       // Clear cache data (grid events, event details, summaries)
-      // And new format: "gpw:cache:v1:black_swans|id=...", "gpw:cache:v1:grid|...", etc.
-      if (key.startsWith("cache:") || key.startsWith("gpw:cache:")) {
+      // Keys format: "cache:grid:...", "cache:event:...", etc.
+      if (key.startsWith("cache:")) {
         localStorage.removeItem(key);
       }
 

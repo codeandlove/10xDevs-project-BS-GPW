@@ -9,12 +9,6 @@ export interface LoginOptions {
   password: string;
 }
 
-export interface SubscriptionState {
-  subscription_status: "active" | "trial" | "canceled" | "past_due";
-  trial_expires_at: string | null;
-  current_period_end?: string | null;
-}
-
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY;
 
@@ -61,26 +55,6 @@ export async function loginViaAPI(page: Page, { email, password }: LoginOptions)
     { data: authData, key: storageKey }
   );
 
-  // Explicitly set session in Supabase client
-  // This is needed because Supabase client doesn't automatically detect localStorage changes
-  await page.evaluate(
-    async ({ accessToken, refreshToken }) => {
-      // Import Supabase client dynamically
-      // @ts-expect-error - Dynamic import in browser context, path resolved by Astro at runtime
-      const { supabaseClient } = await import("/src/db/supabase.client.ts");
-
-      // Set session explicitly - this updates the client's internal state
-      await supabaseClient.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-    },
-    {
-      accessToken: authData.access_token,
-      refreshToken: authData.refresh_token,
-    }
-  );
-
   // Set cookies for server-side middleware
   await page.context().addCookies([
     {
@@ -116,59 +90,4 @@ export async function loginViaAPI(page: Page, { email, password }: LoginOptions)
   ]);
 
   return authData;
-}
-
-/**
- * Setup subscription state for test user
- * Mocks /api/users/me and Supabase app_users query
- * Use this before loginViaAPI() to ensure correct subscription state is returned
- *
- * @example
- * await setupSubscriptionState(page, "expired@example.com", {
- *   subscription_status: "canceled",
- *   trial_expires_at: "2025-01-01T00:00:00Z",
- * });
- * await loginViaAPI(page, { email: "expired@example.com", password: "Test123!@#" });
- */
-export async function setupSubscriptionState(page: Page, email: string, state: SubscriptionState) {
-  const authUid = `test-user-${email.split("@")[0]}`;
-
-  // Mock /api/users/me
-  await page.route("**/api/users/me", (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        success: true,
-        data: {
-          user: {
-            auth_uid: authUid,
-            email,
-            subscription_status: state.subscription_status,
-            trial_expires_at: state.trial_expires_at,
-            current_period_end: state.current_period_end || null,
-            deleted_at: null,
-          },
-        },
-      }),
-    });
-  });
-
-  // Mock Supabase app_users query
-  await page.route("**/rest/v1/app_users**", (route) => {
-    route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify([
-        {
-          auth_uid: authUid,
-          email,
-          subscription_status: state.subscription_status,
-          trial_expires_at: state.trial_expires_at,
-          current_period_end: state.current_period_end || null,
-          deleted_at: null,
-        },
-      ]),
-    });
-  });
 }

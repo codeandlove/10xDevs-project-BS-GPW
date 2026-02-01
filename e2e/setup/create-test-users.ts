@@ -32,9 +32,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 interface TestUser {
   email: string;
   password: string;
-  subscription_status: "active" | "trial" | "canceled" | "past_due";
+  subscription_status: "active" | "trial" | "canceled";
   trial_expires_at: string | null;
-  current_period_end?: string | null;
 }
 
 const TEST_USERS: TestUser[] = [
@@ -43,59 +42,36 @@ const TEST_USERS: TestUser[] = [
     password: "Test123!@#",
     subscription_status: "active",
     trial_expires_at: null,
-    current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
     email: "trial@example.com",
     password: "Test123!@#",
     subscription_status: "trial",
     trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    current_period_end: null,
   },
   {
     email: "expired@example.com",
     password: "Test123!@#",
     subscription_status: "canceled",
     trial_expires_at: "2025-01-01T00:00:00Z",
-    current_period_end: null,
   },
   {
     email: "userb@example.com",
     password: "Test123!@#",
     subscription_status: "active",
     trial_expires_at: null,
-    current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    email: "pastdue@example.com",
-    password: "Test123!@#",
-    subscription_status: "past_due",
-    trial_expires_at: null,
-    current_period_end: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    email: "trial-expiring@example.com",
-    password: "Test123!@#",
-    subscription_status: "trial",
-    trial_expires_at: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    current_period_end: null,
   },
 ];
 
 async function createTestUser(user: TestUser) {
-  // Try to sign in to check if user exists (more reliable than listUsers with pagination)
-  const { data: signInData } = await supabase.auth.signInWithPassword({
-    email: user.email,
-    password: user.password,
-  });
+  // Try to get existing user by email
+  const { data: existingUsers } = await supabase.auth.admin.listUsers();
+  const existingUser = existingUsers?.users.find((u) => u.email === user.email);
 
   let authUid: string;
 
-  if (signInData?.user) {
-    // User exists and credentials are correct
-    authUid = signInData.user.id;
-    // Sign out immediately
-    await supabase.auth.signOut();
+  if (existingUser) {
+    authUid = existingUser.id;
   } else {
     // Create auth user
     const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
@@ -130,7 +106,6 @@ async function createTestUser(user: TestUser) {
       .update({
         subscription_status: user.subscription_status,
         trial_expires_at: user.trial_expires_at,
-        current_period_end: user.current_period_end || null,
         updated_at: new Date().toISOString(),
       })
       .eq("auth_uid", authUid);
@@ -144,7 +119,6 @@ async function createTestUser(user: TestUser) {
       auth_uid: authUid,
       subscription_status: user.subscription_status,
       trial_expires_at: user.trial_expires_at,
-      current_period_end: user.current_period_end || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
@@ -167,10 +141,14 @@ async function main() {
     }
   }
 
+  TEST_USERS.forEach((user) => {
+    if (user.trial_expires_at) {
+      // Trial user configured
+    }
+  });
+
   if (failCount > 0) {
     process.exit(1);
-  } else {
-    process.exit(0);
   }
 }
 

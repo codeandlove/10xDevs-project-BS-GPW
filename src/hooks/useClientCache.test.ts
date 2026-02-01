@@ -85,40 +85,6 @@ describe("Cache Utils - clearGridCache", () => {
       expect(localStorage.getItem(key)).toBeNull();
     });
   });
-
-  it("clearGridCache should clear new format cache (gpw:cache:v1:*)", () => {
-    // Setup new format cache entries (used in production)
-    const newCacheKeys = [
-      "gpw:cache:v1:black_swans|id=251",
-      "gpw:cache:v1:black_swans|id=253",
-      "gpw:cache:v1:grid|range=week",
-    ];
-
-    newCacheKeys.forEach((key) => {
-      localStorage.setItem(key, JSON.stringify({ data: "test", timestamp: Date.now() }));
-    });
-
-    // Setup preferences (should be preserved)
-    localStorage.setItem("gpw:preferences:symbols", "CPD,PKN");
-    localStorage.setItem("theme", "dark");
-
-    // Verify all cache exists
-    newCacheKeys.forEach((key) => {
-      expect(localStorage.getItem(key)).toBeTruthy();
-    });
-
-    // Clear cache
-    clearGridCache();
-
-    // Verify new format cache cleared
-    newCacheKeys.forEach((key) => {
-      expect(localStorage.getItem(key)).toBeNull();
-    });
-
-    // Verify preferences preserved
-    expect(localStorage.getItem("gpw:preferences:symbols")).toBe("CPD,PKN");
-    expect(localStorage.getItem("theme")).toBe("dark");
-  });
 });
 
 describe("Cache Utils - clearAllCache", () => {

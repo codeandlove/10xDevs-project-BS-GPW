@@ -63,11 +63,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialize auth state
   useEffect(() => {
     // Get initial session
-    supabaseClient.auth.getSession().then(async ({ data: { session } }) => {
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        await fetchProfile();
+        fetchProfile();
       }
       setIsLoading(false);
     });
@@ -75,14 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    } = supabaseClient.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        await fetchProfile();
+        fetchProfile();
       } else {
         setProfile(null);
       }
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();

@@ -14,8 +14,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // Allow parallel execution across projects
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? 1 : undefined,
   reporter: [
     ["html", { outputFolder: "playwright-report" }],
     ["json", { outputFile: "playwright-report/results.json" }],
@@ -33,24 +32,9 @@ export default defineConfig({
   globalSetup: undefined,
 
   projects: [
-    // Project 1: Tests using test@example.com (runs serially within project)
     {
-      name: "active-user",
-      testMatch: /auth\.spec\.ts|grid\.spec\.ts|sidebar\.spec\.ts/,
-      use: {
-        ...devices["Desktop Chrome"],
-      },
-      // Run tests serially within this project to avoid user conflicts
-      fullyParallel: false,
-    },
-    // Project 2: Tests using expired@example.com (runs serially, parallel to Project 1)
-    {
-      name: "expired-user",
-      testMatch: /checkout\.spec\.ts/,
-      use: {
-        ...devices["Desktop Chrome"],
-      },
-      fullyParallel: false,
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
     // Uncomment for cross-browser testing
     // {

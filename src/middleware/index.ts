@@ -6,114 +6,71 @@
 import { defineMiddleware } from "astro:middleware";
 import { supabaseClient } from "../db/supabase.client";
 
-// Protected routes that require authentication + active subscription (API only)
-const PROTECTED_ROUTES = ["/api/nocodb"];
+// Protected routes that require authentication + active subscription
+const PROTECTED_ROUTES = ["/grid", "/summary", "/event"];
 
 // Routes that require authentication but NOT subscription
-const AUTH_ONLY_ROUTES = ["/api/users", "/api/subscriptions"];
+const AUTH_ONLY_ROUTES = ["/checkout"];
 
 // Public routes (accessible without authentication)
 const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/register", "/403", "/404", "/500"];
 
-// Public API routes (no authentication required)
-const PUBLIC_API_ROUTES = ["/api/users/initialize"];
-
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, redirect } = context;
-
   context.locals.supabase = supabaseClient;
 
+  // Check if current route requires authentication
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => url.pathname.startsWith(route));
   const isAuthOnlyRoute = AUTH_ONLY_ROUTES.some((route) => url.pathname.startsWith(route));
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => url.pathname.startsWith(route));
 
-  // Public routes - exact match for "/" or startsWith for others
-  const isPublicRoute = PUBLIC_ROUTES.some((route) => {
-    if (route === "/") {
-      return url.pathname === "/";
-    }
-    return url.pathname.startsWith(route);
-  });
-
-  // Check if this is a public API route
-  const isPublicApiRoute = PUBLIC_API_ROUTES.some((route) => url.pathname === route);
-
-  // Skip middleware for API webhooks, public routes, and public API routes
-  if (url.pathname === "/api/webhooks/stripe" || isPublicRoute || isPublicApiRoute) {
+  // Skip middleware for API webhooks and public routes
+  if (url.pathname === "/api/webhooks/stripe" || isPublicRoute) {
     return next();
   }
 
   // Routes that require authentication (with or without subscription check)
   if (isProtectedRoute || isAuthOnlyRoute) {
-    let userId = null;
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabaseClient.auth.getSession();
 
-    if (url.pathname.startsWith("/api/")) {
-      const authHeader = context.request.headers.get("Authorization");
-      const token = authHeader?.replace("Bearer ", "");
-
-      if (!token) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-
-      if (userError || !userData?.user) {
-        return new Response(JSON.stringify({ error: "Invalid token" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      userId = userData.user.id;
-    } else {
-      return next();
+    // No valid session - redirect to login with returnUrl
+    if (sessionError || !session) {
+      const returnUrl = encodeURIComponent(url.pathname + url.search);
+      return redirect(`/auth/login?returnUrl=${returnUrl}`);
     }
 
+    // Fetch user with subscription status
     const { data: user, error: userError } = await supabaseClient
       .from("app_users")
       .select("subscription_status, trial_expires_at, deleted_at")
-      .eq("auth_uid", userId)
+      .eq("auth_uid", session.user.id)
       .is("deleted_at", null)
       .single();
 
     if (userError || !user) {
-      if (url.pathname.startsWith("/api/")) {
-        return new Response(JSON.stringify({ error: "User not found" }), {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        });
-      } else {
-        return redirect("/auth/login");
-      }
+      // User record not found - redirect to login
+      return redirect("/auth/login");
     }
 
+    // For protected routes, check subscription access
     if (isProtectedRoute) {
       const now = new Date();
       const trialExpiresAt = user.trial_expires_at ? new Date(user.trial_expires_at) : null;
+      const hasActiveSubscription = user.subscription_status === "active" || user.subscription_status === "trial";
+      const hasValidTrial = trialExpiresAt && trialExpiresAt > now;
 
-      let hasAccess = false;
-
-      if (user.subscription_status === "active") {
-        hasAccess = true;
-      } else if (user.subscription_status === "trial") {
-        hasAccess = trialExpiresAt ? trialExpiresAt > now : false;
-      }
-
-      if (url.pathname.startsWith("/api/") && !hasAccess) {
-        return new Response(
-          JSON.stringify({
-            error: "Subscription required",
-            message: "Active subscription is required to access premium data",
-          }),
-          {
-            status: 403,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
+      if (!hasActiveSubscription && !hasValidTrial) {
+        // No active subscription or expired trial - redirect to 403
+        return redirect("/403?reason=subscription_required");
       }
     }
+
+    // Attach user context for use in pages/API routes
+    context.locals.user = user;
+    context.locals.session = session;
   }
 
   return next();

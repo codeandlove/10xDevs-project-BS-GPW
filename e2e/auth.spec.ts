@@ -8,7 +8,6 @@ import { test, expect } from "@playwright/test";
 import { loginViaAPI } from "./helpers/auth.helper";
 import { setupNocoDBMocks } from "./helpers/mock-nocodb.helper";
 
-// Tests without login - can run in parallel
 test.describe("Middleware Guard - Unauthorized Access", () => {
   test.beforeEach(async ({ context }) => {
     // Clear all cookies to simulate logged-out state
@@ -62,174 +61,156 @@ test.describe("Middleware Guard - Unauthorized Access", () => {
   });
 });
 
-// Group all tests using test@example.com - run serially to avoid session conflicts
-test.describe("Auth Tests - Active User (test@example.com)", () => {
-  test.describe.configure({ mode: "serial" });
-
-  test.describe("Middleware Guard - After Login Redirect", () => {
-    test("TC-AUTH-001: Redirect to returnUrl after successful login", async ({ page }) => {
-      // Login via API
-      await loginViaAPI(page, {
-        email: "test@example.com",
-        password: "Test123!@#",
-      });
-
-      // Navigate to /grid
-      await page.goto("/grid");
-
-      // Should stay on /grid
-      await expect(page).toHaveURL("/grid");
+test.describe("Middleware Guard - After Login Redirect", () => {
+  test("TC-AUTH-001: Redirect to returnUrl after successful login", async ({ page }) => {
+    // Login via API
+    await loginViaAPI(page, {
+      email: "test@example.com",
+      password: "Test123!@#",
     });
 
-    test("TC-AUTH-001: Redirect to /grid by default if no returnUrl", async ({ page }) => {
-      // Login via API
-      await loginViaAPI(page, {
-        email: "test@example.com",
-        password: "Test123!@#",
-      });
+    // Navigate to /grid
+    await page.goto("/grid");
 
-      await page.goto("/grid");
-
-      // Should redirect to /grid
-      await expect(page).toHaveURL("/grid");
-    });
+    // Should stay on /grid
+    await expect(page).toHaveURL("/grid");
   });
-}); // End of Auth Tests - Active User (test@example.com)
 
-// Tests using expired@example.com - run serially
-test.describe("Auth Tests - Expired User (expired@example.com)", () => {
-  test.describe.configure({ mode: "serial" });
-
-  test.describe("Middleware Guard - Expired Subscription", () => {
-    test.beforeEach(async ({ page }) => {
-      // Login via API with expired user
-      await loginViaAPI(page, {
-        email: "expired@example.com",
-        password: "Test123!@#",
-      });
+  test("TC-AUTH-001: Redirect to /grid by default if no returnUrl", async ({ page }) => {
+    // Login via API
+    await loginViaAPI(page, {
+      email: "test@example.com",
+      password: "Test123!@#",
     });
 
-    test("TC-AUTH-002: Redirect to 403 when subscription expired", async ({ page }) => {
-      // This test requires middleware to check subscription via /api/users/me
-      // Currently middleware might redirect to login instead of 403
-      // Skip this test for now as it depends on middleware implementation
-      test.skip();
+    await page.goto("/grid");
 
-      // Mock API to return expired subscription status
-      await page.route("**/api/users/me", (route) => {
-        route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            data: {
-              user: {
-                subscription_status: "canceled",
-                trial_expires_at: "2025-01-01T00:00:00Z", // Past date
-              },
-            },
-          }),
-        });
-      });
-
-      await page.goto("/grid");
-
-      // Should redirect to 403
-      await expect(page).toHaveURL(/\/403\?reason=subscription_required/);
-
-      // Should show error message
-      await expect(page.getByText("Brak dostępu")).toBeVisible();
-      await expect(page.getByText("wymagana aktywna subskrypcja")).toBeVisible();
-
-      // Should show CTA to buy plan
-      await expect(page.getByRole("link", { name: /kup plan/i })).toBeVisible();
-    });
-
-    // NOTE: These tests are outdated - middleware no longer checks subscription for pages
-    // Access control is now handled client-side by GridView component
-    // See grid.spec.ts "Grid Access Control" suites for current tests
-    test.skip("TC-AUTH-002: Allow access with active trial", async ({ page }) => {
-      // Setup grid mocks
-      await setupNocoDBMocks(page);
-
-      await page.route("**/api/users/me", (route) => {
-        route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            data: {
-              user: {
-                subscription_status: "trial",
-                trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-              },
-            },
-          }),
-        });
-      });
-
-      await page.goto("/grid");
-
-      // Should allow access
-      await expect(page).toHaveURL("/grid");
-      await expect(page.locator('[role="grid"]')).toBeVisible();
-    });
-
-    // NOTE: Test outdated - see grid.spec.ts "Grid Access Control" for current tests
-    test.skip("TC-AUTH-002: Allow access with active subscription", async ({ page }) => {
-      // Setup grid mocks
-      await setupNocoDBMocks(page);
-
-      await page.route("**/api/users/me", (route) => {
-        route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            data: {
-              user: {
-                subscription_status: "active",
-                trial_expires_at: null,
-              },
-            },
-          }),
-        });
-      });
-
-      await page.goto("/grid");
-
-      await expect(page).toHaveURL("/grid");
-      await expect(page.locator('[role="grid"]')).toBeVisible();
-    });
+    // Should redirect to /grid
+    await expect(page).toHaveURL("/grid");
   });
-}); // End of Auth Tests - Expired User (expired@example.com)
+});
 
-// Tests using userb@example.com - run serially (though only 1 test)
-test.describe("Auth Tests - User B (userb@example.com)", () => {
-  test.describe.configure({ mode: "serial" });
-
-  test.describe.skip("Cache Cleanup on Logout - GDPR Compliance", () => {
-    // Requires working registration API + unique email each time
-    test("TC-AUTH-003: Automatic trial on registration", async ({ page }) => {
-      await page.goto("/auth/register");
-
-      // Fill registration form
-      await page.fill('[name="email"]', `test${Date.now()}@example.com`);
-      await page.fill('[name="password"]', "Test123!@#");
-      await page.fill('[name="confirmPassword"]', "Test123!@#");
-      await page.click('button[type="submit"]');
-
-      // Should redirect to grid
-      await expect(page).toHaveURL("/grid");
-
-      // Should show trial banner
-      await expect(page.getByText(/trial aktywny do/i)).toBeVisible();
-    });
+test.describe("Middleware Guard - Expired Subscription", () => {
+  test.beforeEach(async ({ page }) => {
+    // Setup: Login as user with expired subscription
+    // This would require a test user with expired subscription in DB
+    // For now, we'll mock the scenario
+    await page.goto("/auth/login");
+    await page.fill('[name="email"]', "expired@example.com");
+    await page.fill('[name="password"]', "Test123!@#");
+    await page.click('button[type="submit"]');
   });
-}); // End of Auth Tests - User B (userb@example.com)
 
-// Tests without specific user - can run in parallel
+  test("TC-AUTH-002: Redirect to 403 when subscription expired", async ({ page }) => {
+    // This test requires middleware to check subscription via /api/users/me
+    // Currently middleware might redirect to login instead of 403
+    // Skip this test for now as it depends on middleware implementation
+    test.skip();
+
+    // Mock API to return expired subscription status
+    await page.route("**/api/users/me", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            user: {
+              subscription_status: "canceled",
+              trial_expires_at: "2025-01-01T00:00:00Z", // Past date
+            },
+          },
+        }),
+      });
+    });
+
+    await page.goto("/grid");
+
+    // Should redirect to 403
+    await expect(page).toHaveURL(/\/403\?reason=subscription_required/);
+
+    // Should show error message
+    await expect(page.getByText("Brak dostępu")).toBeVisible();
+    await expect(page.getByText("wymagana aktywna subskrypcja")).toBeVisible();
+
+    // Should show CTA to buy plan
+    await expect(page.getByRole("link", { name: /kup plan/i })).toBeVisible();
+  });
+
+  test("TC-AUTH-002: Allow access with active trial", async ({ page }) => {
+    // Setup grid mocks
+    await setupNocoDBMocks(page);
+
+    await page.route("**/api/users/me", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            user: {
+              subscription_status: "trial",
+              trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+          },
+        }),
+      });
+    });
+
+    await page.goto("/grid");
+
+    // Should allow access
+    await expect(page).toHaveURL("/grid");
+    await expect(page.locator('[role="grid"]')).toBeVisible();
+  });
+
+  test("TC-AUTH-002: Allow access with active subscription", async ({ page }) => {
+    // Setup grid mocks
+    await setupNocoDBMocks(page);
+
+    await page.route("**/api/users/me", (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            user: {
+              subscription_status: "active",
+              trial_expires_at: null,
+            },
+          },
+        }),
+      });
+    });
+
+    await page.goto("/grid");
+
+    await expect(page).toHaveURL("/grid");
+    await expect(page.locator('[role="grid"]')).toBeVisible();
+  });
+});
+
 test.describe.skip("Middleware Guard - 7-Day Trial", () => {
+  // Requires working registration API + unique email each time
+  test("TC-AUTH-003: Automatic trial on registration", async ({ page }) => {
+    await page.goto("/auth/register");
+
+    // Fill registration form
+    await page.fill('[name="email"]', `test${Date.now()}@example.com`);
+    await page.fill('[name="password"]', "Test123!@#");
+    await page.fill('[name="confirmPassword"]', "Test123!@#");
+    await page.click('button[type="submit"]');
+
+    // Should redirect to grid
+    await expect(page).toHaveURL("/grid");
+
+    // Should show trial banner
+    await expect(page.getByText(/trial aktywny do/i)).toBeVisible();
+  });
+});
+
+test.describe.skip("Cache Cleanup on Logout - GDPR Compliance", () => {
   // SKIP: These tests require full UI login flow which doesn't work with current test setup
   // Issues:
   // 1. loginViaAPI doesn't initialize AuthContext properly (AvatarMenu not rendered)
@@ -564,11 +545,7 @@ test.describe("Password Reset Flow", () => {
 });
 
 test.describe("Email Confirmation Flow", () => {
-  // NOTE: This test is flaky - depends on Supabase email confirmation settings
-  // Skip for now as it requires specific NEEDS_CONFIRM_EMAIL configuration
-  test.skip("TC-AUTH-004: Registration with NEEDS_CONFIRM_EMAIL=true redirects to /auth/confirmation", async ({
-    page,
-  }) => {
+  test("TC-AUTH-004: Registration with NEEDS_CONFIRM_EMAIL=true redirects to /auth/confirmation", async ({ page }) => {
     // NOTE: This test assumes NEEDS_CONFIRM_EMAIL is set to true in AuthForm.tsx
 
     // Navigate to register page

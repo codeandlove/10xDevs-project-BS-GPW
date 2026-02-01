@@ -3,11 +3,9 @@
  * Manages grid state, filters, and data fetching
  */
 
-import { useCallback, useMemo, useEffect, useState } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import { useClientCache } from "@/hooks/useClientCache";
 import { useGrid } from "@/contexts/GridContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { canAccessPremiumFeatures } from "@/lib/auth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Header } from "@/components/layout/Header";
@@ -18,8 +16,6 @@ import { EventTypeFilter } from "./EventTypeFilter";
 import { SortOptions } from "./SortOptions";
 import { ClearFiltersButton } from "./ClearFiltersButton";
 import { VirtualizedGrid } from "./VirtualizedGrid";
-import { BlurredDemoGrid } from "./BlurredDemoGrid";
-import { MobileAccessBlock } from "./MobileAccessBlock";
 import { GridSkeleton } from "@/components/ui/skeleton";
 import { SummaryView } from "@/components/summary/SummaryView";
 import { fetchGridData } from "@/lib/api-service";
@@ -30,27 +26,6 @@ const AVAILABLE_SYMBOLS = ["CPD", "PKN", "PKO", "PZU", "KGH", "JSW", "LPP", "ALE
 
 export function GridView() {
   const { gridState, setRange, setSymbols, setEventTypes, setSort, setEventId, clearFilters } = useGrid();
-  const { profile, isLoading: isLoadingAuth } = useAuth();
-
-  useEffect(() => {
-    if (!isLoadingAuth && !profile) {
-      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.href = `/auth/login?returnUrl=${returnUrl}`;
-    }
-  }, [profile, isLoadingAuth]);
-
-  const hasAccess = profile && !isLoadingAuth ? canAccessPremiumFeatures(profile) : null;
-
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // sm breakpoint
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   // Listen for browser back/forward navigation
   useEffect(() => {
@@ -66,19 +41,15 @@ export function GridView() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [setEventId]);
 
+  // Cache key based on range and symbols (per PRD section 8.1)
   const cacheKey = `cache:grid:${gridState.range}:${gridState.symbols.join(",")}`;
 
-  const shouldFetch = hasAccess === true;
-
+  // Fetch data with caching - now using real API
   const {
     data: gridResponse,
     isLoading,
     error,
-  } = useClientCache(
-    cacheKey,
-    shouldFetch ? () => fetchGridData(gridState.range, gridState.symbols) : () => Promise.resolve(null),
-    { ttl: shouldFetch ? 5 * 60 * 1000 : 0 }
-  );
+  } = useClientCache(cacheKey, () => fetchGridData(gridState.range, gridState.symbols));
 
   // Extract and filter events
   let events = gridResponse?.events || [];
@@ -139,7 +110,6 @@ export function GridView() {
   return (
     <ErrorBoundary>
       <AppLayout
-        scrollable={isMobile && hasAccess === false}
         header={
           <Header
             showRangeSelector
@@ -177,15 +147,9 @@ export function GridView() {
             </div>
           )}
 
-          <div className="relative min-h-0 flex-1">
-            {isLoading || hasAccess === null ? (
+          <div className="min-h-0 flex-1">
+            {isLoading ? (
               <GridSkeleton />
-            ) : !hasAccess ? (
-              isMobile ? (
-                <MobileAccessBlock />
-              ) : (
-                <BlurredDemoGrid range={gridState.range} />
-              )
             ) : events.length > 0 ? (
               <VirtualizedGrid
                 events={events}
@@ -206,8 +170,8 @@ export function GridView() {
           </div>
         </div>
 
-        {/* Summary Sidebar/Drawer - only if has access */}
-        {hasAccess && <SummaryView eventId={gridState.eventId || null} onClose={handleCloseSummary} />}
+        {/* Summary Sidebar/Drawer */}
+        <SummaryView eventId={gridState.eventId || null} onClose={handleCloseSummary} />
       </AppLayout>
     </ErrorBoundary>
   );
