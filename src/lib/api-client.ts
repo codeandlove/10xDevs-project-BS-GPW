@@ -1,3 +1,5 @@
+import { clearAllCache } from "@/lib/cache-utils";
+
 /**
  * API Client
  * Centralized fetch wrapper with error handling and retry logic
@@ -88,11 +90,8 @@ async function fetchWithRetry(url: string, options: FetchOptions = {}): Promise<
 
         // Handle 401 Unauthorized - clear cache and redirect to login
         if (response.status === 401) {
-          // Dynamic import to avoid circular dependency
-          import("@/hooks/useClientCache").then(({ clearGridCache }) => {
-            clearGridCache();
-            window.location.href = "/auth/login";
-          });
+          clearAllCache();
+          window.location.href = "/auth/login";
         }
 
         throw apiError;
