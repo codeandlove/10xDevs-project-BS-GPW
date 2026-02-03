@@ -33,6 +33,7 @@ Realizuj maksymalnie 3 kroki z Fazy 2 planu implementacyjnego (sekcja "6.2. Faza
 WAZNE: Nie implementuj wszystkiego na raz. Pracuj iteracyjnie, krok po kroku, zbierajac feedback po kazdej iteracji 3 krokow.
 
 Po zakonczeniu kazdej iteracji czekaj na moje potwierdzenie przed kontynuacja. To pozwala na:
+
 - Wczesne wykrycie problemow i nieporozumien
 - Dostosowanie implementacji do ewolwujacych wymagan
 - Kontrole jakosci kodu na biezaco
@@ -284,6 +285,7 @@ Implementacja feature zakonczona i gotowa do code review.
 DODATKOWE WSKAZOWKI DLA KAZDEJ FAZY:
 
 FAZA: CORE FUNCTIONALITY
+
 - Zacznij od najprostszych komponentow (bottom-up approach)
 - Lub zacznij od user-facing components i mockuj dependencies (top-down approach)
 - Wybierz podejscie zgodne z planem
@@ -292,6 +294,7 @@ FAZA: CORE FUNCTIONALITY
 - Dodawaj proper JSDoc comments do publicznych APIs
 
 FAZA: TYPY I INTERFEJSY
+
 - Tworz typy blisko miejsca uzycia, chyba ze sa reused
 - Uzywaj type guards dla runtime validation
 - Unikaj type assertions (as) - preferuj type guards
@@ -299,6 +302,7 @@ FAZA: TYPY I INTERFEJSY
 - Uzywaj utility types (Pick, Omit, Partial, etc.)
 
 FAZA: INTEGRACJE
+
 - Zawsze dodawaj error handling
 - Uzywaj try-catch dla async operations
 - Implementuj retry logic dla network requests
@@ -307,6 +311,7 @@ FAZA: INTEGRACJE
 - Testuj error scenarios
 
 FAZA: STYLIZACJA
+
 - Uzywaj Tailwind utilities zgodnie z copilot-instructions.md
 - Testuj responsive design na mobile/tablet/desktop
 - Implementuj dark mode jesli aplikacja wspiera
@@ -315,6 +320,7 @@ FAZA: STYLIZACJA
 - Testuj accessibility z keyboard navigation
 
 FAZA: TESTY
+
 - Unit tests: testuj logic w izolacji, mockuj dependencies
 - Integration tests: testuj interactions miedzy modulami
 - E2E tests: testuj user journeys w real browser
@@ -337,9 +343,10 @@ ANTI-PATTERNS DO UNIKANIA:
 9. NIE zapomnij o accessibility - implementuj od poczatku
 10. NIE skipuj code review checklist - sprawdz przed finalem
 
-PAMIETAJ: 
+PAMIETAJ:
 
 Nie implementuj wszystkiego na raz. Pracuj krok po kroku w iteracjach 3x3. To pozwala na:
+
 - Kontrole jakosci na kazdym etapie
 - Wczesne wykrycie problemow i nieporozumien
 - Łatwiejsze debugowanie (mniejsze changesets)

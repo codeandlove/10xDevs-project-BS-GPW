@@ -6,6 +6,7 @@
 
 import { useRef, useCallback, memo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { TrendingUp } from "lucide-react";
 import type { GPWSymbol } from "@/types/nocodb.types";
 
 interface TickerListProps {
@@ -54,6 +55,16 @@ const TickerRow = memo(({ symbol, isSelected, onToggle }: TickerRowProps) => {
         </div>
         <span className="truncate text-xs text-muted-foreground">{symbol.name}</span>
       </div>
+      {symbol.eventCount !== undefined && (
+        <div className="ml-2 flex items-center gap-1">
+          {symbol.eventCount > 0 && <TrendingUp className="h-3 w-3 text-primary" />}
+          <span
+            className={`text-xs ${symbol.eventCount > 0 ? "font-semibold text-foreground" : "text-muted-foreground"}`}
+          >
+            ({symbol.eventCount})
+          </span>
+        </div>
+      )}
     </label>
   );
 });

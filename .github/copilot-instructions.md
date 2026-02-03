@@ -1,25 +1,30 @@
 # Copilot Instructions for this repository
 
 ## File creation policy
+
 - Markdown files (.md) may be created ONLY when:
-    - the prompt explicitly requests a Markdown file
-    - AND specifies filename and location
+  - the prompt explicitly requests a Markdown file
+  - AND specifies filename and location
 - Creating documentation, summaries, plans, or reports without explicit instruction is forbidden.
 
 ## Default behavior
+
 - Focus on modifying existing files or returning code snippets.
 - Prefer explaining changes inline instead of generating documentation.
 - If a task implies documentation but does not explicitly request it, ask for confirmation.
 
 ## Output discipline
+
 - Never generate multiple alternative files unless explicitly requested.
 - Never create agent summaries or task recaps.
 - Never create “plan.md”, “summary.md”, “notes.md”, or similar files by default.
 
 ## Terminal usage
+
 - Terminal usage is prohibited unless the prompt explicitly authorizes it.
 
 ## Tone
+
 - Neutral, technical, skeptical.
 - No motivational language.
 

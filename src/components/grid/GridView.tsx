@@ -207,6 +207,7 @@ export function GridView() {
                   selected={gridState.symbols}
                   onChange={setSymbols}
                   recentSymbols={recentSymbols}
+                  range={gridState.range}
                 />
                 <EventTypeFilter selected={(gridState.eventTypes || []) as EventType[]} onChange={setEventTypes} />
                 <SortOptions

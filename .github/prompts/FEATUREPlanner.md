@@ -10,7 +10,7 @@ Jestes doswiadczonym architektem oprogramowania i product ownerem, ktorego zadan
 - Kryteria akceptacji
 - Mockupy/wireframes (jesli dostepne)
 - Dodatkowe wymagania
-</feature_description>
+  </feature_description>
 
 <tech_stack_reference>
 @tech-stack.md <- stack technologiczny projektu (jesli dostepny)
@@ -43,6 +43,7 @@ Proces planowania jest ITERACYJNY i wymaga Twojego feedbacku. W momentach niepew
 5. Zaktualizuj plan o uzyskana wiedze i kontynuuj
 
 NIE ZGADUJ i NIE ZAKLADAJ - zawsze pytaj gdy:
+
 - Nie jest jasny zakres funkcjonalnosci lub wymagania biznesowe
 - Istnieje kilka rownoważnych podejsc architektonicznych
 - Brakuje informacji o integracjach z istniejacymi modulami
@@ -57,7 +58,7 @@ Wykonaj nastepujace kroki, aby przeprowadzic kompleksowa analize i zaplanowac im
    c. Zidentyfikuj dotkniety obszar aplikacji (komponenty, endpointy, serwisy, baza danych)
    d. Okresl priorytety: MVP (must-have) vs nice-to-have features
    e. Zidentyfikuj zaleznosci od istniejacych funkcjonalnosci
-   
+
    CHECKPOINT 1: Jesli brakuje kluczowych informacji o wymaganiach - ZATRZYMAJ i zapytaj uzytkownika.
 
 2. ANALIZA KONTEKSTU BIZNESOWEGO I TECHNICZNEGO:
@@ -66,7 +67,7 @@ Wykonaj nastepujace kroki, aby przeprowadzic kompleksowa analize i zaplanowac im
    c. Sprawdz istniejace integracje, API, struktury danych
    d. Przeanalizuj architekture systemu i jej wpływ na nowa funkcjonalnosc
    e. Zidentyfikuj potencjalne konflikty lub incompatibilities z obecnym systemem
-   
+
    CHECKPOINT 2: Jesli znaleziono konflikty lub multiple architecture approaches - ZATRZYMAJ i zapytaj uzytkownika o preferencje.
 
 3. SKANOWANIE ZASIEGU - Okresl zakres nowych i modyfikowanych plikow/modulow:
@@ -77,7 +78,7 @@ Wykonaj nastepujace kroki, aby przeprowadzic kompleksowa analize i zaplanowac im
    e. Okresl czy wymagane sa zmiany w bazie danych (migracje, nowe tabele)
    f. Zidentyfikuj scope testow (unit, integration, E2E)
    g. Sprawdz zależnosci miedzy modulami - jak nowa funkcjonalnosc wpłynie na system
-   
+
    CHECKPOINT 3: Jesli scope jest bardzo duzy (XL) - ZATRZYMAJ i zapytaj czy podzielic na mniejsze iteracje/fazy.
 
 4. ANALIZA ZGODNOSCI - Sprawdz zgodnosc z standardami i best practices:
@@ -87,7 +88,7 @@ Wykonaj nastepujace kroki, aby przeprowadzic kompleksowa analize i zaplanowac im
    d. Sprawdz wymagania dostepnosci (WCAG, ARIA, keyboard navigation)
    e. Oceń wpływ na performance (rendering, bundle size, loading, caching)
    f. Sprawdz wymagania SEO (jesli dotyczy)
-   
+
    CHECKPOINT 4: Jesli nowa funkcjonalnosc wymaga zewnetrznych bibliotek/dependencies - ZATRZYMAJ i zapytaj o akceptacje.
 
 5. PROPOZYCJE PODEJSC ARCHITEKTONICZNYCH - Zaproponuj 2-3 alternatywne podejscia (jesli funkcjonalnosc jest zlożona):
@@ -117,7 +118,7 @@ Wykonaj nastepujace kroki, aby przeprowadzic kompleksowa analize i zaplanowac im
    - Szacowany effort (XS | S | M | L | XL)
    - Poziom zlożonosci (LOW | MEDIUM | HIGH)
    - Impact na istniejacy system (LOW | MEDIUM | HIGH)
-   
+
    CHECKPOINT 5: Przedstaw podejscia uzytkownikowi - ZATRZYMAJ i czekaj na wybor preferowanego.
 
 6. REKOMENDACJA - Zaproponuj najlepsze podejscie z uzasadnieniem (lub czekaj na wybor uzytkownika):
@@ -159,10 +160,12 @@ Priorytet: {{HIGH | MEDIUM | LOW}}
 [HIGH | MEDIUM | LOW] - uzasadnienie priorytetu
 
 MVP (must-have):
+
 - [Feature 1 wymagany w pierwszej wersji]
 - [Feature 2 wymagany w pierwszej wersji]
 
 Nice-to-have (moze byc dodane pozniej):
+
 - [Feature A - enhancement]
 - [Feature B - enhancement]
 
@@ -197,6 +200,7 @@ Chce [akcja]
 Aby [cel/korzysc]
 
 Acceptance Criteria:
+
 - [ ] [Kryterium 1]
 - [ ] [Kryterium 2]
 - [ ] [Kryterium N]
@@ -271,7 +275,7 @@ interface NewFeature {
   // ...properties
 }
 
-type FeatureStatus = 'active' | 'inactive' | 'pending';
+type FeatureStatus = "active" | "inactive" | "pending";
 ```
 
 #### Nowe tabele w bazie danych (jesli wymagane):
@@ -419,9 +423,11 @@ ADD COLUMN new_feature_id UUID REFERENCES new_feature_table(id);
 Cel: [Co ten krok osiaga]
 
 Pliki do stworzenia:
+
 - `{{sciezka/do/nowego-pliku.ts}}`
 
 Lub pliki do modyfikacji:
+
 - `{{sciezka/do/istniejacego-pliku.ts}}`
 
 Opis implementacji:
@@ -437,6 +443,7 @@ Uzasadnienie:
 [Dlaczego ten krok jest konieczny]
 
 Acceptance criteria dla tego kroku:
+
 - [ ] [Kryterium 1]
 - [ ] [Kryterium 2]
 
@@ -512,6 +519,7 @@ Opis:
 - [ ] Icons i assets
 
 Pliki stylow:
+
 - `{{sciezka/do/styles.css}}` lub Tailwind classes
 
 ### 6.7. Faza 7: Testy
@@ -533,6 +541,7 @@ describe("NewFeature", () => {
 ```
 
 Scope testow jednostkowych:
+
 - [ ] [Test case 1: opis]
 - [ ] [Test case 2: opis]
 - [ ] [Test case N: opis]
@@ -550,6 +559,7 @@ describe("NewFeature Integration", () => {
 ```
 
 Scope testow integracyjnych:
+
 - [ ] [Integration scenario 1]
 - [ ] [Integration scenario 2]
 
@@ -564,6 +574,7 @@ test("user can use new feature", async ({ page }) => {
 ```
 
 Scope testow E2E:
+
 - [ ] [User journey 1: opis]
 - [ ] [User journey 2: opis]
 
@@ -848,6 +859,7 @@ src/layouts/Layout.astro
 #### POST /api/feature
 
 Request:
+
 ```json
 {
   "field": "value"
@@ -855,6 +867,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "id": "uuid",
@@ -863,10 +876,10 @@ Response:
 ```
 
 Error responses:
+
 - 400: Bad Request - [opis]
 - 401: Unauthorized - [opis]
 - 500: Server Error - [opis]
-
 ````
 
 KLUCZOWE ZASADY PLANOWANIA NOWEJ FUNKCJONALNOSCI:
@@ -924,6 +937,7 @@ Ostateczny wynik powinien skladac sie wylacznie z planu implementacji nowej funk
 INTERAKTYWNA NATURA PROMPTU:
 
 To nie jest jednokierunkowy prompt. Oczekuj odpowiedzi od uzytkownika w kluczowych momentach. Kazdy checkpoint to miejsce na:
+
 - Zadanie precyzyjnego pytania
 - Zaproponowanie 2-3 opcji z pros/cons
 - Przedstawienie rekomendacji

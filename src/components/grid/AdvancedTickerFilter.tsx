@@ -22,20 +22,22 @@ import { useSymbols, searchSymbols } from "@/hooks/useSymbols";
 import { TickerSearchInput } from "./TickerSearchInput";
 import { TickerList } from "./TickerList";
 import { GPW_INDICES, getIndexById } from "@/config/gpw-indices";
+import type { DateRange } from "@/types/nocodb.types";
 
 interface AdvancedTickerFilterProps {
   selected: string[];
   onChange: (selected: string[]) => void;
   recentSymbols?: string[]; // "Ostatnie" symbols from smart initialization
+  range?: DateRange; // Current date range to show event counts
 }
 
-export function AdvancedTickerFilter({ selected, onChange, recentSymbols }: AdvancedTickerFilterProps) {
+export function AdvancedTickerFilter({ selected, onChange, recentSymbols, range }: AdvancedTickerFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [localSelected, setLocalSelected] = useState<Set<string>>(new Set(selected));
 
-  // Fetch symbols with caching
-  const { symbols, isLoading, error } = useSymbols();
+  // Fetch symbols with caching (with event counts if range provided)
+  const { symbols, isLoading, error } = useSymbols(range);
 
   // Filter symbols based on search query
   const filteredSymbols = useMemo(() => {

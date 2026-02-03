@@ -44,9 +44,10 @@ export async function fetchSummaries(
 
 /**
  * Fetch GPW symbols
+ * @param range - Optional date range to include event counts per symbol
  */
-export async function fetchSymbols(): Promise<SymbolsResponse> {
-  const url = API_ENDPOINTS.symbols();
+export async function fetchSymbols(range?: DateRange): Promise<SymbolsResponse> {
+  const url = range ? `${API_ENDPOINTS.symbols()}?range=${range}` : API_ENDPOINTS.symbols();
   return apiClient.get<SymbolsResponse>(url);
 }
 

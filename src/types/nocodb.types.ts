@@ -246,6 +246,7 @@ export interface GPWSymbol {
   label: string; // "11BIT"
   name: string; // "11 Bit Studios SA"
   active: boolean; // true
+  eventCount?: number; // Number of events for this symbol (optional, only when range param provided)
 }
 
 /**

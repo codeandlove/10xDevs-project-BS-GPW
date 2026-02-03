@@ -5,6 +5,9 @@
  * Authorization handled by middleware (src/middleware/index.ts)
  * Rate limited: 60 requests per minute
  * Response cached for 24h (client-side)
+ *
+ * Query parameters:
+ * - range (optional): week|month|3months|6months - if provided, includes eventCount for each symbol
  */
 
 import type { APIRoute } from "astro";
@@ -12,12 +15,14 @@ import { NocoDBClient } from "@/lib/nocodb-client";
 import { NocoDBService } from "@/services/nocodb.service";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limiter";
 import { getAuthUid } from "@/lib/auth";
+import type { DateRange } from "@/types/nocodb.types";
 
 export const prerender = false;
 
 /**
- * GET /api/nocodb/symbols
- * No query parameters required
+ * GET /api/nocodb/symbols?range=week
+ * Query params:
+ * - range (optional): DateRange - if provided, aggregates event counts per symbol
  * Returns: { symbols: GPWSymbol[], total_count: number, cached_at: string }
  */
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -54,19 +59,23 @@ export const GET: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // [3] Fetch symbols from NocoDB
+    // [3] Parse query parameters
+    const url = new URL(request.url);
+    const range = url.searchParams.get("range") as DateRange | null;
+
+    // [4] Fetch symbols from NocoDB (with optional event counts)
     const client = new NocoDBClient();
     const service = new NocoDBService(client);
 
-    const symbolsResponse = await service.getActiveSymbols();
+    const symbolsResponse = await service.getActiveSymbols(range);
 
-    // [4] Return response with cache headers
+    // [5] Return response with cache headers
     return new Response(JSON.stringify(symbolsResponse), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        // Cache for 24h on client (symbols change rarely)
-        "Cache-Control": "private, max-age=86400",
+        // Cache for 24h if no range (static symbols), 5min if range (dynamic event counts)
+        "Cache-Control": range ? "private, max-age=300" : "private, max-age=86400",
         ...getRateLimitHeaders(rateLimitResult),
       },
     });

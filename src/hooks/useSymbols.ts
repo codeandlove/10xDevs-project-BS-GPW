@@ -6,22 +6,30 @@
 import { useMemo } from "react";
 import { useClientCache } from "./useClientCache";
 import { fetchSymbols } from "@/lib/api-service";
-import type { GPWSymbol, SymbolsResponse } from "@/types/nocodb.types";
+import type { GPWSymbol, SymbolsResponse, DateRange } from "@/types/nocodb.types";
 
 /**
  * Cache configuration for symbols
  * Symbols change rarely, so we cache for 24h
+ * When range provided, cache for 5min (event counts are dynamic)
  */
-const SYMBOLS_CACHE_KEY = "gpw:cache:v1:symbols";
+const SYMBOLS_CACHE_KEY_BASE = "gpw:cache:v1:symbols";
 const SYMBOLS_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const SYMBOLS_WITH_COUNTS_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Custom hook for GPW symbols with caching
  * Returns symbols data, loading state, error, and search function
+ * @param range - Optional date range to include event counts per symbol
  */
-export function useSymbols() {
-  const { data, isLoading, error, isRevalidating } = useClientCache<SymbolsResponse>(SYMBOLS_CACHE_KEY, fetchSymbols, {
-    ttl: SYMBOLS_TTL,
+export function useSymbols(range?: DateRange) {
+  const cacheKey = range ? `${SYMBOLS_CACHE_KEY_BASE}:${range}` : SYMBOLS_CACHE_KEY_BASE;
+  const ttl = range ? SYMBOLS_WITH_COUNTS_TTL : SYMBOLS_TTL;
+
+  const fetcher = useMemo(() => () => fetchSymbols(range), [range]);
+
+  const { data, isLoading, error, isRevalidating } = useClientCache<SymbolsResponse>(cacheKey, fetcher, {
+    ttl,
     staleWhileRevalidate: true,
     retry: 3,
   });
