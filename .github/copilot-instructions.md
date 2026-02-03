@@ -1,14 +1,27 @@
-# AI Rules
+# Copilot Instructions for this repository
 
-## WORKAROUND FOR COPILOT COMMAND Run_in_terminal OUTPUT BUG
+## File creation policy
+- Markdown files (.md) may be created ONLY when:
+    - the prompt explicitly requests a Markdown file
+    - AND specifies filename and location
+- Creating documentation, summaries, plans, or reports without explicit instruction is forbidden.
 
-1. Whenever you want to run a command in the terminal, don't!.
-2. don't use terminal at all.
+## Default behavior
+- Focus on modifying existing files or returning code snippets.
+- Prefer explaining changes inline instead of generating documentation.
+- If a task implies documentation but does not explicitly request it, ask for confirmation.
 
-## TASK DOCUMENTATION SUMMARY
+## Output discipline
+- Never generate multiple alternative files unless explicitly requested.
+- Never create agent summaries or task recaps.
+- Never create “plan.md”, “summary.md”, “notes.md”, or similar files by default.
 
-1. For the task summary at the end of task job, do not create new `*.md` files as documentation, unless the task explicitly requires it.
-2. No more any new MD files in docs after any job run finished.
+## Terminal usage
+- Terminal usage is prohibited unless the prompt explicitly authorizes it.
+
+## Tone
+- Neutral, technical, skeptical.
+- No motivational language.
 
 ## FRONTEND
 

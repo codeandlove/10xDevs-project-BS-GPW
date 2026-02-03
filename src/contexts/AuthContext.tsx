@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(data.user || null);
     } catch {
       // Silent fail - profile will remain null
+      setProfile(null);
     }
   };
 
@@ -83,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
       }
+      setIsLoading(false); // Mark loading complete after auth state change
     });
 
     return () => subscription.unsubscribe();

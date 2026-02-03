@@ -8,6 +8,7 @@ import type {
   NocoDBEventRecord,
   NocoDBSummaryRecord,
   NocoDBHistoricRecord,
+  NocoDBSymbolRecord,
 } from "../types/nocodb.types";
 
 /**
@@ -32,6 +33,7 @@ export const NOCODB_TABLES = {
   BLACK_SWANS: import.meta.env.NOCODB_TABLE_BLACK_SWANS,
   AI_SUMMARY: import.meta.env.NOCODB_TABLE_AI_SUMMARY,
   HISTORIC_DATA: import.meta.env.NOCODB_TABLE_HISTORIC_DATA,
+  GPW_SYMBOLS: import.meta.env.NOCODB_TABLE_GPW_SYMBOLS,
 } as const;
 
 /**
@@ -244,6 +246,13 @@ export class NocoDBClient {
    */
   async queryHistoricData(queryBuilder: NocoDBQueryBuilder): Promise<NocoDBResponse<NocoDBHistoricRecord>> {
     return this.queryRecords<NocoDBHistoricRecord>(NOCODB_TABLES.HISTORIC_DATA, queryBuilder);
+  }
+
+  /**
+   * Query GPW Symbols (tickers)
+   */
+  async querySymbols(queryBuilder: NocoDBQueryBuilder): Promise<NocoDBResponse<NocoDBSymbolRecord>> {
+    return this.queryRecords<NocoDBSymbolRecord>(NOCODB_TABLES.GPW_SYMBOLS, queryBuilder);
   }
 }
 

@@ -17,6 +17,9 @@ import type {
   NocoDBEventRecord,
   NocoDBSummaryRecord,
   NocoDBHistoricRecord,
+  SymbolsResponse,
+  GPWSymbol,
+  NocoDBSymbolRecord,
 } from "../types/nocodb.types";
 
 /**
@@ -149,6 +152,18 @@ function transformHistoricData(record: NocoDBHistoricRecord): HistoricDataPoint 
     low: record.low,
     close: record.close,
     volume: record.volume,
+  };
+}
+
+/**
+ * Transform NocoDB symbol record to DTO
+ */
+function transformSymbol(record: NocoDBSymbolRecord): GPWSymbol {
+  return {
+    symbol: record.symbol,
+    label: record.label,
+    name: record.name,
+    active: record.active,
   };
 }
 
@@ -358,6 +373,28 @@ export class NocoDBService {
       event_type: eventType,
       summaries,
       total_count: summaries.length,
+      cached_at: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Get all active GPW symbols (tickers)
+   */
+  async getActiveSymbols(): Promise<SymbolsResponse> {
+    // Build query: where active=true, sort by symbol, limit 1000
+    const queryBuilder = new NocoDBQueryBuilder()
+      .where("active", "eq", "true") // Boolean as string for NocoDB API
+      .sort("symbol", false) // ASC
+      .limit(1000);
+
+    const symbolsResponse = await this.client.querySymbols(queryBuilder);
+
+    // Transform to DTOs
+    const symbols: GPWSymbol[] = symbolsResponse.list.map((record) => transformSymbol(record));
+
+    return {
+      symbols,
+      total_count: symbols.length,
       cached_at: new Date().toISOString(),
     };
   }

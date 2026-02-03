@@ -3,8 +3,6 @@
  * Centralized fetch wrapper with error handling and retry logic
  */
 
-import { supabaseClient } from "@/db/supabase.client";
-
 interface FetchOptions extends RequestInit {
   retry?: number;
   retryDelay?: number;
@@ -49,16 +47,28 @@ async function fetchWithRetry(url: string, options: FetchOptions = {}): Promise<
   // Normalize URL for test environment
   const normalizedUrl = normalizeUrl(url);
 
-  // Automatically add Authorization header if not skipped
-  if (!skipAuth) {
-    const {
-      data: { session },
-    } = await supabaseClient.auth.getSession();
+  // Get auth token from localStorage to avoid getSession() deadlock
+  // Supabase stores session in localStorage with key pattern: sb-{project-ref}-auth-token
+  if (!skipAuth && typeof window !== "undefined" && typeof localStorage !== "undefined") {
+    try {
+      const keys = Object.keys(localStorage);
+      const authKey = keys.find((key) => key.includes("sb-") && key.includes("-auth-token"));
 
-    if (session?.access_token) {
-      const headers = new Headers(fetchOptions.headers || {});
-      headers.set("Authorization", `Bearer ${session.access_token}`);
-      fetchOptions.headers = headers;
+      if (authKey) {
+        const sessionData = localStorage.getItem(authKey);
+        if (sessionData) {
+          const session = JSON.parse(sessionData);
+          const accessToken = session.access_token || session.accessToken;
+
+          if (accessToken) {
+            const headers = new Headers(fetchOptions.headers || {});
+            headers.set("Authorization", `Bearer ${accessToken}`);
+            fetchOptions.headers = headers;
+          }
+        }
+      }
+    } catch {
+      // Silent fail - continue without auth header
     }
   }
 
@@ -202,6 +212,7 @@ export const API_ENDPOINTS = {
     if (eventType) params.append("event_type", eventType);
     return `/api/nocodb/summaries?${params.toString()}`;
   },
+  symbols: () => "/api/nocodb/symbols",
 
   // Users
   userProfile: () => "/api/users/me",

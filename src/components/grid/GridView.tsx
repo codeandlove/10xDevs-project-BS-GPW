@@ -13,7 +13,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Header } from "@/components/layout/Header";
 import { AvatarMenu } from "@/components/layout/AvatarMenu";
 import { RangeSelector } from "./RangeSelector";
-import { TickerFilter } from "./TickerFilter";
+import { AdvancedTickerFilter } from "./AdvancedTickerFilter";
 import { EventTypeFilter } from "./EventTypeFilter";
 import { SortOptions } from "./SortOptions";
 import { ClearFiltersButton } from "./ClearFiltersButton";
@@ -23,23 +23,78 @@ import { MobileAccessBlock } from "./MobileAccessBlock";
 import { GridSkeleton } from "@/components/ui/skeleton";
 import { SummaryView } from "@/components/summary/SummaryView";
 import { fetchGridData } from "@/lib/api-service";
+import { hashSymbols } from "@/lib/cache";
+import { WIG20_SYMBOLS } from "@/config/gpw-indices";
 import type { EventType } from "@/types/nocodb.types";
 
-// Available symbols for filter
-const AVAILABLE_SYMBOLS = ["CPD", "PKN", "PKO", "PZU", "KGH", "JSW", "LPP", "ALE"];
-
 export function GridView() {
-  const { gridState, setRange, setSymbols, setEventTypes, setSort, setEventId, clearFilters } = useGrid();
-  const { profile, isLoading: isLoadingAuth } = useAuth();
+  const {
+    gridState,
+    setRange,
+    setSymbols,
+    setEventTypes,
+    setSort,
+    setEventId,
+    clearFilters,
+    recentSymbols,
+    setRecentSymbols,
+    isInitialized,
+    setIsInitialized,
+  } = useGrid();
+  const { profile, isLoading: isLoadingAuth, session } = useAuth();
 
+  // Redirect unauthenticated users - but only if loading complete AND no session exists
+  // If session exists but profile is null, it means profile is still loading - don't redirect
   useEffect(() => {
-    if (!isLoadingAuth && !profile) {
+    if (!isLoadingAuth && !session) {
       const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
       window.location.href = `/auth/login?returnUrl=${returnUrl}`;
     }
-  }, [profile, isLoadingAuth]);
+  }, [session, isLoadingAuth]);
 
-  const hasAccess = profile && !isLoadingAuth ? canAccessPremiumFeatures(profile) : null;
+  const hasAccess = useMemo(
+    () => (profile && !isLoadingAuth ? canAccessPremiumFeatures(profile) : null),
+    [profile, isLoadingAuth]
+  );
+
+  // Smart initialization: show tickers with events from last 7 days or WIG20 fallback
+  // Only runs once on first load
+  useEffect(() => {
+    async function smartInitialization() {
+      // Skip if already initialized or no access
+      if (isInitialized || !hasAccess) {
+        return;
+      }
+
+      try {
+        // Fetch events from last 7 days without symbol filter
+        const recentEvents = await fetchGridData("week", []);
+
+        // Extract unique symbols from events
+        const uniqueSymbols = [...new Set(recentEvents.events.map((e) => e.symbol))];
+
+        // If >= 2 events, use those symbols; otherwise fallback to WIG20
+        if (recentEvents.events.length >= 2) {
+          setSymbols(uniqueSymbols);
+          setRecentSymbols(uniqueSymbols); // Cache "ostatnie" for "Zaznacz ostatnie" button
+        } else {
+          setSymbols([...WIG20_SYMBOLS]);
+          setRecentSymbols([...WIG20_SYMBOLS]); // Cache WIG20 as fallback
+        }
+
+        setIsInitialized(true); // Mark as initialized - won't run again
+      } catch {
+        // Fallback to WIG20 on error
+        setSymbols([...WIG20_SYMBOLS]);
+        setRecentSymbols([...WIG20_SYMBOLS]);
+        setIsInitialized(true);
+      }
+    }
+
+    if (hasAccess === true) {
+      smartInitialization();
+    }
+  }, [hasAccess, isInitialized, setIsInitialized, setRecentSymbols, setSymbols]);
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -66,19 +121,20 @@ export function GridView() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [setEventId]);
 
-  const cacheKey = `cache:grid:${gridState.range}:${gridState.symbols.join(",")}`;
+  const cacheKey = `cache:grid:${gridState.range}:${hashSymbols(gridState.symbols)}`;
 
   const shouldFetch = hasAccess === true;
+
+  // Memoize fetcher to ensure useClientCache properly detects key changes
+  const fetcher = useCallback(() => {
+    return shouldFetch ? fetchGridData(gridState.range, gridState.symbols) : Promise.resolve(null);
+  }, [shouldFetch, gridState.range, gridState.symbols]);
 
   const {
     data: gridResponse,
     isLoading,
     error,
-  } = useClientCache(
-    cacheKey,
-    shouldFetch ? () => fetchGridData(gridState.range, gridState.symbols) : () => Promise.resolve(null),
-    { ttl: shouldFetch ? 5 * 60 * 1000 : 0 }
-  );
+  } = useClientCache(cacheKey, fetcher, { ttl: shouldFetch ? 5 * 60 * 1000 : 0 });
 
   // Extract and filter events
   let events = gridResponse?.events || [];
@@ -147,7 +203,11 @@ export function GridView() {
             rangeSelector={<RangeSelector value={gridState.range} onChange={setRange} />}
             filters={
               <div className="flex flex-wrap items-center gap-2">
-                <TickerFilter symbols={AVAILABLE_SYMBOLS} selected={gridState.symbols} onChange={setSymbols} />
+                <AdvancedTickerFilter
+                  selected={gridState.symbols}
+                  onChange={setSymbols}
+                  recentSymbols={recentSymbols}
+                />
                 <EventTypeFilter selected={(gridState.eventTypes || []) as EventType[]} onChange={setEventTypes} />
                 <SortOptions
                   value={{
@@ -178,7 +238,7 @@ export function GridView() {
           )}
 
           <div className="relative min-h-0 flex-1">
-            {isLoading || hasAccess === null ? (
+            {isLoading || hasAccess === null || (!isInitialized && hasAccess) ? (
               <GridSkeleton />
             ) : !hasAccess ? (
               isMobile ? (
@@ -192,6 +252,7 @@ export function GridView() {
                 range={gridState.range}
                 onCellClick={handleCellClick}
                 selectedEventId={gridState.eventId}
+                selectedSymbols={gridState.symbols}
               />
             ) : (
               <div className="flex h-full items-center justify-center">
