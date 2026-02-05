@@ -17,6 +17,9 @@ import type {
   NocoDBEventRecord,
   NocoDBSummaryRecord,
   NocoDBHistoricRecord,
+  SymbolsResponse,
+  GPWSymbol,
+  NocoDBSymbolRecord,
 } from "../types/nocodb.types";
 
 /**
@@ -149,6 +152,18 @@ function transformHistoricData(record: NocoDBHistoricRecord): HistoricDataPoint 
     low: record.low,
     close: record.close,
     volume: record.volume,
+  };
+}
+
+/**
+ * Transform NocoDB symbol record to DTO
+ */
+function transformSymbol(record: NocoDBSymbolRecord): GPWSymbol {
+  return {
+    symbol: record.symbol,
+    label: record.label,
+    name: record.name,
+    active: record.active,
   };
 }
 
@@ -360,5 +375,57 @@ export class NocoDBService {
       total_count: summaries.length,
       cached_at: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Get all active GPW symbols (tickers)
+   * @param range - Optional date range to aggregate event counts per symbol
+   */
+  async getActiveSymbols(range?: DateRange | null): Promise<SymbolsResponse> {
+    // Build query: where active=true, sort by symbol, limit 1000
+    const queryBuilder = new NocoDBQueryBuilder()
+      .where("active", "eq", "true") // Boolean as string for NocoDB API
+      .sort("symbol", false) // ASC
+      .limit(1000);
+
+    const symbolsResponse = await this.client.querySymbols(queryBuilder);
+
+    // Transform to DTOs
+    let symbols: GPWSymbol[] = symbolsResponse.list.map((record) => transformSymbol(record));
+
+    // If range provided, aggregate event counts per symbol
+    if (range) {
+      const eventCounts = await this.getEventCountsBySymbol(range);
+
+      // Add eventCount to each symbol
+      symbols = symbols.map((symbol) => ({
+        ...symbol,
+        eventCount: eventCounts.get(symbol.symbol) || 0,
+      }));
+    }
+
+    return {
+      symbols,
+      total_count: symbols.length,
+      cached_at: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Get event counts per symbol for given date range
+   * @param range - Date range to query
+   * @returns Map of symbol -> event count
+   */
+  private async getEventCountsBySymbol(range: DateRange): Promise<Map<string, number>> {
+    // Fetch all events for the range (without symbol filter)
+    const eventsResponse = await this.getGridEvents(range);
+
+    // Count events per symbol
+    const counts = new Map<string, number>();
+    eventsResponse.events.forEach((event) => {
+      counts.set(event.symbol, (counts.get(event.symbol) || 0) + 1);
+    });
+
+    return counts;
   }
 }

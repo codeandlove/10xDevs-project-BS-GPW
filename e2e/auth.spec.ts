@@ -5,7 +5,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { loginViaAPI } from "./helpers/auth.helper";
+import { loginViaUI } from "./helpers/auth.helper";
 import { setupNocoDBMocks } from "./helpers/mock-nocodb.helper";
 
 // Tests without login - can run in parallel
@@ -68,30 +68,24 @@ test.describe("Auth Tests - Active User (test@example.com)", () => {
 
   test.describe("Middleware Guard - After Login Redirect", () => {
     test("TC-AUTH-001: Redirect to returnUrl after successful login", async ({ page }) => {
-      // Login via API
-      await loginViaAPI(page, {
-        email: "test@example.com",
-        password: "Test123!@#",
-      });
+      // Login via UI
+      await loginViaUI(page);
 
       // Navigate to /grid
       await page.goto("/grid");
 
-      // Should stay on /grid
-      await expect(page).toHaveURL("/grid");
+      // Should stay on /grid (may have query params)
+      await expect(page).toHaveURL(/\/grid/);
     });
 
     test("TC-AUTH-001: Redirect to /grid by default if no returnUrl", async ({ page }) => {
-      // Login via API
-      await loginViaAPI(page, {
-        email: "test@example.com",
-        password: "Test123!@#",
-      });
+      // Login via UI
+      await loginViaUI(page);
 
       await page.goto("/grid");
 
-      // Should redirect to /grid
-      await expect(page).toHaveURL("/grid");
+      // Should redirect to /grid (may have query params)
+      await expect(page).toHaveURL(/\/grid/);
     });
   });
 }); // End of Auth Tests - Active User (test@example.com)
@@ -102,8 +96,8 @@ test.describe("Auth Tests - Expired User (expired@example.com)", () => {
 
   test.describe("Middleware Guard - Expired Subscription", () => {
     test.beforeEach(async ({ page }) => {
-      // Login via API with expired user
-      await loginViaAPI(page, {
+      // Login via UI with expired user
+      await loginViaUI(page, {
         email: "expired@example.com",
         password: "Test123!@#",
       });
@@ -357,8 +351,8 @@ test.describe.skip("Middleware Guard - 7-Day Trial", () => {
     // Setup mocks for User B
     await setupNocoDBMocks(page);
 
-    // User B logs in via API
-    await loginViaAPI(page, {
+    // User B logs in via UI
+    await loginViaUI(page, {
       email: "userb@example.com",
       password: "Test123!@#",
     });
@@ -375,14 +369,11 @@ test.describe.skip("Middleware Guard - 7-Day Trial", () => {
 
 test.describe("API 401 Handling - Auto Logout", () => {
   test("TC-AUTH: 401 response clears cache and redirects to login", async ({ page }) => {
-    // Login first via API
-    await loginViaAPI(page, {
-      email: "test@example.com",
-      password: "Test123!@#",
-    });
+    // Login first via UI
+    await loginViaUI(page);
 
     await page.goto("/grid");
-    await expect(page).toHaveURL("/grid");
+    await expect(page).toHaveURL(/\/grid/);
 
     // Mock API to return 401
     await page.route("**/api/nocodb/grid*", (route) => {

@@ -18,6 +18,49 @@ export interface SubscriptionState {
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY;
 
+/**
+ * Login via UI (form submission)
+ * This is the RECOMMENDED approach for E2E tests as it:
+ * - Tests the real user flow
+ * - Works reliably with Supabase session initialization
+ * - Doesn't rely on timing-sensitive localStorage manipulation
+ *
+ * @param page - Playwright page object
+ * @param options - Login credentials (defaults to test@example.com)
+ */
+export async function loginViaUI(
+  page: Page,
+  options: LoginOptions = { email: "test@example.com", password: "Test123!@#" }
+) {
+  // Navigate to login page
+  await page.goto("/auth/login");
+
+  // Wait for form to be ready
+  await page.waitForSelector('input[type="email"]', { state: "visible" });
+  await page.waitForSelector('input[type="password"]', { state: "visible" });
+  await page.waitForSelector('button[type="submit"]', { state: "visible" });
+
+  // Fill and submit login form
+  await page.fill('input[type="email"]', options.email);
+  await page.fill('input[type="password"]', options.password);
+
+  // Click submit button
+  await page.click('button[type="submit"]');
+
+  // Wait for redirect to happen (app has 1s setTimeout before redirect)
+  // Wait up to 5s for URL to change away from /auth/login
+  await page.waitForURL((url) => !url.pathname.includes("/auth/login"), { timeout: 5000 });
+}
+
+/**
+ * Legacy: Login via API call
+ * DEPRECATED: Use loginViaUI() instead
+ *
+ * This approach sets localStorage directly but doesn't work reliably
+ * in production builds due to Supabase client initialization timing.
+ *
+ * @deprecated Use loginViaUI() instead
+ */
 export async function loginViaAPI(page: Page, { email, password }: LoginOptions) {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("Supabase URL or Anon Key is not set in environment variables");

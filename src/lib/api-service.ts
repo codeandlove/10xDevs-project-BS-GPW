@@ -4,7 +4,13 @@
  */
 
 import { apiClient, API_ENDPOINTS } from "./api-client";
-import type { GridResponse, EventDetailsResponse, SummariesResponse, DateRange } from "@/types/nocodb.types";
+import type {
+  GridResponse,
+  EventDetailsResponse,
+  SummariesResponse,
+  SymbolsResponse,
+  DateRange,
+} from "@/types/nocodb.types";
 import type { UserProfileDTO } from "@/types/types";
 
 /**
@@ -34,6 +40,15 @@ export async function fetchSummaries(
 ): Promise<SummariesResponse> {
   const url = API_ENDPOINTS.summaries(symbol, occurrenceDate, eventType);
   return apiClient.get<SummariesResponse>(url);
+}
+
+/**
+ * Fetch GPW symbols
+ * @param range - Optional date range to include event counts per symbol
+ */
+export async function fetchSymbols(range?: DateRange): Promise<SymbolsResponse> {
+  const url = range ? `${API_ENDPOINTS.symbols()}?range=${range}` : API_ENDPOINTS.symbols();
+  return apiClient.get<SymbolsResponse>(url);
 }
 
 /**

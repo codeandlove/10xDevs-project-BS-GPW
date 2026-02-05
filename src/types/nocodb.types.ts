@@ -233,3 +233,50 @@ export interface NocoDBResponse<T> {
     isLastPage: boolean;
   };
 }
+
+// ============================================
+// GPW Symbols Types (Advanced Ticker Selector)
+// ============================================
+
+/**
+ * GPW Symbol (ticker) z tabeli GPW_Symbols
+ */
+export interface GPWSymbol {
+  symbol: string; // "11B"
+  label: string; // "11BIT"
+  name: string; // "11 Bit Studios SA"
+  active: boolean; // true
+  eventCount?: number; // Number of events for this symbol (optional, only when range param provided)
+}
+
+/**
+ * NocoDB raw symbol record
+ */
+export interface NocoDBSymbolRecord {
+  Id: string | number;
+  CreatedAt?: string;
+  UpdatedAt?: string | null;
+  symbol: string;
+  label: string;
+  name: string;
+  active: boolean;
+}
+
+/**
+ * Symbols API response
+ */
+export interface SymbolsResponse {
+  symbols: GPWSymbol[];
+  total_count: number;
+  cached_at: string; // ISO timestamp
+}
+
+/**
+ * GPW Index configuration
+ */
+export interface GPWIndex {
+  id: string;
+  name: string;
+  description: string;
+  symbols: string[];
+}

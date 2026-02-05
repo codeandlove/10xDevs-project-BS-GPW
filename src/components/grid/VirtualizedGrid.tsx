@@ -15,6 +15,7 @@ interface VirtualizedGridProps {
   range: DateRange;
   onCellClick: (eventId: string) => void;
   selectedEventId?: string;
+  selectedSymbols?: string[]; // User-selected symbols to always show (even if no events)
 }
 
 // Responsive grid sizing
@@ -48,7 +49,13 @@ function useBreakpoint() {
   return breakpoint;
 }
 
-export function VirtualizedGrid({ events, range, onCellClick, selectedEventId }: VirtualizedGridProps) {
+export function VirtualizedGrid({
+  events,
+  range,
+  onCellClick,
+  selectedEventId,
+  selectedSymbols,
+}: VirtualizedGridProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const breakpoint = useBreakpoint();
@@ -78,18 +85,24 @@ export function VirtualizedGrid({ events, range, onCellClick, selectedEventId }:
     const symbolsSet = new Set<string>();
     const eventMap = new Map<string, BlackSwanEventMinimal>();
 
+    // Add symbols from events
     events.forEach((event) => {
       symbolsSet.add(event.symbol);
       const key = `${event.symbol}-${event.occurrence_date}`;
       eventMap.set(key, event);
     });
 
+    // Add user-selected symbols (even if no events) - always show selected tickers
+    if (selectedSymbols && selectedSymbols.length > 0) {
+      selectedSymbols.forEach((symbol) => symbolsSet.add(symbol));
+    }
+
     return {
       symbols: Array.from(symbolsSet).sort(),
       dates: datesInRange,
       eventsBySymbolAndDate: eventMap,
     };
-  }, [events, range]);
+  }, [events, range, selectedSymbols]);
 
   // Row virtualizer (symbols) - recreate when config changes
   const rowVirtualizer = useVirtualizer({

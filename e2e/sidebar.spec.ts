@@ -4,8 +4,9 @@
  * Per test-plan.md section 4.2 (TC-SIDEBAR-001 to TC-SIDEBAR-004)
  */
 
-import { test, expect } from "@playwright/test";
-import { loginViaAPI } from "./helpers/auth.helper";
+import { expect, test } from "@playwright/test";
+
+import { loginViaUI } from "./helpers/auth.helper";
 import { setupNocoDBMocks } from "./helpers/mock-nocodb.helper";
 
 // All sidebar tests use test@example.com - run serially
@@ -14,15 +15,13 @@ test.describe("Sidebar Tests - Active User (test@example.com)", () => {
 
   test.describe("Summary View - Opening Sidebar", () => {
     test.beforeEach(async ({ page }) => {
-      // Setup API mocks FIRST
+      // Login via UI
+      await loginViaUI(page);
+
+      // Setup mocks
       await setupNocoDBMocks(page);
 
-      // Login via API
-      await loginViaAPI(page, {
-        email: "test@example.com",
-        password: "Test123!@#",
-      });
-
+      // Navigate to grid
       await page.goto("/grid");
       await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
     });
@@ -110,7 +109,7 @@ test.describe("Sidebar Tests - Active User (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -186,7 +185,7 @@ test.describe("Sidebar Tests - Active User (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -250,7 +249,7 @@ test.describe("Sidebar Tests - Active User (test@example.com)", () => {
     test("TC-SIDEBAR-004: First open fetches from API", async ({ page }) => {
       // Setup mocks
       await setupNocoDBMocks(page);
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -307,7 +306,7 @@ test.describe("Sidebar Tests - Active User (test@example.com)", () => {
 
     test("TC-SIDEBAR-004: Retry button appears on error", async ({ page }) => {
       // Setup mocks and login
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -345,7 +344,7 @@ test.describe("Sidebar Tests - Active User (test@example.com)", () => {
     test("TC-SIDEBAR: Browser back closes sidebar", async ({ page }) => {
       // Setup mocks
       await setupNocoDBMocks(page);
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -371,7 +370,7 @@ test.describe("Sidebar Tests - Active User (test@example.com)", () => {
     test("TC-SIDEBAR: Browser forward reopens sidebar", async ({ page }) => {
       // Setup mocks
       await setupNocoDBMocks(page);
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -405,7 +404,7 @@ test.describe("Sidebar Tests - Active User (test@example.com)", () => {
     test("TC-SIDEBAR: Drawer opens from bottom on mobile", async ({ page }) => {
       // Setup mocks
       await setupNocoDBMocks(page);
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });

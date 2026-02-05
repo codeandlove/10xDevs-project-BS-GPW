@@ -5,9 +5,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { clearGridCache, clearAllCache } from "@/hooks/useClientCache";
+import { clearAllCache } from "@/hooks/useClientCache";
 
-describe("Cache Utils - clearGridCache", () => {
+describe("Cache Utils - clearAllCache", () => {
   beforeEach(() => {
     localStorage.clear();
   });
@@ -16,7 +16,7 @@ describe("Cache Utils - clearGridCache", () => {
     localStorage.clear();
   });
 
-  it("clearGridCache should remove cache data", () => {
+  it("clearAllCache should remove cache data", () => {
     // Setup cache data
     localStorage.setItem("cache:grid:week:", JSON.stringify({ data: "grid-data" }));
     localStorage.setItem("cache:event:rec_123", JSON.stringify({ data: "event-data" }));
@@ -26,14 +26,14 @@ describe("Cache Utils - clearGridCache", () => {
     expect(localStorage.getItem("cache:event:rec_123")).toBeTruthy();
 
     // Clear cache
-    clearGridCache();
+    clearAllCache();
 
     // Verify cache cleared
     expect(localStorage.getItem("cache:grid:week:")).toBeNull();
     expect(localStorage.getItem("cache:event:rec_123")).toBeNull();
   });
 
-  it("clearGridCache should preserve user preferences", () => {
+  it("clearAllCache should preserve user preferences", () => {
     // Setup cache data and preferences
     localStorage.setItem("cache:grid:week:", JSON.stringify({ data: "grid-data" }));
     localStorage.setItem("gpw:preferences:symbols", "CPD,PKN");
@@ -45,7 +45,7 @@ describe("Cache Utils - clearGridCache", () => {
     expect(localStorage.getItem("gpw:preferences:range")).toBe("month");
 
     // Clear cache
-    clearGridCache();
+    clearAllCache();
 
     // Verify cache cleared but preferences preserved
     expect(localStorage.getItem("cache:grid:week:")).toBeNull();
@@ -53,12 +53,12 @@ describe("Cache Utils - clearGridCache", () => {
     expect(localStorage.getItem("gpw:preferences:range")).toBe("month");
   });
 
-  it("clearGridCache should handle empty cache gracefully", () => {
+  it("clearAllCache should handle empty cache gracefully", () => {
     // No cache data
-    expect(() => clearGridCache()).not.toThrow();
+    expect(() => clearAllCache()).not.toThrow();
   });
 
-  it("clearGridCache should clear multiple cache entries", () => {
+  it("clearAllCache should clear multiple cache entries", () => {
     // Setup multiple cache entries
     const cacheKeys = [
       "cache:grid:week:CPD",
@@ -78,7 +78,7 @@ describe("Cache Utils - clearGridCache", () => {
     });
 
     // Clear cache
-    clearGridCache();
+    clearAllCache();
 
     // Verify all cleared
     cacheKeys.forEach((key) => {
@@ -86,7 +86,7 @@ describe("Cache Utils - clearGridCache", () => {
     });
   });
 
-  it("clearGridCache should clear new format cache (gpw:cache:v1:*)", () => {
+  it("clearAllCache should clear new format cache (gpw:cache:v1:*)", () => {
     // Setup new format cache entries (used in production)
     const newCacheKeys = [
       "gpw:cache:v1:black_swans|id=251",
@@ -108,7 +108,7 @@ describe("Cache Utils - clearGridCache", () => {
     });
 
     // Clear cache
-    clearGridCache();
+    clearAllCache();
 
     // Verify new format cache cleared
     newCacheKeys.forEach((key) => {
@@ -118,62 +118,6 @@ describe("Cache Utils - clearGridCache", () => {
     // Verify preferences preserved
     expect(localStorage.getItem("gpw:preferences:symbols")).toBe("CPD,PKN");
     expect(localStorage.getItem("theme")).toBe("dark");
-  });
-});
-
-describe("Cache Utils - clearAllCache", () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
-  afterEach(() => {
-    localStorage.clear();
-  });
-
-  it("clearAllCache should remove all cache data", () => {
-    // Setup cache data
-    localStorage.setItem("cache:grid:week:", JSON.stringify({ data: "grid-data" }));
-    localStorage.setItem("cache:event:rec_123", JSON.stringify({ data: "event-data" }));
-
-    // Clear all cache
-    clearAllCache();
-
-    // Verify all cache cleared
-    expect(localStorage.getItem("cache:grid:week:")).toBeNull();
-    expect(localStorage.getItem("cache:event:rec_123")).toBeNull();
-  });
-
-  it("clearAllCache should NOT preserve preferences (different from clearGridCache)", () => {
-    // Setup cache and preferences
-    localStorage.setItem("cache:grid:week:", JSON.stringify({ data: "grid-data" }));
-    localStorage.setItem("gpw:preferences:symbols", "CPD,PKN");
-
-    // Clear all
-    clearAllCache();
-
-    // Verify cache cleared
-    expect(localStorage.getItem("cache:grid:week:")).toBeNull();
-
-    // Preferences should still exist (clearAllCache only clears cache:* prefix)
-    // This is the current implementation - it doesn't clear preferences either
-    expect(localStorage.getItem("gpw:preferences:symbols")).toBe("CPD,PKN");
-  });
-
-  it("clearAllCache should handle non-cache keys gracefully", () => {
-    // Setup non-cache keys (should not be affected)
-    localStorage.setItem("other:key", "value");
-    localStorage.setItem("random", "data");
-
-    // Setup cache keys
-    localStorage.setItem("cache:test", JSON.stringify({ data: "test" }));
-
-    // Clear all cache
-    clearAllCache();
-
-    // Verify cache cleared but other keys preserved
-    expect(localStorage.getItem("cache:test")).toBeNull();
-    expect(localStorage.getItem("other:key")).toBe("value");
-    expect(localStorage.getItem("random")).toBe("data");
   });
 });
 
@@ -220,7 +164,6 @@ describe("Cache Utils - Edge Cases", () => {
     });
 
     // Should not throw
-    expect(() => clearGridCache()).not.toThrow();
     expect(() => clearAllCache()).not.toThrow();
 
     // Restore
@@ -232,7 +175,6 @@ describe("Cache Utils - Edge Cases", () => {
     localStorage.setItem("cache:corrupted", "not-valid-json{");
 
     // Should not throw
-    expect(() => clearGridCache()).not.toThrow();
     expect(() => clearAllCache()).not.toThrow();
   });
 
@@ -247,7 +189,7 @@ describe("Cache Utils - Edge Cases", () => {
       localStorage.setItem(key, JSON.stringify({ data: "test" }));
     });
 
-    clearGridCache();
+    clearAllCache();
 
     specialKeys.forEach((key) => {
       expect(localStorage.getItem(key)).toBeNull();
@@ -276,7 +218,7 @@ describe("Cache Utils - GDPR Compliance", () => {
     });
 
     // Clear on logout (GDPR requirement)
-    clearGridCache();
+    clearAllCache();
 
     // Verify all PII cleared
     Object.keys(userCache).forEach((key) => {
@@ -297,7 +239,7 @@ describe("Cache Utils - GDPR Compliance", () => {
     });
 
     // Clear cache
-    clearGridCache();
+    clearAllCache();
 
     // Verify preferences preserved (not PII)
     Object.entries(preferences).forEach(([key, value]) => {

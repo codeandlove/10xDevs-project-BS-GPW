@@ -4,9 +4,10 @@
  * Per test-plan.md section 4.1 (TC-GRID-001 to TC-GRID-004)
  */
 
-import { test, expect } from "@playwright/test";
-import { loginViaAPI, setupSubscriptionState } from "./helpers/auth.helper";
-import { setupNocoDBMocks, setupEmptyGridMock } from "./helpers/mock-nocodb.helper";
+import { expect, test } from "@playwright/test";
+
+import { loginViaUI, setupSubscriptionState } from "./helpers/auth.helper";
+import { setupEmptyGridMock, setupNocoDBMocks } from "./helpers/mock-nocodb.helper";
 
 // Group all tests using test@example.com - run serially to avoid session conflicts
 test.describe("Grid View - Active User Tests (test@example.com)", () => {
@@ -14,14 +15,11 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
 
   test.describe("Grid View - Basic Rendering", () => {
     test.beforeEach(async ({ page }) => {
-      // Setup API mocks FIRST (before login)
-      await setupNocoDBMocks(page);
+      // Login FIRST via UI (real user flow)
+      await loginViaUI(page);
 
-      // Then login
-      await loginViaAPI(page, {
-        email: "test@example.com",
-        password: "Test123!@#",
-      });
+      // THEN setup API mocks (after authentication)
+      await setupNocoDBMocks(page);
     });
 
     test("TC-GRID-001: Grid renders with default range in < 1.5s", async ({ page }) => {
@@ -97,7 +95,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -147,7 +145,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -157,39 +155,106 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
     });
 
     test("TC-GRID-003: Filter by single ticker", async ({ page }) => {
-      // Open ticker filter (aria-label="Filter by ticker")
+      // Grid starts with 3 pre-selected tickers (smart initialization)
+      // We'll change it to only 1 ticker (PKN)
+
       await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
 
-      // Wait for dropdown to be visible
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
       await page.waitForTimeout(300);
 
-      // Select CPD checkbox (inside a label)
-      const cpdCheckbox = page.locator('label:has-text("CPD") input[type="checkbox"]');
-      await cpdCheckbox.check();
+      const searchInput = dialog.getByPlaceholder(/Szukaj po symbolu/i);
+      // Wait for search input to be enabled (symbols loading)
+      await expect(searchInput).toBeEnabled({ timeout: 10000 });
 
-      // Close dropdown by clicking outside (on overlay)
-      await page.locator('div[class*="fixed inset-0"]').click();
+      // Uncheck CPD
+      await searchInput.fill("CPD");
+      await page.waitForTimeout(500);
 
-      // Wait for filter to apply
+      await page.locator("#ticker-CPD").first().uncheck();
+      await page.waitForTimeout(200);
+
+      // Uncheck PKO
+      await searchInput.clear();
+      await searchInput.fill("PKO");
+      await page.waitForTimeout(500);
+
+      await page.locator("#ticker-PKO").first().uncheck();
+      await page.waitForTimeout(200);
+
+      // Now only PKN should be selected (1 ticker)
+      // Use JavaScript click to bypass viewport restrictions
+      const applyButton = dialog.getByRole("button", { name: /Zastosuj \(1\)/i });
+      await expect(applyButton).toBeVisible();
+      await expect(applyButton).toBeEnabled();
+      await applyButton.scrollIntoViewIfNeeded();
+
+      await applyButton.evaluate((el) => (el as HTMLElement).click());
+
+      await expect(dialog).not.toBeVisible();
       await page.waitForTimeout(500);
 
       // Verify URL updated with symbols param
       await expect(page).toHaveURL(/symbols=/);
 
-      // Verify the filter badge shows 1 selected
+      // Verify the filter badge shows exactly 1 selected
       await expect(page.getByRole("button", { name: /Filter by ticker|Tickery/i })).toContainText("1");
     });
 
     test("TC-GRID-003: Filter by multiple tickers", async ({ page }) => {
+      // Grid starts with 3 tickers (CPD, PKN, PKO)
+      // We'll change it to 2 different tickers (11B, ABE)
+
       await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
+
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
       await page.waitForTimeout(300);
 
-      // Select CPD and PKN
-      await page.locator('label:has-text("CPD") input[type="checkbox"]').check();
-      await page.locator('label:has-text("PKN") input[type="checkbox"]').check();
+      const searchInput = dialog.getByPlaceholder(/Szukaj po symbolu/i);
+      // Wait for search input to be enabled (symbols loading)
+      await expect(searchInput).toBeEnabled({ timeout: 10000 });
 
-      // Close dropdown
-      await page.locator('div[class*="fixed inset-0"]').click();
+      // Uncheck all 3 pre-selected tickers
+      await searchInput.fill("CPD");
+      await page.waitForTimeout(500);
+      await page.locator("#ticker-CPD").first().uncheck();
+
+      await searchInput.clear();
+      await searchInput.fill("PKN");
+      await page.waitForTimeout(500);
+      await page.locator("#ticker-PKN").first().uncheck();
+
+      await searchInput.clear();
+      await searchInput.fill("PKO");
+      await page.waitForTimeout(500);
+      await page.locator("#ticker-PKO").first().uncheck();
+
+      // Now select 2 new tickers: 11B and ABE
+      await searchInput.clear();
+      await searchInput.fill("11B");
+      await page.waitForTimeout(500);
+
+      const ticker11B = page.locator("#ticker-11B").first();
+      await expect(ticker11B).toBeVisible({ timeout: 5000 });
+      await ticker11B.check();
+
+      await searchInput.clear();
+      await searchInput.fill("ABE");
+      await page.waitForTimeout(500);
+
+      const tickerABE = page.locator("#ticker-ABE").first();
+      await expect(tickerABE).toBeVisible({ timeout: 5000 });
+      await tickerABE.check();
+      await page.waitForTimeout(200);
+
+      // Apply with 2 selected - use JavaScript click
+      const applyButton = dialog.getByRole("button", { name: /Zastosuj \(2\)/i });
+      await expect(applyButton).toBeEnabled();
+      await applyButton.evaluate((el) => (el as HTMLElement).click());
+
+      await expect(dialog).not.toBeVisible();
       await page.waitForTimeout(500);
 
       // Verify URL contains symbols param
@@ -200,16 +265,32 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
     });
 
     test("TC-GRID-003: Filters saved in localStorage", async ({ page }) => {
+      // Change filters and verify they persist
       await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
+
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
       await page.waitForTimeout(300);
 
-      await page.locator('label:has-text("CPD") input[type="checkbox"]').check();
+      const searchInput = dialog.getByPlaceholder(/Szukaj po symbolu/i);
+      // Wait for search input to be enabled (symbols loading)
+      await expect(searchInput).toBeEnabled({ timeout: 10000 });
 
-      // Wait for state to update
+      // Keep only PKN (uncheck CPD and PKO)
+      await searchInput.fill("CPD");
       await page.waitForTimeout(500);
+      await page.locator("#ticker-CPD").first().uncheck();
 
-      // Close dropdown
-      await page.locator('div[class*="fixed inset-0"]').click();
+      await searchInput.clear();
+      await searchInput.fill("PKO");
+      await page.waitForTimeout(500);
+      await page.locator("#ticker-PKO").first().uncheck();
+      await page.waitForTimeout(200);
+
+      // Apply filter - use JavaScript click
+      await dialog.getByRole("button", { name: /Zastosuj \(1\)/i }).evaluate((el) => (el as HTMLElement).click());
+
+      await expect(dialog).not.toBeVisible();
       await page.waitForTimeout(500);
 
       // Check localStorage for saved preferences
@@ -217,42 +298,70 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
         return JSON.stringify(localStorage);
       });
 
-      // Should have some filter/preferences saved
+      // Should have filter preferences saved
       expect(allStorage).toBeTruthy();
+      expect(allStorage).toContain("PKN");
     });
 
-    test("TC-GRID-003: Clear all filters", async ({ page }) => {
-      // Apply some filters first
+    test("TC-GRID-003: Replace filters with different tickers", async ({ page }) => {
+      // This test verifies ability to change filter selection
+      // (We can't clear ALL filters - minimum 1 required)
+
+      // First, apply filter with PKN only
       await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
+
+      let dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
       await page.waitForTimeout(300);
 
-      await page.locator('label:has-text("CPD") input[type="checkbox"]').check();
-      await page.waitForTimeout(500);
+      const searchInput = dialog.getByPlaceholder(/Szukaj po symbolu/i);
+      // Wait for search input to be enabled (symbols loading)
+      await expect(searchInput).toBeEnabled({ timeout: 10000 });
 
-      // Close dropdown and verify filter applied
-      await page.locator('div[class*="fixed inset-0"]').click();
+      // Uncheck CPD and PKO, keep PKN
+      await searchInput.fill("CPD");
+      await page.waitForTimeout(500);
+      await page.locator("#ticker-CPD").first().uncheck();
+
+      await searchInput.clear();
+      await searchInput.fill("PKO");
+      await page.waitForTimeout(500);
+      await page.locator("#ticker-PKO").first().uncheck();
+
+      await dialog.getByRole("button", { name: /Zastosuj \(1\)/i }).evaluate((el) => (el as HTMLElement).click());
+      await expect(dialog).not.toBeVisible();
       await page.waitForTimeout(500);
 
       // Verify badge shows 1
       await expect(page.getByRole("button", { name: /Filter by ticker|Tickery/i })).toContainText("1");
 
-      // Clear filters using the "Wyczyść" button inside dropdown (exact match, first one)
+      // Now replace PKN with CPD
       await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
+      dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
       await page.waitForTimeout(300);
 
-      // Get the clear button inside the dropdown (size="sm" variant)
-      const clearButton = page.getByRole("button", { name: "Wyczyść", exact: true }).first();
-      await expect(clearButton).toBeVisible();
-      await clearButton.click();
-      await page.waitForTimeout(300);
+      // Uncheck PKN
+      await searchInput.clear();
+      await searchInput.fill("PKN");
+      await page.waitForTimeout(500);
+      await page.locator("#ticker-PKN").first().uncheck();
 
-      // Close dropdown
-      await page.locator('div[class*="fixed inset-0"]').click();
+      // Check CPD
+      await searchInput.clear();
+      await searchInput.fill("CPD");
+      await page.waitForTimeout(500);
+      await page.locator("#ticker-CPD").first().check();
+      await page.waitForTimeout(200);
+
+      // Apply changes - use JavaScript click
+      await dialog.getByRole("button", { name: /Zastosuj \(1\)/i }).evaluate((el) => (el as HTMLElement).click());
+      await expect(dialog).not.toBeVisible();
       await page.waitForTimeout(500);
 
-      // Badge should not show 1 anymore
+      // Badge should still show 1 (but different ticker now)
       const buttonText = await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).textContent();
-      expect(buttonText).not.toContain("1");
+      expect(buttonText).toContain("1");
     });
   });
 
@@ -262,7 +371,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -323,7 +432,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
   test.describe("Grid View - Error Handling", () => {
     test("TC-GRID: Show error message with retry button", async ({ page }) => {
       // Login first
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -361,7 +470,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -405,7 +514,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -628,7 +737,7 @@ test.describe("Grid Access Control - Expired User Tests (expired@example.com)", 
       await setupNocoDBMocks(page);
 
       // Login as expired trial user (user exists in DB with correct state from create-test-users.ts)
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "expired@example.com",
         password: "Test123!@#",
       });
@@ -725,12 +834,17 @@ test.describe("Grid Access Control - Expired User Tests (expired@example.com)", 
 
       // Apply filter
       await filterButton.click();
+
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
       await page.waitForTimeout(300);
 
-      const checkbox = page.locator('label:has-text("CPD") input[type="checkbox"]');
+      const checkbox = page.locator('label:has-text("CPD") input[type="checkbox"]').first();
       if ((await checkbox.count()) > 0) {
         await checkbox.check();
-        await page.locator('div[class*="fixed inset-0"]').click();
+        await page.waitForTimeout(200);
+        await dialog.getByRole("button", { name: /Zastosuj/i }).evaluate((el) => (el as HTMLElement).click());
+        await expect(dialog).not.toBeVisible();
         await page.waitForTimeout(500);
       }
 
@@ -749,7 +863,7 @@ test.describe("Grid Access Control - Expired User Tests (expired@example.com)", 
         trial_expires_at: "2025-01-01T00:00:00Z",
       });
 
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "expired@example.com",
         password: "Test123!@#",
       });
@@ -788,18 +902,18 @@ test.describe("Grid Access Control - Expired User Tests (expired@example.com)", 
 // Tests using unique users (trial@example.com, pastdue@example.com) - can run in parallel
 test.describe("Grid Access Control - Active Subscription", () => {
   test.beforeEach(async ({ page }) => {
+    // Login first
+    await loginViaUI(page);
+
+    // Setup subscription mock
     await setupSubscriptionState(page, "test@example.com", {
       subscription_status: "active",
       trial_expires_at: null,
       current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
+    // Setup NocoDB mocks
     await setupNocoDBMocks(page);
-
-    await loginViaAPI(page, {
-      email: "test@example.com",
-      password: "Test123!@#",
-    });
   });
 
   test("TC-ACCESS-ACTIVE-001: Shows real grid with active subscription", async ({ page }) => {
@@ -818,17 +932,17 @@ test.describe("Grid Access Control - Active Subscription", () => {
 
 test.describe("Grid Access Control - Active Trial", () => {
   test.beforeEach(async ({ page }) => {
+    // Login first
+    await loginViaUI(page, { email: "trial@example.com", password: "Test123!@#" });
+
+    // Setup subscription mock
     await setupSubscriptionState(page, "trial@example.com", {
       subscription_status: "trial",
       trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
+    // Setup NocoDB mocks
     await setupNocoDBMocks(page);
-
-    await loginViaAPI(page, {
-      email: "trial@example.com",
-      password: "Test123!@#",
-    });
   });
 
   test("TC-ACCESS-TRIAL-001: Shows real grid with active trial", async ({ page }) => {
@@ -853,7 +967,7 @@ test.describe("Grid Access Control - Past Due Subscription", () => {
       current_period_end: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
-    await loginViaAPI(page, {
+    await loginViaUI(page, {
       email: "pastdue@example.com",
       password: "Test123!@#",
     });
