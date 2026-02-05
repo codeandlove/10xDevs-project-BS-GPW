@@ -109,15 +109,15 @@ export function useClientCache<T>(key: string, fetcher: () => Promise<T>, option
         // No cache - fetch fresh data
         try {
           const freshData = await fetchData();
-          if (mounted && freshData) {
-            setData(freshData);
+          if (mounted) {
+            if (freshData) {
+              setData(freshData);
+            }
+            setIsLoading(false);
           }
         } catch (err) {
           if (mounted) {
             setError(err instanceof Error ? err : new Error("Failed to fetch data"));
-          }
-        } finally {
-          if (mounted) {
             setIsLoading(false);
           }
         }

@@ -239,7 +239,10 @@ export function GridView() {
           )}
 
           <div className="relative min-h-0 flex-1">
-            {isLoading || hasAccess === null || (!isInitialized && hasAccess) ? (
+            {isLoading ||
+            hasAccess === null ||
+            (!isInitialized && hasAccess) ||
+            (hasAccess && gridResponse === null) ? (
               <GridSkeleton />
             ) : !hasAccess ? (
               isMobile ? (
