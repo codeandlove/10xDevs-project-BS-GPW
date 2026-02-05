@@ -165,6 +165,8 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await page.waitForTimeout(300);
 
       const searchInput = dialog.getByPlaceholder(/Szukaj po symbolu/i);
+      // Wait for search input to be enabled (symbols loading)
+      await expect(searchInput).toBeEnabled({ timeout: 10000 });
 
       // Uncheck CPD
       await searchInput.fill("CPD");
@@ -211,6 +213,8 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await page.waitForTimeout(300);
 
       const searchInput = dialog.getByPlaceholder(/Szukaj po symbolu/i);
+      // Wait for search input to be enabled (symbols loading)
+      await expect(searchInput).toBeEnabled({ timeout: 10000 });
 
       // Uncheck all 3 pre-selected tickers
       await searchInput.fill("CPD");
@@ -269,6 +273,8 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await page.waitForTimeout(300);
 
       const searchInput = dialog.getByPlaceholder(/Szukaj po symbolu/i);
+      // Wait for search input to be enabled (symbols loading)
+      await expect(searchInput).toBeEnabled({ timeout: 10000 });
 
       // Keep only PKN (uncheck CPD and PKO)
       await searchInput.fill("CPD");
@@ -309,6 +315,8 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await page.waitForTimeout(300);
 
       const searchInput = dialog.getByPlaceholder(/Szukaj po symbolu/i);
+      // Wait for search input to be enabled (symbols loading)
+      await expect(searchInput).toBeEnabled({ timeout: 10000 });
 
       // Uncheck CPD and PKO, keep PKN
       await searchInput.fill("CPD");
