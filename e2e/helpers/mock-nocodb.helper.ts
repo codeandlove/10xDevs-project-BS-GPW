@@ -4,12 +4,26 @@
  */
 
 import type { Page } from "@playwright/test";
-import { mockGridResponse, mockEventDetailsResponse, mockSummariesResponse } from "../fixtures/nocodb-mock.fixture";
+import {
+  mockGridResponse,
+  mockEventDetailsResponse,
+  mockSummariesResponse,
+  mockSymbolsResponse,
+} from "../fixtures/nocodb-mock.fixture";
 
 /**
  * Setup all NocoDB API mocks for grid tests
  */
 export async function setupNocoDBMocks(page: Page) {
+  // Mock symbols endpoint (for ticker filter)
+  await page.route("**/api/nocodb/symbols**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(mockSymbolsResponse),
+    });
+  });
+
   // Mock grid data endpoint
   await page.route("**/api/nocodb/grid**", async (route) => {
     await route.fulfill({

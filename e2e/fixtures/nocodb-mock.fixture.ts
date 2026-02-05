@@ -3,6 +3,23 @@
  * Based on actual API structure from api-plan.md
  */
 
+export const mockSymbolsResponse = {
+  symbols: [
+    { symbol: "11B", label: "11BIT", name: "11 Bit Studios SA", active: true },
+    { symbol: "ABE", label: "ABENA", name: "AB SA", active: true },
+    { symbol: "ALE", label: "ALLEG", name: "Allegro.eu SA", active: true },
+    { symbol: "CPD", label: "CPRDEV", name: "CPD SA", active: true },
+    { symbol: "JSW", label: "JSW", name: "Jastrzębska Spółka Węglowa SA", active: true },
+    { symbol: "KGH", label: "KGHM", name: "KGHM Polska Miedź SA", active: true },
+    { symbol: "LPP", label: "LPP", name: "LPP SA", active: true },
+    { symbol: "PKN", label: "PKNOR", name: "PKN Orlen SA", active: true },
+    { symbol: "PKO", label: "PEKAO", name: "Bank Pekao SA", active: true },
+    { symbol: "PZU", label: "PZU", name: "Powszechny Zakład Ubezpieczeń SA", active: true },
+  ],
+  total_count: 10,
+  cached_at: new Date().toISOString(),
+};
+
 export const mockGridResponse = {
   success: true,
   data: {
