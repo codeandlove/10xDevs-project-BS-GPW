@@ -4,9 +4,10 @@
  * Per test-plan.md section 4.1 (TC-GRID-001 to TC-GRID-004)
  */
 
-import { test, expect } from "@playwright/test";
-import { loginViaAPI, setupSubscriptionState } from "./helpers/auth.helper";
-import { setupNocoDBMocks, setupEmptyGridMock } from "./helpers/mock-nocodb.helper";
+import { expect, test } from "@playwright/test";
+
+import { loginViaUI, setupSubscriptionState } from "./helpers/auth.helper";
+import { setupEmptyGridMock, setupNocoDBMocks } from "./helpers/mock-nocodb.helper";
 
 // Group all tests using test@example.com - run serially to avoid session conflicts
 test.describe("Grid View - Active User Tests (test@example.com)", () => {
@@ -14,14 +15,11 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
 
   test.describe("Grid View - Basic Rendering", () => {
     test.beforeEach(async ({ page }) => {
-      // Setup API mocks FIRST (before login)
-      await setupNocoDBMocks(page);
+      // Login FIRST via UI (real user flow)
+      await loginViaUI(page);
 
-      // Then login
-      await loginViaAPI(page, {
-        email: "test@example.com",
-        password: "Test123!@#",
-      });
+      // THEN setup API mocks (after authentication)
+      await setupNocoDBMocks(page);
     });
 
     test("TC-GRID-001: Grid renders with default range in < 1.5s", async ({ page }) => {
@@ -97,7 +95,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -147,7 +145,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -365,7 +363,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -426,7 +424,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
   test.describe("Grid View - Error Handling", () => {
     test("TC-GRID: Show error message with retry button", async ({ page }) => {
       // Login first
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -464,7 +462,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -508,7 +506,7 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       await setupNocoDBMocks(page);
 
       // Login via API
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "test@example.com",
         password: "Test123!@#",
       });
@@ -731,7 +729,7 @@ test.describe("Grid Access Control - Expired User Tests (expired@example.com)", 
       await setupNocoDBMocks(page);
 
       // Login as expired trial user (user exists in DB with correct state from create-test-users.ts)
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "expired@example.com",
         password: "Test123!@#",
       });
@@ -857,7 +855,7 @@ test.describe("Grid Access Control - Expired User Tests (expired@example.com)", 
         trial_expires_at: "2025-01-01T00:00:00Z",
       });
 
-      await loginViaAPI(page, {
+      await loginViaUI(page, {
         email: "expired@example.com",
         password: "Test123!@#",
       });
@@ -896,18 +894,18 @@ test.describe("Grid Access Control - Expired User Tests (expired@example.com)", 
 // Tests using unique users (trial@example.com, pastdue@example.com) - can run in parallel
 test.describe("Grid Access Control - Active Subscription", () => {
   test.beforeEach(async ({ page }) => {
+    // Login first
+    await loginViaUI(page);
+
+    // Setup subscription mock
     await setupSubscriptionState(page, "test@example.com", {
       subscription_status: "active",
       trial_expires_at: null,
       current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
+    // Setup NocoDB mocks
     await setupNocoDBMocks(page);
-
-    await loginViaAPI(page, {
-      email: "test@example.com",
-      password: "Test123!@#",
-    });
   });
 
   test("TC-ACCESS-ACTIVE-001: Shows real grid with active subscription", async ({ page }) => {
@@ -926,17 +924,17 @@ test.describe("Grid Access Control - Active Subscription", () => {
 
 test.describe("Grid Access Control - Active Trial", () => {
   test.beforeEach(async ({ page }) => {
+    // Login first
+    await loginViaUI(page, { email: "trial@example.com", password: "Test123!@#" });
+
+    // Setup subscription mock
     await setupSubscriptionState(page, "trial@example.com", {
       subscription_status: "trial",
       trial_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
+    // Setup NocoDB mocks
     await setupNocoDBMocks(page);
-
-    await loginViaAPI(page, {
-      email: "trial@example.com",
-      password: "Test123!@#",
-    });
   });
 
   test("TC-ACCESS-TRIAL-001: Shows real grid with active trial", async ({ page }) => {
@@ -961,7 +959,7 @@ test.describe("Grid Access Control - Past Due Subscription", () => {
       current_period_end: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
-    await loginViaAPI(page, {
+    await loginViaUI(page, {
       email: "pastdue@example.com",
       password: "Test123!@#",
     });

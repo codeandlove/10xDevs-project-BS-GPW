@@ -28,9 +28,18 @@ export default defineConfig({
     video: "retain-on-failure",
   },
 
-  // Make environment variables available in test files
-  // This is needed for Supabase configuration in auth.helper.ts
-  globalSetup: undefined,
+  // Start preview server before running tests
+  // NOTE: Due to timing issues with webServer in this environment,
+  // you may need to start the preview server manually before running tests:
+  // npm run preview (in a separate terminal)
+  webServer: process.env.CI
+    ? {
+        command: "npm run preview",
+        port: 3000,
+        timeout: 120 * 1000,
+        reuseExistingServer: false,
+      }
+    : undefined,
 
   projects: [
     // Project 1: Tests using test@example.com (runs serially within project)
@@ -62,16 +71,4 @@ export default defineConfig({
     //   use: { ...devices['Desktop Safari'] },
     // },
   ],
-
-  // Run local dev server before starting tests
-  // In local dev, assume server is already running on port 3000
-  // In CI, start server automatically
-  webServer: process.env.CI
-    ? {
-        command: "npm run dev",
-        url: "http://localhost:3000",
-        reuseExistingServer: false,
-        timeout: 120 * 1000,
-      }
-    : undefined,
 });
