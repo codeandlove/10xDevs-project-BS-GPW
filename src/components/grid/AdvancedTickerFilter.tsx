@@ -17,11 +17,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  BottomSheet,
+  BottomSheetContent,
+  BottomSheetDescription,
+  BottomSheetFooter,
+  BottomSheetHeader,
+  BottomSheetTitle,
+  BottomSheetBody,
+} from "@/components/ui/bottom-sheet";
 import { Filter } from "lucide-react";
 import { useSymbols, searchSymbols } from "@/hooks/useSymbols";
 import { TickerSearchInput } from "./TickerSearchInput";
 import { TickerList } from "./TickerList";
 import { GPW_INDICES, getIndexById } from "@/config/gpw-indices";
+import { useMediaQuery, BREAKPOINTS } from "@/hooks/useMediaQuery";
 import type { DateRange } from "@/types/nocodb.types";
 
 interface AdvancedTickerFilterProps {
@@ -35,6 +45,9 @@ export function AdvancedTickerFilter({ selected, onChange, recentSymbols, range 
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [localSelected, setLocalSelected] = useState<Set<string>>(new Set(selected));
+
+  // Detect mobile viewport
+  const isDesktop = useMediaQuery(BREAKPOINTS.sm);
 
   // Fetch symbols with caching (with event counts if range provided)
   const { symbols, isLoading, error } = useSymbols(range);
@@ -113,6 +126,157 @@ export function AdvancedTickerFilter({ selected, onChange, recentSymbols, range 
     return symbols.filter((s) => localSelected.has(s.symbol));
   }, [symbols, localSelected]);
 
+  // Shared content for both Dialog and BottomSheet
+  const renderContent = () => (
+    <>
+      {/* Search and Actions */}
+      <div className="space-y-4">
+        {/* Search Input */}
+        <TickerSearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Szukaj po symbolu, nazwie lub skrócie..."
+          disabled={isLoading}
+        />
+
+        {/* Index Selection and Bulk Actions */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Index Selector */}
+          <select
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            onChange={(e) => {
+              if (e.target.value) {
+                handleSelectIndex(e.target.value);
+                e.target.value = ""; // Reset selection
+              }
+            }}
+            defaultValue=""
+            disabled={isLoading}
+            aria-label="Wybierz indeks GPW"
+          >
+            <option value="" disabled>
+              Wybierz indeks...
+            </option>
+            {GPW_INDICES.map((index) => (
+              <option key={index.id} value={index.id}>
+                {index.name} ({index.symbols.length})
+              </option>
+            ))}
+          </select>
+
+          {/* Bulk Actions */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSelectAll}
+              disabled={isLoading || filteredSymbols.length === 0}
+            >
+              Zaznacz wszystkie
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDeselectAll}
+              disabled={isLoading || localSelected.size === 0}
+            >
+              Odznacz wszystkie
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSelectRecent}
+              disabled={isLoading || !recentSymbols || recentSymbols.length === 0}
+              title="Zaznacz tickery z ostatniej inicjalizacji"
+            >
+              Zaznacz ostatnie ({recentSymbols?.length || 0})
+            </Button>
+          </div>
+        </div>
+
+        {/* Selected Count */}
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            Zaznaczono: <strong>{localSelected.size}</strong> / {symbols.length}
+          </span>
+          {searchQuery && (
+            <span>
+              Wyników wyszukiwania: <strong>{filteredSymbols.length}</strong>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="space-y-4">
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex h-64 items-center justify-center">
+            <p className="text-sm text-muted-foreground">Ładowanie tickerów...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="flex h-64 flex-col items-center justify-center gap-2">
+            <p className="text-sm text-destructive">Błąd ładowania tickerów</p>
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+              Spróbuj ponownie
+            </Button>
+          </div>
+        )}
+
+        {/* Selected Tickers (if any) */}
+        {!isLoading && !error && selectedSymbols.length > 0 && (
+          <div>
+            <h4 className="mb-2 text-sm font-medium">Zaznaczone ({selectedSymbols.length})</h4>
+            <TickerList
+              symbols={selectedSymbols}
+              selected={localSelected}
+              onToggle={handleToggle}
+              height={150}
+              className="mb-4"
+            />
+          </div>
+        )}
+
+        {/* All Available Tickers */}
+        {!isLoading && !error && (
+          <div>
+            <h4 className="mb-2 text-sm font-medium">
+              {searchQuery
+                ? `Wyniki wyszukiwania (${filteredSymbols.length})`
+                : `Wszystkie tickery (${symbols.length})`}
+            </h4>
+            <TickerList
+              symbols={filteredSymbols}
+              selected={localSelected}
+              onToggle={handleToggle}
+              height={selectedSymbols.length > 0 ? 250 : 400}
+            />
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  // Shared footer buttons
+  const renderFooter = () => (
+    <>
+      <Button variant="outline" onClick={handleCancel} className="min-h-[44px]">
+        Anuluj
+      </Button>
+      <Button
+        onClick={handleApply}
+        disabled={isLoading || localSelected.size === 0}
+        title={localSelected.size === 0 ? "Musisz zaznaczyć przynajmniej jeden ticker" : undefined}
+        className="min-h-[44px]"
+      >
+        Zastosuj ({localSelected.size})
+      </Button>
+    </>
+  );
+
   return (
     <>
       {/* Trigger Button */}
@@ -124,160 +288,40 @@ export function AdvancedTickerFilter({ selected, onChange, recentSymbols, range 
         )}
       </Button>
 
-      {/* Modal */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl" showCloseButton={true}>
-          <DialogHeader>
-            <DialogTitle>Wybierz tickery</DialogTitle>
-            <DialogDescription>
-              Wyszukaj i wybierz spółki GPW, które chcesz analizować. Możesz również wybrać cały indeks.
-            </DialogDescription>
-          </DialogHeader>
+      {/* Conditional Rendering: Desktop Dialog or Mobile BottomSheet */}
+      {isDesktop ? (
+        /* Desktop: Standard Dialog */
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent className="max-w-2xl" showCloseButton={true}>
+            <DialogHeader>
+              <DialogTitle>Wybierz tickery</DialogTitle>
+              <DialogDescription>
+                Wyszukaj i wybierz spółki GPW, które chcesz analizować. Możesz również wybrać cały indeks.
+              </DialogDescription>
+            </DialogHeader>
 
-          {/* Search and Actions */}
-          <div className="space-y-4">
-            {/* Search Input */}
-            <TickerSearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Szukaj po symbolu, nazwie lub skrócie..."
-              disabled={isLoading}
-            />
+            {renderContent()}
 
-            {/* Index Selection and Bulk Actions */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Index Selector */}
-              <select
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    handleSelectIndex(e.target.value);
-                    e.target.value = ""; // Reset selection
-                  }
-                }}
-                defaultValue=""
-                disabled={isLoading}
-                aria-label="Wybierz indeks GPW"
-              >
-                <option value="" disabled>
-                  Wybierz indeks...
-                </option>
-                {GPW_INDICES.map((index) => (
-                  <option key={index.id} value={index.id}>
-                    {index.name} ({index.symbols.length})
-                  </option>
-                ))}
-              </select>
+            <DialogFooter>{renderFooter()}</DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : (
+        /* Mobile: Bottom Sheet */
+        <BottomSheet open={isOpen} onOpenChange={setIsOpen}>
+          <BottomSheetContent>
+            <BottomSheetHeader>
+              <BottomSheetTitle>Wybierz tickery</BottomSheetTitle>
+              <BottomSheetDescription>
+                Wyszukaj i wybierz spółki GPW, które chcesz analizować. Możesz również wybrać cały indeks.
+              </BottomSheetDescription>
+            </BottomSheetHeader>
 
-              {/* Bulk Actions */}
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSelectAll}
-                  disabled={isLoading || filteredSymbols.length === 0}
-                >
-                  Zaznacz wszystkie
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDeselectAll}
-                  disabled={isLoading || localSelected.size === 0}
-                >
-                  Odznacz wszystkie
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSelectRecent}
-                  disabled={isLoading || !recentSymbols || recentSymbols.length === 0}
-                  title="Zaznacz tickery z ostatniej inicjalizacji"
-                >
-                  Zaznacz ostatnie ({recentSymbols?.length || 0})
-                </Button>
-              </div>
-            </div>
+            <BottomSheetBody>{renderContent()}</BottomSheetBody>
 
-            {/* Selected Count */}
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>
-                Zaznaczono: <strong>{localSelected.size}</strong> / {symbols.length}
-              </span>
-              {searchQuery && (
-                <span>
-                  Wyników wyszukiwania: <strong>{filteredSymbols.length}</strong>
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="space-y-4">
-            {/* Loading State */}
-            {isLoading && (
-              <div className="flex h-64 items-center justify-center">
-                <p className="text-sm text-muted-foreground">Ładowanie tickerów...</p>
-              </div>
-            )}
-
-            {/* Error State */}
-            {error && !isLoading && (
-              <div className="flex h-64 flex-col items-center justify-center gap-2">
-                <p className="text-sm text-destructive">Błąd ładowania tickerów</p>
-                <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-                  Spróbuj ponownie
-                </Button>
-              </div>
-            )}
-
-            {/* Selected Tickers (if any) */}
-            {!isLoading && !error && selectedSymbols.length > 0 && (
-              <div>
-                <h4 className="mb-2 text-sm font-medium">Zaznaczone ({selectedSymbols.length})</h4>
-                <TickerList
-                  symbols={selectedSymbols}
-                  selected={localSelected}
-                  onToggle={handleToggle}
-                  height={150}
-                  className="mb-4"
-                />
-              </div>
-            )}
-
-            {/* All Available Tickers */}
-            {!isLoading && !error && (
-              <div>
-                <h4 className="mb-2 text-sm font-medium">
-                  {searchQuery
-                    ? `Wyniki wyszukiwania (${filteredSymbols.length})`
-                    : `Wszystkie tickery (${symbols.length})`}
-                </h4>
-                <TickerList
-                  symbols={filteredSymbols}
-                  selected={localSelected}
-                  onToggle={handleToggle}
-                  height={selectedSymbols.length > 0 ? 250 : 400}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Footer */}
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCancel}>
-              Anuluj
-            </Button>
-            <Button
-              onClick={handleApply}
-              disabled={isLoading || localSelected.size === 0}
-              title={localSelected.size === 0 ? "Musisz zaznaczyć przynajmniej jeden ticker" : undefined}
-            >
-              Zastosuj ({localSelected.size})
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <BottomSheetFooter className="flex flex-row gap-2">{renderFooter()}</BottomSheetFooter>
+          </BottomSheetContent>
+        </BottomSheet>
+      )}
     </>
   );
 }
