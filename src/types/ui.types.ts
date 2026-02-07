@@ -42,7 +42,7 @@ export interface GridState {
   range: DateRange;
   symbols: string[]; // Selected ticker filters
   eventTypes?: EventType[]; // Selected event type filters
-  sortField?: "date" | "percent_change"; // Sort field
+  sortField?: "date" | "percent_change" | "symbol"; // Sort field
   sortDirection?: "asc" | "desc"; // Sort direction
   endDate?: string; // Optional end date for range
   eventId?: string; // Selected event for sidebar

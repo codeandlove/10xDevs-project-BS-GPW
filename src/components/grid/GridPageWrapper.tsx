@@ -14,6 +14,8 @@ interface GridPageWrapperProps {
   initialSymbols?: string;
   initialEventTypes?: string;
   initialEventId?: string;
+  initialSortField?: string;
+  initialSortDirection?: string;
 }
 
 export function GridPageWrapper({
@@ -21,12 +23,16 @@ export function GridPageWrapper({
   initialSymbols = "",
   initialEventTypes = "",
   initialEventId = "",
+  initialSortField = "symbol",
+  initialSortDirection = "asc",
 }: GridPageWrapperProps) {
   // Parse initial values from Astro props
   const range = (initialRange as DateRange) || "week";
   const symbols = initialSymbols ? initialSymbols.split(",").filter(Boolean) : [];
   const eventTypes = initialEventTypes ? (initialEventTypes.split(",").filter(Boolean) as EventType[]) : [];
   const eventId = initialEventId || undefined;
+  const sortField = (initialSortField as "date" | "percent_change" | "symbol") || "symbol";
+  const sortDirection = (initialSortDirection as "asc" | "desc") || "asc";
 
   return (
     <AuthProvider>
@@ -36,6 +42,8 @@ export function GridPageWrapper({
           symbols,
           eventTypes,
           eventId,
+          sortField,
+          sortDirection,
         }}
       >
         <GridView />

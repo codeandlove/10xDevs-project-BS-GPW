@@ -12,7 +12,7 @@ interface GridContextValue {
   setRange: (range: DateRange) => void;
   setSymbols: (symbols: string[]) => void;
   setEventTypes: (types: EventType[]) => void;
-  setSort: (sort: { field: "date" | "percent_change"; direction: "asc" | "desc" }) => void;
+  setSort: (sort: { field: "date" | "percent_change" | "symbol"; direction: "asc" | "desc" }) => void;
   setEventId: (eventId: string | undefined) => void;
   clearFilters: () => void;
   recentSymbols: string[]; // Cached "ostatnie" symbols from smart initialization
@@ -37,6 +37,8 @@ function getInitialStateFromUrl(): GridState {
       range: "week",
       symbols: [],
       eventTypes: [],
+      sortField: "symbol",
+      sortDirection: "asc",
     };
   }
 
@@ -46,6 +48,8 @@ function getInitialStateFromUrl(): GridState {
     symbols: params.get("symbols")?.split(",").filter(Boolean) || [],
     eventTypes: (params.get("eventTypes")?.split(",").filter(Boolean) as EventType[]) || [],
     eventId: params.get("eventId") || undefined,
+    sortField: (params.get("sortField") as "date" | "percent_change" | "symbol") || "symbol",
+    sortDirection: (params.get("sortDirection") as "asc" | "desc") || "asc",
   };
 }
 
@@ -80,6 +84,18 @@ function updateUrlParams(state: Partial<GridState>): void {
     }
   }
 
+  // Handle sort parameters
+  if (state.sortField !== undefined && state.sortDirection !== undefined) {
+    // Only add to URL if not default
+    if (state.sortField !== "symbol" || state.sortDirection !== "asc") {
+      params.set("sortField", state.sortField);
+      params.set("sortDirection", state.sortDirection);
+    } else {
+      params.delete("sortField");
+      params.delete("sortDirection");
+    }
+  }
+
   const newUrl = `${window.location.pathname}?${params.toString()}`;
   window.history.pushState({}, "", newUrl);
 }
@@ -91,6 +107,8 @@ export function GridProvider({ children, initialState }: GridProviderProps) {
       range: "week",
       symbols: [],
       eventTypes: [],
+      sortField: "symbol",
+      sortDirection: "asc",
     };
     return { ...defaultState, ...initialState };
   });
@@ -128,7 +146,7 @@ export function GridProvider({ children, initialState }: GridProviderProps) {
     setGridState((prev) => ({ ...prev, eventTypes }));
   }, []);
 
-  const setSort = useCallback((sort: { field: "date" | "percent_change"; direction: "asc" | "desc" }) => {
+  const setSort = useCallback((sort: { field: "date" | "percent_change" | "symbol"; direction: "asc" | "desc" }) => {
     setGridState((prev) => ({ ...prev, sortField: sort.field, sortDirection: sort.direction }));
   }, []);
 
@@ -142,6 +160,8 @@ export function GridProvider({ children, initialState }: GridProviderProps) {
       symbols: [],
       eventTypes: [],
       eventId: undefined,
+      sortField: "symbol",
+      sortDirection: "asc",
     }));
   }, []);
 

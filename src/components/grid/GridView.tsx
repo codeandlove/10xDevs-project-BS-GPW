@@ -146,16 +146,20 @@ export function GridView() {
 
   // Apply sorting
   if (gridState.sortField && gridState.sortDirection) {
-    events = [...events].sort((a, b) => {
-      if (gridState.sortField === "date") {
-        const comparison = a.occurrence_date.localeCompare(b.occurrence_date);
-        return gridState.sortDirection === "asc" ? comparison : -comparison;
-      } else if (gridState.sortField === "percent_change") {
-        const comparison = a.percent_change - b.percent_change;
-        return gridState.sortDirection === "asc" ? comparison : -comparison;
-      }
-      return 0;
-    });
+    // Only sort events for date and percent_change
+    // Symbol sorting is handled in VirtualizedGrid (row order)
+    if (gridState.sortField !== "symbol") {
+      events = [...events].sort((a, b) => {
+        if (gridState.sortField === "date") {
+          const comparison = a.occurrence_date.localeCompare(b.occurrence_date);
+          return gridState.sortDirection === "asc" ? comparison : -comparison;
+        } else if (gridState.sortField === "percent_change") {
+          const comparison = Math.abs(a.percent_change) - Math.abs(b.percent_change);
+          return gridState.sortDirection === "asc" ? comparison : -comparison;
+        }
+        return 0;
+      });
+    }
   }
 
   // Count active filters
@@ -163,9 +167,9 @@ export function GridView() {
     let count = 0;
     if (gridState.symbols.length > 0) count++;
     if (gridState.eventTypes && gridState.eventTypes.length > 0) count++;
-    if (gridState.sortField) count++;
+    if (gridState.sortField && (gridState.sortField !== "symbol" || gridState.sortDirection !== "asc")) count++;
     return count;
-  }, [gridState.symbols, gridState.eventTypes, gridState.sortField]);
+  }, [gridState.symbols, gridState.eventTypes, gridState.sortField, gridState.sortDirection]);
 
   // Handle cell click - add to history
   const handleCellClick = useCallback(
@@ -257,6 +261,8 @@ export function GridView() {
                 onCellClick={handleCellClick}
                 selectedEventId={gridState.eventId}
                 selectedSymbols={gridState.symbols}
+                sortField={gridState.sortField}
+                sortDirection={gridState.sortDirection}
               />
             ) : (
               <div className="flex h-full items-center justify-center">
