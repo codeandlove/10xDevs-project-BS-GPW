@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 
-export type SortField = "date" | "percent_change";
+export type SortField = "date" | "percent_change" | "symbol";
 export type SortDirection = "asc" | "desc";
 
 interface SortOption {
@@ -22,6 +22,8 @@ interface SortOptionsProps {
 }
 
 const SORT_OPTIONS: SortOption[] = [
+  { field: "symbol", direction: "asc", label: "Symbol: A-Z" },
+  { field: "symbol", direction: "desc", label: "Symbol: Z-A" },
   { field: "date", direction: "desc", label: "Data: najnowsze" },
   { field: "date", direction: "asc", label: "Data: najstarsze" },
   { field: "percent_change", direction: "desc", label: "Zmiana: największa" },
@@ -63,13 +65,15 @@ export function SortOptions({ value, onChange }: SortOptionsProps) {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border bg-white shadow-lg">
+        <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border bg-white shadow-lg" role="listbox">
           <div className="p-2">
             {SORT_OPTIONS.map((option, index) => {
               const isSelected = option.field === value.field && option.direction === value.direction;
               return (
                 <button
                   key={index}
+                  role="option"
+                  aria-selected={isSelected}
                   onClick={() => handleSelect(option)}
                   className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${
                     isSelected ? "bg-primary text-primary-foreground" : "hover:bg-gray-100"

@@ -16,6 +16,8 @@ interface VirtualizedGridProps {
   onCellClick: (eventId: string) => void;
   selectedEventId?: string;
   selectedSymbols?: string[]; // User-selected symbols to always show (even if no events)
+  sortField?: "date" | "percent_change" | "symbol";
+  sortDirection?: "asc" | "desc";
 }
 
 // Responsive grid sizing
@@ -55,6 +57,8 @@ export function VirtualizedGrid({
   onCellClick,
   selectedEventId,
   selectedSymbols,
+  sortField = "symbol",
+  sortDirection = "asc",
 }: VirtualizedGridProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const headerScrollRef = useRef<HTMLDivElement>(null);
@@ -85,24 +89,55 @@ export function VirtualizedGrid({
     const symbolsSet = new Set<string>();
     const eventMap = new Map<string, BlackSwanEventMinimal>();
 
-    // Add symbols from events
+    // Group events by symbol to find most significant event per symbol
+    const eventsBySymbol = new Map<string, BlackSwanEventMinimal[]>();
+
+    // Add symbols from events and group by symbol
     events.forEach((event) => {
       symbolsSet.add(event.symbol);
       const key = `${event.symbol}-${event.occurrence_date}`;
       eventMap.set(key, event);
+
+      if (!eventsBySymbol.has(event.symbol)) {
+        eventsBySymbol.set(event.symbol, []);
+      }
+      const symbolEvents = eventsBySymbol.get(event.symbol);
+      if (symbolEvents) {
+        symbolEvents.push(event);
+      }
     });
 
-    // Add user-selected symbols (even if no events) - always show selected tickers
+    // Add user-selected symbols (even if no events) - append at end
     if (selectedSymbols && selectedSymbols.length > 0) {
-      selectedSymbols.forEach((symbol) => symbolsSet.add(symbol));
+      selectedSymbols.forEach((symbol) => {
+        symbolsSet.add(symbol);
+      });
+    }
+
+    // Determine symbol order based on sortField
+    let finalSymbols: string[];
+
+    if (sortField === "symbol") {
+      // Alphabetic sorting
+      finalSymbols = Array.from(symbolsSet).sort((a, b) => {
+        const comparison = a.localeCompare(b);
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    } else {
+      // For date/percent_change sorting: preserve order from events array
+      // Symbols with events stay in the order of their first (most significant) event
+      const symbolsWithEvents = Array.from(eventsBySymbol.keys());
+      const symbolsWithoutEvents = Array.from(symbolsSet).filter((s) => !eventsBySymbol.has(s));
+      // Symbols without events are sorted alphabetically and appended
+      finalSymbols = [...symbolsWithEvents, ...symbolsWithoutEvents.sort()];
     }
 
     return {
-      symbols: Array.from(symbolsSet).sort(),
+      symbols: finalSymbols,
       dates: datesInRange,
       eventsBySymbolAndDate: eventMap,
     };
-  }, [events, range, selectedSymbols]);
+  }, [events, range, selectedSymbols, sortField, sortDirection]);
 
   // Row virtualizer (symbols) - recreate when config changes
   const rowVirtualizer = useVirtualizer({

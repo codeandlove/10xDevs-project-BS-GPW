@@ -826,6 +826,264 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       }
     });
   });
+
+  test.describe("Grid View - Sorting", () => {
+    test.beforeEach(async ({ page }) => {
+      // Setup API mocks
+      await setupNocoDBMocks(page);
+
+      // Login via API
+      await loginViaUI(page, {
+        email: "test@example.com",
+        password: "Test123!@#",
+      });
+    });
+
+    test("TC-GRID-004: Sort by symbol (A-Z) - default", async ({ page }) => {
+      await page.goto("/grid");
+
+      // Wait for grid to load
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Default sort should be "Symbol: A-Z"
+      const sortButton = page.getByRole("button", { name: /Symbol: A-Z/i });
+      await expect(sortButton).toBeVisible();
+
+      // URL should NOT contain sort parameters (default state)
+      expect(page.url()).not.toContain("sortField");
+      expect(page.url()).not.toContain("sortDirection");
+
+      // Verify symbols are sorted alphabetically
+      // Get all symbol cells (first column)
+      const symbolCells = page.locator('[role="row"]').locator("div:first-child span");
+      const firstSymbolCount = await symbolCells.count();
+
+      if (firstSymbolCount > 1) {
+        // Get first two symbols
+        const firstSymbol = await symbolCells.nth(1).textContent(); // Skip header
+        const secondSymbol = await symbolCells.nth(2).textContent();
+
+        if (firstSymbol && secondSymbol) {
+          // First symbol should come before second in alphabet
+          expect(firstSymbol.localeCompare(secondSymbol)).toBeLessThanOrEqual(0);
+        }
+      }
+    });
+
+    test("TC-GRID-004: Sort by symbol (Z-A)", async ({ page }) => {
+      await page.goto("/grid");
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Click sort button to open dropdown
+      const sortButton = page.getByRole("button", { name: /Symbol: A-Z/i });
+      await sortButton.click();
+
+      // Select "Symbol: Z-A" from dropdown
+      const zaOption = page.getByRole("option", { name: /Symbol: Z-A/i });
+      await zaOption.click();
+
+      // Wait for sort to apply
+      await page.waitForTimeout(500);
+
+      // Button should update to show selected sort
+      await expect(page.getByRole("button", { name: /Symbol: Z-A/i })).toBeVisible();
+
+      // URL should contain sort parameters
+      await page.waitForURL(/sortField=symbol/);
+      await page.waitForURL(/sortDirection=desc/);
+
+      // Verify symbols are sorted reverse alphabetically
+      // Get all rows, then extract symbol from each row
+      const rows = page.locator('[role="row"]');
+      const rowCount = await rows.count();
+
+      if (rowCount > 2) {
+        // Skip header row (index 0), get first two data rows
+        const firstRow = rows.nth(1);
+        const secondRow = rows.nth(2);
+
+        // Get symbol from the sticky left column
+        const firstSymbol = await firstRow.locator(".sticky.left-0 span").first().textContent();
+        const secondSymbol = await secondRow.locator(".sticky.left-0 span").first().textContent();
+
+        if (firstSymbol && secondSymbol) {
+          // First symbol should come after second in alphabet (reverse order)
+          // Z-A means: first >= second (e.g., "PKO" >= "PKN")
+          expect(firstSymbol.localeCompare(secondSymbol)).toBeGreaterThanOrEqual(0);
+        }
+      }
+
+      // Reload page to verify persistence
+      await page.reload();
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Sort should persist after reload
+      await expect(page.getByRole("button", { name: /Symbol: Z-A/i })).toBeVisible();
+      expect(page.url()).toContain("sortField=symbol");
+      expect(page.url()).toContain("sortDirection=desc");
+    });
+
+    test("TC-GRID-004: Sort by date (oldest first)", async ({ page }) => {
+      await page.goto("/grid");
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Click sort button to open dropdown
+      const sortButton = page.getByRole("button", { name: /Symbol: A-Z/i });
+      await sortButton.click();
+
+      // Select "Data: najstarsze" from dropdown
+      const oldestOption = page.getByRole("option", { name: /Data: najstarsze/i });
+      await oldestOption.click();
+
+      // Wait for sort to apply
+      await page.waitForTimeout(500);
+
+      // Button should update to show selected sort
+      await expect(page.getByRole("button", { name: /Data: najstarsze/i })).toBeVisible();
+
+      // URL should contain sort parameters
+      await page.waitForURL(/sortField=date/);
+      await page.waitForURL(/sortDirection=asc/);
+
+      // Reload page to verify persistence
+      await page.reload();
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Sort should persist after reload
+      await expect(page.getByRole("button", { name: /Data: najstarsze/i })).toBeVisible();
+      expect(page.url()).toContain("sortField=date");
+      expect(page.url()).toContain("sortDirection=asc");
+    });
+
+    test("TC-GRID-004: Sort by percent change (highest)", async ({ page }) => {
+      await page.goto("/grid");
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Click sort button
+      const sortButton = page.getByRole("button", { name: /Symbol: A-Z/i });
+      await sortButton.click();
+
+      // Select "Zmiana: największa"
+      const highestOption = page.getByRole("option", { name: /Zmiana: największa/i });
+      await highestOption.click();
+
+      // Wait for sort to apply
+      await page.waitForTimeout(500);
+
+      // Button should update
+      await expect(page.getByRole("button", { name: /Zmiana: największa/i })).toBeVisible();
+
+      // URL should contain sort parameters
+      await page.waitForURL(/sortField=percent_change/);
+      await page.waitForURL(/sortDirection=desc/);
+
+      // Verify events are sorted by percent_change descending
+      const eventCells = page.locator('[data-has-event="true"]');
+      const eventCount = await eventCells.count();
+
+      if (eventCount > 1) {
+        // Get percent changes from first two events
+        const firstPercent = await eventCells.nth(0).getAttribute("data-percent-change");
+        const secondPercent = await eventCells.nth(1).getAttribute("data-percent-change");
+
+        if (firstPercent && secondPercent) {
+          // First event should have higher or equal percent change
+          expect(Math.abs(parseFloat(firstPercent))).toBeGreaterThanOrEqual(Math.abs(parseFloat(secondPercent)));
+        }
+      }
+    });
+
+    test("TC-GRID-004: Sort by percent change (lowest)", async ({ page }) => {
+      await page.goto("/grid");
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Click sort button
+      const sortButton = page.getByRole("button", { name: /Symbol: A-Z/i });
+      await sortButton.click();
+
+      // Select "Zmiana: najmniejsza"
+      const lowestOption = page.getByRole("option", { name: /Zmiana: najmniejsza/i });
+      await lowestOption.click();
+
+      // Wait for sort to apply
+      await page.waitForTimeout(500);
+
+      // Button should update
+      await expect(page.getByRole("button", { name: /Zmiana: najmniejsza/i })).toBeVisible();
+
+      // URL should contain sort parameters
+      await page.waitForURL(/sortField=percent_change/);
+      await page.waitForURL(/sortDirection=asc/);
+
+      // Reload to verify persistence
+      await page.reload();
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Sort should persist
+      await expect(page.getByRole("button", { name: /Zmiana: najmniejsza/i })).toBeVisible();
+      expect(page.url()).toContain("sortField=percent_change");
+      expect(page.url()).toContain("sortDirection=asc");
+    });
+
+    test("TC-GRID-004: Clear filters resets sort to default", async ({ page }) => {
+      await page.goto("/grid");
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Apply non-default sort
+      const sortButton = page.getByRole("button", { name: /Symbol: A-Z/i });
+      await sortButton.click();
+      const highestOption = page.getByRole("option", { name: /Zmiana: największa/i });
+      await highestOption.click();
+      await page.waitForTimeout(500);
+
+      // Verify sort is active
+      await expect(page.getByRole("button", { name: /Zmiana: największa/i })).toBeVisible();
+      expect(page.url()).toContain("sortField=percent_change");
+
+      // Click "Wyczyść filtry"
+      const clearButton = page.getByRole("button", { name: /Wyczyść filtry/i });
+      await clearButton.click();
+
+      // Wait for filters to clear
+      await page.waitForTimeout(500);
+
+      // Sort should reset to default "Symbol: A-Z"
+      await expect(page.getByRole("button", { name: /Symbol: A-Z/i })).toBeVisible();
+
+      // URL should NOT contain sort parameters (default state)
+      expect(page.url()).not.toContain("sortField");
+      expect(page.url()).not.toContain("sortDirection");
+    });
+
+    test("TC-GRID-004: Sort persists in URL on reload", async ({ page }) => {
+      await page.goto("/grid");
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Apply sort - first open the sort dropdown using the default button
+      const sortButton = page.getByRole("button", { name: /Symbol: A-Z/i });
+      await sortButton.click();
+      const oldestOption = page.getByRole("option", { name: /Data: najstarsze/i });
+      await oldestOption.click();
+      await page.waitForTimeout(500);
+
+      // Get URL with sort parameters
+      const urlWithSort = page.url();
+      expect(urlWithSort).toContain("sortField=date");
+      expect(urlWithSort).toContain("sortDirection=asc");
+
+      // Navigate away
+      await page.goto("/");
+
+      // Navigate back using the URL with sort parameters
+      await page.goto(urlWithSort);
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Sort should be preserved
+      await expect(page.getByRole("button", { name: /Data: najstarsze/i })).toBeVisible();
+      expect(page.url()).toContain("sortField=date");
+      expect(page.url()).toContain("sortDirection=asc");
+    });
+  });
 }); // End of Grid View - Active User Tests (test@example.com)
 
 // Group all tests using expired@example.com - run serially to avoid session conflicts
