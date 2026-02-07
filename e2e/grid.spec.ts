@@ -363,6 +363,107 @@ test.describe("Grid View - Active User Tests (test@example.com)", () => {
       const buttonText = await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).textContent();
       expect(buttonText).toContain("1");
     });
+
+    test("TC-GRID-003: Mobile - Bottom sheet opens and is scrollable", async ({ page }) => {
+      // Test mobile viewport - bottom sheet implementation
+      await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE
+      await page.reload(); // Re-render components for mobile viewport
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Open mobile menu first
+      await page.getByRole("button", { name: /Toggle menu/i }).click();
+      await page.waitForTimeout(300);
+
+      await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
+      await page.waitForTimeout(500);
+
+      // Bottom sheet should be visible (vaul uses data-vaul-drawer)
+      const bottomSheet = page.locator("[data-vaul-drawer]");
+      await expect(bottomSheet).toBeVisible();
+
+      // Check title
+      await expect(page.getByRole("heading", { name: "Wybierz tickery" })).toBeVisible();
+
+      // Check scrollable area exists
+      const scrollableArea = bottomSheet.locator(".overflow-y-auto").first();
+      await expect(scrollableArea).toBeVisible();
+
+      // Footer buttons should be visible (sticky)
+      const applyButton = bottomSheet.getByRole("button", { name: /Zastosuj/i });
+      const cancelButton = bottomSheet.getByRole("button", { name: /Anuluj/i });
+      await expect(applyButton).toBeVisible();
+      await expect(cancelButton).toBeVisible();
+
+      // Close by clicking cancel
+      await cancelButton.click();
+      await page.waitForTimeout(300);
+      await expect(bottomSheet).not.toBeVisible();
+    });
+
+    test("TC-GRID-003: Mobile - Touch targets meet WCAG requirements", async ({ page }) => {
+      // Test touch target sizes on mobile
+      await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE
+      await page.reload(); // Re-render components for mobile viewport
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      // Open mobile menu first
+      await page.getByRole("button", { name: /Toggle menu/i }).click();
+      await page.waitForTimeout(300);
+
+      await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
+      await page.waitForTimeout(500);
+
+      const bottomSheet = page.locator("[data-vaul-drawer]");
+      await expect(bottomSheet).toBeVisible();
+      await page.waitForTimeout(1000); // Wait for content
+
+      // Check footer buttons touch targets (≥44px)
+      const applyButton = bottomSheet.getByRole("button", { name: /Zastosuj/i });
+      const applyBox = await applyButton.boundingBox();
+      expect(applyBox).toBeTruthy();
+      if (applyBox) {
+        expect(applyBox.height).toBeGreaterThanOrEqual(44);
+      }
+
+      const cancelButton = bottomSheet.getByRole("button", { name: /Anuluj/i });
+      const cancelBox = await cancelButton.boundingBox();
+      expect(cancelBox).toBeTruthy();
+      if (cancelBox) {
+        expect(cancelBox.height).toBeGreaterThanOrEqual(44);
+      }
+
+      await cancelButton.click();
+    });
+
+    test("TC-GRID-003: Desktop - Dialog opens centered (not bottom sheet)", async ({ page }) => {
+      // Test desktop viewport - standard dialog
+      await page.setViewportSize({ width: 1280, height: 720 }); // Desktop
+      await page.reload(); // Re-render components for desktop viewport
+      await expect(page.locator('[role="grid"]')).toBeVisible({ timeout: 10000 });
+
+      await page.getByRole("button", { name: /Filter by ticker|Tickery/i }).click();
+
+      // Dialog should be visible (Radix Dialog uses role="dialog")
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+
+      // Should NOT be bottom sheet
+      const vaulDrawer = page.locator("[data-vaul-drawer]");
+      await expect(vaulDrawer).not.toBeVisible();
+
+      // Dialog should not be fullscreen
+      const dialogBox = await dialog.boundingBox();
+      expect(dialogBox).toBeTruthy();
+      if (dialogBox) {
+        expect(dialogBox.width).toBeLessThan(700); // max-w-2xl
+        expect(dialogBox.height).toBeLessThan(900); // Not fullscreen but allows for long ticker list
+      }
+
+      // Close dialog by pressing Escape key
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(300);
+      await expect(dialog).not.toBeVisible();
+    });
   });
 
   test.describe("Grid View - Keyboard Navigation", () => {
