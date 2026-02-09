@@ -118,3 +118,70 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom thin scrollbar for minimap - complete override */
+[data-minimap-scroll] {
+  scrollbar-width: thin !important;
+  scrollbar-color: #d1d5db #f3f4f6 !important;
+}
+
+[data-minimap-scroll]::-webkit-scrollbar {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 6px !important;
+  height: 6px !important;
+}
+
+[data-minimap-scroll]::-webkit-scrollbar-track {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: #f3f4f6 !important;
+  border-radius: 3px !important;
+}
+
+[data-minimap-scroll]::-webkit-scrollbar-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: #d1d5db !important;
+  border-radius: 3px !important;
+}
+
+[data-minimap-scroll]::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af !important;
+}
+
+/* Completely remove scrollbar buttons/arrows */
+[data-minimap-scroll]::-webkit-scrollbar-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: block !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+[data-minimap-scroll]::-webkit-scrollbar-button:single-button {
+  display: block !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* All directional buttons */
+[data-minimap-scroll]::-webkit-scrollbar-button:vertical:start,
+[data-minimap-scroll]::-webkit-scrollbar-button:vertical:end,
+[data-minimap-scroll]::-webkit-scrollbar-button:horizontal:start,
+[data-minimap-scroll]::-webkit-scrollbar-button:horizontal:end {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: block !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Corner where scrollbars meet */
+[data-minimap-scroll]::-webkit-scrollbar-corner {
+  background: transparent !important;
+}

@@ -46,7 +46,7 @@ function BottomSheetContent({ className, children, showHandle = true, ...props }
       <BottomSheetOverlay />
       <Drawer.Content
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-[96%] flex-col rounded-t-[20px] bg-background",
+          "fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[96%] flex-col rounded-t-[20px] bg-background",
           className
         )}
         {...props}
@@ -71,7 +71,7 @@ function BottomSheetDescription({ className, ...props }: React.ComponentProps<ty
 }
 
 function BottomSheetBody({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("flex-1 overflow-y-auto px-4 py-4", className)} {...props} />;
+  return <div className={cn("max-h-[80vh] overflow-y-auto px-4 py-4", className)} {...props} />;
 }
 
 function BottomSheetFooter({ className, ...props }: React.ComponentProps<"div">) {

@@ -8,6 +8,7 @@ import { useRef, useMemo, useCallback, useState, useEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { BlackSwanEventMinimal, DateRange } from "@/types/nocodb.types";
 import { GridCell } from "./GridCell";
+import { GridMinimap } from "./GridMinimap";
 import { getDatesInRange } from "@/lib/ui-utils";
 
 interface VirtualizedGridProps {
@@ -68,12 +69,18 @@ export function VirtualizedGrid({
   // Keyboard navigation state
   const [focusedCell, setFocusedCell] = useState<{ symbolIndex: number; dateIndex: number } | null>(null);
 
+  // Store grid scroll element for minimap
+  const [gridScrollElement, setGridScrollElement] = useState<HTMLDivElement | null>(null);
+
   // Scroll synchronization between header and body
   useEffect(() => {
     const bodyEl = parentRef.current;
     const headerEl = headerScrollRef.current;
 
     if (!bodyEl || !headerEl) return;
+
+    // Set grid scroll element for minimap
+    setGridScrollElement(bodyEl);
 
     const handleScroll = () => {
       headerEl.scrollLeft = bodyEl.scrollLeft;
@@ -229,39 +236,129 @@ export function VirtualizedGrid({
   );
 
   return (
-    <div className="flex h-full w-full flex-col rounded-lg border" role="grid" aria-label="Black Swan Events Grid">
-      {/* Header row with dates (sticky) */}
-      <div className="sticky top-0 z-20 flex min-h-[48px] border-b bg-white md:min-h-[56px]" role="row">
-        {/* Top-left corner (empty cell for symbol column) */}
-        <div
-          className="sticky left-0 z-30 flex shrink-0 items-center border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
-          role="columnheader"
-          style={{ width: `${config.symbolWidth}px` }}
-        >
-          <span className="text-xs font-semibold text-gray-700 md:text-sm">Symbol</span>
+    <>
+      <div className="flex h-full w-full flex-col rounded-lg border" role="grid" aria-label="Black Swan Events Grid">
+        {/* Header row with dates (sticky) */}
+        <div className="sticky top-0 z-20 flex min-h-[48px] border-b bg-white md:min-h-[56px]" role="row">
+          {/* Top-left corner (empty cell for symbol column) */}
+          <div
+            className="sticky left-0 z-30 flex shrink-0 items-center border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
+            role="columnheader"
+            style={{ width: `${config.symbolWidth}px` }}
+          >
+            <span className="text-xs font-semibold text-gray-700 md:text-sm">Symbol</span>
+          </div>
+
+          {/* Scrollable dates container */}
+          <div ref={headerScrollRef} className="flex flex-1 items-stretch overflow-x-hidden">
+            <div
+              className="relative flex"
+              style={{
+                width: `${columnVirtualizer.getTotalSize()}px`,
+              }}
+            >
+              {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
+                const date = dates[virtualColumn.index];
+                return (
+                  <div
+                    key={virtualColumn.key}
+                    role="columnheader"
+                    className="absolute left-0 top-0 flex h-full items-center justify-center border-r px-2 py-2 md:px-4 md:py-3"
+                    style={{
+                      width: `${virtualColumn.size}px`,
+                      transform: `translateX(${virtualColumn.start}px)`,
+                    }}
+                  >
+                    <span className="text-[10px] font-medium text-gray-600 md:text-xs">{date}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        {/* Scrollable dates container */}
-        <div ref={headerScrollRef} className="flex flex-1 items-stretch overflow-x-hidden">
+        {/* Scrollable body */}
+        <div ref={parentRef} className="flex-1 overflow-auto rounded-b-lg">
           <div
-            className="relative flex"
+            className="relative"
             style={{
-              width: `${columnVirtualizer.getTotalSize()}px`,
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: `${columnVirtualizer.getTotalSize() + config.symbolWidth}px`,
             }}
           >
-            {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
-              const date = dates[virtualColumn.index];
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const symbol = symbols[virtualRow.index];
+
               return (
                 <div
-                  key={virtualColumn.key}
-                  role="columnheader"
-                  className="absolute left-0 top-0 flex h-full items-center justify-center border-r px-2 py-2 md:px-4 md:py-3"
+                  key={virtualRow.key}
+                  role="row"
+                  className="absolute left-0 top-0 flex w-full"
                   style={{
-                    width: `${virtualColumn.size}px`,
-                    transform: `translateX(${virtualColumn.start}px)`,
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  <span className="text-[10px] font-medium text-gray-600 md:text-xs">{date}</span>
+                  {/* Symbol column (sticky left) */}
+                  <div
+                    className="sticky left-0 z-10 shrink-0 border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
+                    style={{ width: `${config.symbolWidth}px` }}
+                  >
+                    <span className="truncate text-xs font-semibold text-gray-900 md:text-sm" title={symbol}>
+                      {symbol}
+                    </span>
+                  </div>
+
+                  {/* Virtual columns for cells */}
+                  <div
+                    className="relative flex"
+                    style={{
+                      width: `${columnVirtualizer.getTotalSize()}px`,
+                    }}
+                  >
+                    {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
+                      const date = dates[virtualColumn.index];
+                      const event = getEvent(symbol, date);
+                      const symbolIndex = virtualRow.index;
+                      const dateIndex = virtualColumn.index;
+                      const isFocused =
+                        focusedCell?.symbolIndex === symbolIndex && focusedCell?.dateIndex === dateIndex;
+
+                      return (
+                        <div
+                          key={virtualColumn.key}
+                          className={`absolute left-0 top-0 h-full ${isFocused ? "ring-2 ring-blue-500 ring-offset-1" : ""}`}
+                          style={{
+                            width: `${virtualColumn.size}px`,
+                            transform: `translateX(${virtualColumn.start}px)`,
+                          }}
+                        >
+                          <GridCell
+                            data={
+                              event
+                                ? {
+                                    eventId: event.id,
+                                    symbol,
+                                    date,
+                                    eventType: event.event_type,
+                                    percentChange: event.percent_change,
+                                    hasSummary: true,
+                                  }
+                                : {
+                                    eventId: null,
+                                    symbol,
+                                    date,
+                                  }
+                            }
+                            onClick={
+                              event ? () => handleCellClickWithFocus(event.id, symbolIndex, dateIndex) : undefined
+                            }
+                            isSelected={event?.id === selectedEventId}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })}
@@ -269,90 +366,8 @@ export function VirtualizedGrid({
         </div>
       </div>
 
-      {/* Scrollable body */}
-      <div ref={parentRef} className="flex-1 overflow-auto rounded-b-lg">
-        <div
-          className="relative"
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            width: `${columnVirtualizer.getTotalSize() + config.symbolWidth}px`,
-          }}
-        >
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const symbol = symbols[virtualRow.index];
-
-            return (
-              <div
-                key={virtualRow.key}
-                role="row"
-                className="absolute left-0 top-0 flex w-full"
-                style={{
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                {/* Symbol column (sticky left) */}
-                <div
-                  className="sticky left-0 z-10 shrink-0 border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
-                  style={{ width: `${config.symbolWidth}px` }}
-                >
-                  <span className="truncate text-xs font-semibold text-gray-900 md:text-sm" title={symbol}>
-                    {symbol}
-                  </span>
-                </div>
-
-                {/* Virtual columns for cells */}
-                <div
-                  className="relative flex"
-                  style={{
-                    width: `${columnVirtualizer.getTotalSize()}px`,
-                  }}
-                >
-                  {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
-                    const date = dates[virtualColumn.index];
-                    const event = getEvent(symbol, date);
-                    const symbolIndex = virtualRow.index;
-                    const dateIndex = virtualColumn.index;
-                    const isFocused = focusedCell?.symbolIndex === symbolIndex && focusedCell?.dateIndex === dateIndex;
-
-                    return (
-                      <div
-                        key={virtualColumn.key}
-                        className={`absolute left-0 top-0 h-full ${isFocused ? "ring-2 ring-blue-500 ring-offset-1" : ""}`}
-                        style={{
-                          width: `${virtualColumn.size}px`,
-                          transform: `translateX(${virtualColumn.start}px)`,
-                        }}
-                      >
-                        <GridCell
-                          data={
-                            event
-                              ? {
-                                  eventId: event.id,
-                                  symbol,
-                                  date,
-                                  eventType: event.event_type,
-                                  percentChange: event.percent_change,
-                                  hasSummary: true,
-                                }
-                              : {
-                                  eventId: null,
-                                  symbol,
-                                  date,
-                                }
-                          }
-                          onClick={event ? () => handleCellClickWithFocus(event.id, symbolIndex, dateIndex) : undefined}
-                          isSelected={event?.id === selectedEventId}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+      {/* Minimap for navigation */}
+      <GridMinimap events={events} symbols={symbols} dates={dates} gridScrollElement={gridScrollElement} />
+    </>
   );
 }
