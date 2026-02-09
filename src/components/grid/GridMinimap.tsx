@@ -219,18 +219,19 @@ export function GridMinimap({ events, symbols, dates, gridScrollElement }: GridM
         <BottomSheetContent>
           <BottomSheetHeader>
             <BottomSheetTitle>Nawiguj</BottomSheetTitle>
-            <BottomSheetDescription>Dotknij mapy aby przejść do wybranej lokalizacji</BottomSheetDescription>
+            <BottomSheetDescription>Przeciągnij niebieski prostokąt aby nawigować po gridzie</BottomSheetDescription>
           </BottomSheetHeader>
 
           <BottomSheetBody>
             <div
               data-minimap
+              data-vaul-no-drag
               role="button"
               tabIndex={0}
               className="mx-auto w-full"
               onMouseDown={handleMouseDown}
               onKeyDown={handleKeyDown}
-              aria-label="Dotknij aby przewinąć grid"
+              aria-label="Przeciągnij kwadrat aby nawigować po gridzie"
             >
               <MinimapCanvas
                 dimensions={mobileDimensions}
@@ -238,6 +239,7 @@ export function GridMinimap({ events, symbols, dates, gridScrollElement }: GridM
                 viewport={viewport}
                 isDragging={isDragging}
                 fullWidth={true}
+                onTouchStart={handleTouchStart}
               />
             </div>
           </BottomSheetBody>
