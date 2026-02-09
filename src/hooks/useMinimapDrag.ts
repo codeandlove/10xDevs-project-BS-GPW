@@ -152,10 +152,6 @@ export function useMinimapDrag({
       const touch = e.touches[0];
       if (!touch) return;
 
-      // Prevent default immediately on canvas touch
-      e.preventDefault();
-      e.stopPropagation();
-
       canvasElementRef.current = canvas;
       const rect = canvas.getBoundingClientRect();
       const clickX = touch.clientX - rect.left;
@@ -163,7 +159,10 @@ export function useMinimapDrag({
       const isInside = isInsideViewport(touch.clientX, touch.clientY, canvas);
 
       if (isInside) {
-        // DRAG MODE
+        // DRAG MODE: Touch inside viewport - prevent default to enable drag
+        e.preventDefault();
+        e.stopPropagation();
+
         const viewportX = viewport.x * dimensions.width;
         const viewportY = viewport.y * dimensions.height;
         dragOffsetRef.current = { x: clickX - viewportX, y: clickY - viewportY };
@@ -200,14 +199,45 @@ export function useMinimapDrag({
         canvas.addEventListener("touchend", handleTouchEndLocal, { once: true });
         canvas.addEventListener("touchcancel", handleTouchEndLocal, { once: true });
       } else {
-        // JUMP MODE
-        const normalized = normalizePosition(clickX, clickY, dimensions);
-        const targetX = normalized.x - viewport.width / 2;
-        const targetY = normalized.y - viewport.height / 2;
-        const clampedX = Math.max(0, Math.min(1 - viewport.width, targetX));
-        const clampedY = Math.max(0, Math.min(1 - viewport.height, targetY));
-        gridScrollElement.scrollLeft = clampedX * gridScrollElement.scrollWidth;
-        gridScrollElement.scrollTop = clampedY * gridScrollElement.scrollHeight;
+        // JUMP MODE or SCROLL: Touch outside viewport
+        // Check if it's a quick tap (not a scroll gesture)
+        const touchStartTime = Date.now();
+        const startY = touch.clientY;
+
+        const handleTouchMoveCheck = (moveEvent: TouchEvent) => {
+          const moveTouch = moveEvent.touches[0];
+          if (!moveTouch) return;
+
+          // If user moved more than 10px, it's a scroll gesture - let it through
+          const deltaY = Math.abs(moveTouch.clientY - startY);
+          if (deltaY > 10) {
+            canvas.removeEventListener("touchmove", handleTouchMoveCheck);
+            canvas.removeEventListener("touchend", handleTouchEndCheck);
+          }
+        };
+
+        const handleTouchEndCheck = () => {
+          canvas.removeEventListener("touchmove", handleTouchMoveCheck);
+
+          const touchDuration = Date.now() - touchStartTime;
+          const wasTap = touchDuration < 200; // Quick tap under 200ms
+
+          if (wasTap) {
+            // It was a tap - jump to position
+            e.preventDefault(); // Now we can prevent default
+            const normalized = normalizePosition(clickX, clickY, dimensions);
+            const targetX = normalized.x - viewport.width / 2;
+            const targetY = normalized.y - viewport.height / 2;
+            const clampedX = Math.max(0, Math.min(1 - viewport.width, targetX));
+            const clampedY = Math.max(0, Math.min(1 - viewport.height, targetY));
+            gridScrollElement.scrollLeft = clampedX * gridScrollElement.scrollWidth;
+            gridScrollElement.scrollTop = clampedY * gridScrollElement.scrollHeight;
+          }
+          // else: was a scroll - do nothing, native scroll already handled
+        };
+
+        canvas.addEventListener("touchmove", handleTouchMoveCheck, { passive: true });
+        canvas.addEventListener("touchend", handleTouchEndCheck, { once: true });
       }
     },
     [viewport, dimensions, gridScrollElement, isInsideViewport, onDragStart, onDragEnd]

@@ -51,14 +51,14 @@ function MinimapCanvasComponent({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  // Attach native touch listener only if not fullWidth (desktop mode)
+  // Attach native touch listener (both desktop and mobile for drag functionality)
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !onTouchStart || fullWidth) return;
+    if (!canvas || !onTouchStart) return;
 
     canvas.addEventListener("touchstart", onTouchStart, { passive: false });
     return () => canvas.removeEventListener("touchstart", onTouchStart);
-  }, [onTouchStart, fullWidth]);
+  }, [onTouchStart]);
 
   // Render canvas
   useEffect(() => {
@@ -93,7 +93,7 @@ function MinimapCanvasComponent({
       height={dimensions.height}
       className="block"
       style={{
-        touchAction: fullWidth ? "pan-y" : "none",
+        touchAction: fullWidth ? "auto" : "none",
         verticalAlign: "top",
         maxWidth: "100%",
       }}

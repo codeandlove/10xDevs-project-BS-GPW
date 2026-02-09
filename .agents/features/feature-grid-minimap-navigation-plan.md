@@ -528,6 +528,7 @@ e2e/
 - [ ] Import GridMinimap
 - [ ] useMemo dla gridDataForMinimap = { events, symbols, dates }
 - [ ] Render GridMinimap po zamknięciu głównego div gridu (jako sibling)
+
   ```tsx
   return (
     <>
@@ -1090,7 +1091,7 @@ Perfect for analyzing large date ranges (quarter view with many symbols)!
 
 ## Approvals
 
-- [ ] Product Owner: ******\_\_\_******
-- [ ] Tech Lead: ******\_\_\_******
-- [ ] Frontend Dev: ******\_\_\_******
-- [ ] QA Lead: ******\_\_\_******
+- [ ] Product Owner: **\*\***\_\_\_**\*\***
+- [ ] Tech Lead: **\*\***\_\_\_**\*\***
+- [ ] Frontend Dev: **\*\***\_\_\_**\*\***
+- [ ] QA Lead: **\*\***\_\_\_**\*\***
