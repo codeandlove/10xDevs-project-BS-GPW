@@ -22,6 +22,8 @@ import {
   debounce,
   throttle,
 } from "@/lib/ui-utils";
+import { getEventTypeCellColor } from "@/config/event-type-colors";
+import type { EventType } from "@/types/nocodb.types";
 
 describe("UI Utils - Date Formatting", () => {
   it("formatDate should format date to Polish locale", () => {
@@ -124,6 +126,24 @@ describe("UI Utils - Event Type Colors", () => {
     expect(getEventTypeBadgeVariant("BLACK_SWAN_DOWN")).toBe("destructive");
     expect(getEventTypeBadgeVariant("BLACK_SWAN_UP")).toBe("default");
     expect(getEventTypeBadgeVariant("VOLATILITY_UP")).toBe("secondary");
+  });
+
+  it("getEventTypeColor should return same values as getEventTypeCellColor", () => {
+    const eventTypes: EventType[] = [
+      "BLACK_SWAN_UP",
+      "BLACK_SWAN_DOWN",
+      "VOLATILITY_UP",
+      "VOLATILITY_DOWN",
+      "BIG_MOVE",
+    ];
+
+    eventTypes.forEach((type) => {
+      expect(getEventTypeColor(type)).toBe(getEventTypeCellColor(type));
+    });
+  });
+
+  it("getEventTypeColor should return fallback for unknown event type", () => {
+    expect(getEventTypeColor("UNKNOWN")).toContain("gray");
   });
 });
 

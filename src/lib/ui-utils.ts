@@ -2,7 +2,8 @@
  * Utility functions for UI components
  */
 
-import type { DateRange } from "@/types/nocodb.types";
+import type { DateRange, EventType } from "@/types/nocodb.types";
+import { getEventTypeCellColor } from "@/config/event-type-colors";
 
 /**
  * Get array of dates for given date range
@@ -38,22 +39,10 @@ export function getDatesInRange(range: DateRange): string[] {
 
 /**
  * Get color class based on event type
+ * @deprecated Use getEventTypeCellColor from @/config/event-type-colors instead
  */
 export function getEventTypeColor(eventType: string): string {
-  switch (eventType) {
-    case "BLACK_SWAN_UP":
-      return "bg-green-100 text-green-900 border-green-300";
-    case "BLACK_SWAN_DOWN":
-      return "bg-red-100 text-red-900 border-red-300";
-    case "VOLATILITY_UP":
-      return "bg-orange-100 text-orange-900 border-orange-300";
-    case "VOLATILITY_DOWN":
-      return "bg-yellow-100 text-yellow-900 border-yellow-300";
-    case "BIG_MOVE":
-      return "bg-blue-100 text-blue-900 border-blue-300";
-    default:
-      return "bg-gray-100 text-gray-900 border-gray-300";
-  }
+  return getEventTypeCellColor(eventType as EventType);
 }
 
 /**

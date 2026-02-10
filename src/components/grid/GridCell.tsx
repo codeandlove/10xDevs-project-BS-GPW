@@ -4,7 +4,8 @@
 
 import { memo } from "react";
 import type { GridCellProps } from "@/types/ui.types";
-import { getEventTypeColor, formatPercentChange } from "@/lib/ui-utils";
+import { getEventTypeCellColor } from "@/config/event-type-colors";
+import { formatPercentChange } from "@/lib/ui-utils";
 
 export const GridCell = memo(function GridCell({ data, onClick, isSelected = false }: GridCellProps) {
   // Type narrowing: if eventId is null, it's GridCellEmpty
@@ -24,7 +25,7 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
   }
 
   // TypeScript now knows data is GridCellWithEvent
-  const colorClass = getEventTypeColor(data.eventType);
+  const colorClass = getEventTypeCellColor(data.eventType);
   const percentText = formatPercentChange(data.percentChange);
 
   // If no onClick, render as div

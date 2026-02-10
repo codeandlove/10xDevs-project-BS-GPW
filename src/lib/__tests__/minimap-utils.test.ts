@@ -12,6 +12,7 @@ import {
   prepareMinimapEvents,
 } from "../minimap-utils";
 import type { BlackSwanEventMinimal, EventType } from "@/types/nocodb.types";
+import { getEventTypePixelColor } from "@/config/event-type-colors";
 
 describe("calculateMinimapDimensions", () => {
   it("should calculate dimensions for small grid", () => {
@@ -204,9 +205,22 @@ describe("getEventColor", () => {
     expect(color).toBe("#3b82f6");
   });
 
-  it("should return gray for unknown type", () => {
-    const color = getEventColor("UNKNOWN" as EventType);
-    expect(color).toBe("#6b7280");
+  it("should return same values as getEventTypePixelColor", () => {
+    const eventTypes: EventType[] = [
+      "BLACK_SWAN_UP",
+      "BLACK_SWAN_DOWN",
+      "VOLATILITY_UP",
+      "VOLATILITY_DOWN",
+      "BIG_MOVE",
+    ];
+
+    eventTypes.forEach((type) => {
+      expect(getEventColor(type)).toBe(getEventTypePixelColor(type));
+    });
+  });
+
+  it("should return fallback hex for unknown event type", () => {
+    expect(getEventColor("UNKNOWN" as EventType)).toBe("#6b7280");
   });
 });
 

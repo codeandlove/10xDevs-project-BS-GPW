@@ -7,19 +7,19 @@ import { useState } from "react";
 import type { EventType } from "@/types/nocodb.types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getAllEventTypeColors } from "@/config/event-type-colors";
 
 interface EventTypeFilterProps {
   selected: EventType[];
   onChange: (types: EventType[]) => void;
 }
 
-const EVENT_TYPES: { value: EventType; label: string; color: string }[] = [
-  { value: "BLACK_SWAN_UP", label: "Czarny Łabędź (wzrost)", color: "bg-red-500" },
-  { value: "BLACK_SWAN_DOWN", label: "Czarny Łabędź (spadek)", color: "bg-red-600" },
-  { value: "VOLATILITY_UP", label: "Wysoka zmienność (wzrost)", color: "bg-orange-500" },
-  { value: "VOLATILITY_DOWN", label: "Wysoka zmienność (spadek)", color: "bg-orange-600" },
-  { value: "BIG_MOVE", label: "Duży ruch cenowy", color: "bg-blue-500" },
-];
+// Get event types with their colors from central configuration
+const EVENT_TYPES = getAllEventTypeColors().map(({ value, colors }) => ({
+  value,
+  label: colors.label,
+  color: colors.badge,
+}));
 
 export function EventTypeFilter({ selected, onChange }: EventTypeFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
