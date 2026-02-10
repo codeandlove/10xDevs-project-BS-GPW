@@ -7,6 +7,7 @@
 
 import type { BlackSwanEventMinimal, EventType } from "@/types/nocodb.types";
 import type { MinimapDimensions, MinimapViewport, MinimapEvent } from "@/types/minimap.types";
+import { getEventTypePixelColor } from "@/config/event-type-colors";
 
 /** Maximum minimap width in pixels (280px fits within container with safe margin) */
 const MAX_WIDTH = 280;
@@ -183,17 +184,11 @@ export function denormalizePosition(
  * @example
  * getEventColor("BLACK_SWAN_UP");    // Returns: "#22c55e" (green-500)
  * getEventColor("BLACK_SWAN_DOWN");  // Returns: "#ef4444" (red-500)
+ *
+ * @deprecated Use getEventTypePixelColor from @/config/event-type-colors instead
  */
 export function getEventColor(eventType: EventType): string {
-  const colorMap: Record<EventType, string> = {
-    BLACK_SWAN_UP: "#22c55e", // green-500
-    BLACK_SWAN_DOWN: "#ef4444", // red-500
-    VOLATILITY_UP: "#f97316", // orange-500
-    VOLATILITY_DOWN: "#eab308", // yellow-500
-    BIG_MOVE: "#3b82f6", // blue-500
-  };
-
-  return colorMap[eventType] || "#6b7280"; // gray-500 fallback
+  return getEventTypePixelColor(eventType);
 }
 
 /**
