@@ -5,7 +5,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { loginViaUI } from "./helpers/auth.helper";
+import { loginViaAPI } from "./helpers/auth.helper";
 import { setupNocoDBMocks } from "./helpers/mock-nocodb.helper";
 
 // Tests without login - can run in parallel
@@ -69,7 +69,7 @@ test.describe("Auth Tests - Active User (test@example.com)", () => {
   test.describe("Middleware Guard - After Login Redirect", () => {
     test("TC-AUTH-001: Redirect to returnUrl after successful login", async ({ page }) => {
       // Login via UI
-      await loginViaUI(page);
+      await loginViaAPI(page, { email: "test@example.com", password: "Test123!@#" });
 
       // Navigate to /grid
       await page.goto("/grid");
@@ -80,7 +80,7 @@ test.describe("Auth Tests - Active User (test@example.com)", () => {
 
     test("TC-AUTH-001: Redirect to /grid by default if no returnUrl", async ({ page }) => {
       // Login via UI
-      await loginViaUI(page);
+      await loginViaAPI(page, { email: "test@example.com", password: "Test123!@#" });
 
       await page.goto("/grid");
 
@@ -97,7 +97,7 @@ test.describe("Auth Tests - Expired User (expired@example.com)", () => {
   test.describe("Middleware Guard - Expired Subscription", () => {
     test.beforeEach(async ({ page }) => {
       // Login via UI with expired user
-      await loginViaUI(page, {
+      await loginViaAPI(page, {
         email: "expired@example.com",
         password: "Test123!@#",
       });
@@ -352,7 +352,7 @@ test.describe.skip("Middleware Guard - 7-Day Trial", () => {
     await setupNocoDBMocks(page);
 
     // User B logs in via UI
-    await loginViaUI(page, {
+    await loginViaAPI(page, {
       email: "userb@example.com",
       password: "Test123!@#",
     });
@@ -370,7 +370,7 @@ test.describe.skip("Middleware Guard - 7-Day Trial", () => {
 test.describe("API 401 Handling - Auto Logout", () => {
   test("TC-AUTH: 401 response clears cache and redirects to login", async ({ page }) => {
     // Login first via UI
-    await loginViaUI(page);
+    await loginViaAPI(page, { email: "test@example.com", password: "Test123!@#" });
 
     await page.goto("/grid");
     await expect(page).toHaveURL(/\/grid/);
