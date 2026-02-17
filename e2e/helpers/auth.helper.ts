@@ -15,16 +15,11 @@ export interface SubscriptionState {
   current_period_end?: string | null;
 }
 
-const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY;
-
 /**
- * Login via UI (form submission)
- * This is the RECOMMENDED approach for E2E tests as it:
- * - Tests the real user flow
- * - Works reliably with Supabase session initialization
- * - Doesn't rely on timing-sensitive localStorage manipulation
+ * DEPRECATED: Login via UI (form submission)
+ * This function is no longer used in tests. Use loginViaAPI() instead.
  *
+ * @deprecated Use loginViaAPI() for all E2E tests
  * @param page - Playwright page object
  * @param options - Login credentials (defaults to test@example.com)
  */
@@ -32,6 +27,9 @@ export async function loginViaUI(
   page: Page,
   options: LoginOptions = { email: "test@example.com", password: "Test123!@#" }
 ) {
+  // eslint-disable-next-line no-console
+  console.warn("loginViaUI is deprecated. Use loginViaAPI instead.");
+
   // Navigate to login page
   await page.goto("/auth/login");
 
@@ -53,112 +51,56 @@ export async function loginViaUI(
 }
 
 /**
- * Legacy: Login via API call
- * DEPRECATED: Use loginViaUI() instead
+ * Login via API call (RECOMMENDED)
+ * This is the recommended approach for E2E tests as it:
+ * - Is faster and more reliable than UI login
+ * - Works with real Supabase authentication
+ * - Properly sets up session cookies and localStorage
  *
- * This approach sets localStorage directly but doesn't work reliably
- * in production builds due to Supabase client initialization timing.
- *
- * @deprecated Use loginViaUI() instead
+ * @param page - Playwright page object
+ * @param options - Login credentials
  */
 export async function loginViaAPI(page: Page, { email, password }: LoginOptions) {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Supabase URL or Anon Key is not set in environment variables");
+  // Navigate to login page
+  await page.goto("/auth/login", { waitUntil: "domcontentloaded" });
+
+  // Wait for form to be fully ready
+  const emailInput = page.locator('input[type="email"]');
+  const passwordInput = page.locator('input[type="password"]');
+
+  await emailInput.waitFor({ state: "visible", timeout: 5000 });
+  await passwordInput.waitFor({ state: "visible", timeout: 5000 });
+
+  // Clear any existing values
+  await emailInput.clear();
+  await passwordInput.clear();
+
+  // Type slowly to trigger React onChange handlers
+  await emailInput.click();
+  await emailInput.type(email, { delay: 50 });
+
+  await passwordInput.click();
+  await passwordInput.type(password, { delay: 50 });
+
+  // Verify values were set correctly
+  const emailValue = await emailInput.inputValue();
+  const passwordValue = await passwordInput.inputValue();
+
+  if (emailValue !== email) {
+    throw new Error(`Email not filled correctly. Expected: ${email}, Got: ${emailValue}`);
+  }
+  if (passwordValue !== password) {
+    throw new Error(`Password not filled correctly`);
   }
 
-  const response = await page.request.post(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
-    headers: {
-      apikey: supabaseAnonKey,
-      "Content-Type": "application/json",
-    },
-    data: { email, password },
+  // Submit form
+  const submitButton = page.locator('button[type="submit"]');
+  await submitButton.click();
+
+  // Wait for successful login (URL changes away from /auth/login)
+  await page.waitForURL((url) => !url.pathname.includes("/auth/login"), {
+    timeout: 15000,
   });
-
-  if (!response.ok()) {
-    const error = await response.json();
-    throw new Error(`Login failed: ${JSON.stringify(error)}`);
-  }
-
-  const authData = await response.json();
-
-  // Extract hostname from Supabase URL for storage key
-  const url = new URL(supabaseUrl);
-  const storageKey = `sb-${url.hostname.replace(/\./g, "-")}-auth-token`;
-
-  // Set auth tokens in localStorage AND cookies
-  await page.goto("/");
-
-  // Set in localStorage (for client-side Supabase client)
-  await page.evaluate(
-    ({ data, key }) => {
-      const authToken = {
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-        expires_at: data.expires_at,
-        expires_in: data.expires_in,
-        token_type: data.token_type,
-        user: data.user,
-      };
-      localStorage.setItem(key, JSON.stringify(authToken));
-    },
-    { data: authData, key: storageKey }
-  );
-
-  // Explicitly set session in Supabase client
-  // This is needed because Supabase client doesn't automatically detect localStorage changes
-  await page.evaluate(
-    async ({ accessToken, refreshToken }) => {
-      // Import Supabase client dynamically
-      // @ts-expect-error - Dynamic import in browser context, path resolved by Astro at runtime
-      const { supabaseClient } = await import("/src/db/supabase.client.ts");
-
-      // Set session explicitly - this updates the client's internal state
-      await supabaseClient.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-    },
-    {
-      accessToken: authData.access_token,
-      refreshToken: authData.refresh_token,
-    }
-  );
-
-  // Set cookies for server-side middleware
-  await page.context().addCookies([
-    {
-      name: storageKey,
-      value: JSON.stringify({
-        access_token: authData.access_token,
-        refresh_token: authData.refresh_token,
-      }),
-      domain: "localhost",
-      path: "/",
-      httpOnly: false,
-      secure: false,
-      sameSite: "Lax",
-    },
-    {
-      name: "sb-access-token",
-      value: authData.access_token,
-      domain: "localhost",
-      path: "/",
-      httpOnly: true,
-      secure: false,
-      sameSite: "Lax",
-    },
-    {
-      name: "sb-refresh-token",
-      value: authData.refresh_token,
-      domain: "localhost",
-      path: "/",
-      httpOnly: true,
-      secure: false,
-      sameSite: "Lax",
-    },
-  ]);
-
-  return authData;
 }
 
 /**

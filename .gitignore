@@ -22,3 +22,9 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+e2e/.auth/
+
+# E2E test backups
+e2e/*.backup
+e2e/*.old
+e2e/*.migrated

@@ -14,13 +14,18 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // Allow parallel execution across projects
-  workers: process.env.CI ? 2 : undefined,
+
+  // 4 workers locally for speed, 2 in CI for stability
+  workers: process.env.CI ? 2 : 4,
+
+  // NO global setup - using fixtures instead for auth
+
   reporter: [
     ["html", { outputFolder: "playwright-report" }],
     ["json", { outputFile: "playwright-report/results.json" }],
     ["list"],
   ],
+
   use: {
     baseURL: process.env.BASE_URL || "http://localhost:3000",
     trace: "on-first-retry",
@@ -28,10 +33,6 @@ export default defineConfig({
     video: "retain-on-failure",
   },
 
-  // Start preview server before running tests
-  // NOTE: Due to timing issues with webServer in this environment,
-  // you may need to start the preview server manually before running tests:
-  // npm run preview (in a separate terminal)
   webServer: process.env.CI
     ? {
         command: "npm run preview",
@@ -42,33 +43,51 @@ export default defineConfig({
     : undefined,
 
   projects: [
-    // Project 1: Tests using test@example.com (runs serially within project)
+    // Active user tests - test@example.com
+    // ⚡ Uses auto-fixture for authentication
     {
       name: "active-user",
-      testMatch: /auth\.spec\.ts|grid\.spec\.ts|sidebar\.spec\.ts/,
+      testMatch: /grid-rendering|grid-filtering|grid-sorting|grid-layout|grid-errors|grid-keyboard|sidebar|minimap/,
       use: {
         ...devices["Desktop Chrome"],
+        // NO storageState - using fixtures
       },
-      // Run tests serially within this project to avoid user conflicts
-      fullyParallel: false,
+      fullyParallel: true,
     },
-    // Project 2: Tests using expired@example.com (runs serially, parallel to Project 1)
+
+    // Expired user tests - expired@example.com
+    // ⚡ Uses auto-fixture for authentication
     {
       name: "expired-user",
-      testMatch: /checkout\.spec\.ts/,
+      testMatch: /grid-expired|grid-paywall|grid-pastdue|checkout/,
+      use: {
+        ...devices["Desktop Chrome"],
+        // NO storageState - using fixtures
+      },
+      fullyParallel: true,
+    },
+
+    // Trial user tests - trial@example.com
+    // ⚡ Uses auto-fixture for authentication
+    {
+      name: "trial-user",
+      testMatch: /grid-trial/,
+      use: {
+        ...devices["Desktop Chrome"],
+        // NO storageState - using fixtures
+      },
+      fullyParallel: true,
+    },
+
+    // Auth tests - NO auto-login
+    // 🔓 These tests manually control authentication
+    {
+      name: "auth-tests",
+      testMatch: /auth\.spec/,
       use: {
         ...devices["Desktop Chrome"],
       },
-      fullyParallel: false,
+      fullyParallel: true,
     },
-    // Uncomment for cross-browser testing
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
   ],
 });
