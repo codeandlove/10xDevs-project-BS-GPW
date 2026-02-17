@@ -7,8 +7,10 @@ import { getEventTypeCellColor } from "@/config/event-type-colors";
 
 /**
  * Get array of dates for given date range
+ * @param range - Date range type (week, month, quarter)
+ * @param fillToFullWeek - If true and range is "week", extends to show at least 7 days including future dates
  */
-export function getDatesInRange(range: DateRange): string[] {
+export function getDatesInRange(range: DateRange, fillToFullWeek = false): string[] {
   const today = new Date();
   const dates: string[] = [];
   let days: number;
@@ -34,7 +36,59 @@ export function getDatesInRange(range: DateRange): string[] {
     dates.push(date.toISOString().split("T")[0]); // YYYY-MM-DD format
   }
 
-  return dates.reverse(); // Oldest to newest
+  const reversedDates = dates.reverse(); // Oldest to newest
+
+  // Fill to full week for week view
+  if (fillToFullWeek && range === "week" && reversedDates.length < 14) {
+    const lastDate = new Date(reversedDates[reversedDates.length - 1]);
+    const daysToAdd = 14 - reversedDates.length;
+
+    for (let i = 1; i <= daysToAdd; i++) {
+      const futureDate = new Date(lastDate);
+      futureDate.setDate(lastDate.getDate() + i);
+      reversedDates.push(futureDate.toISOString().split("T")[0]);
+    }
+  }
+
+  return reversedDates;
+}
+
+/**
+ * Get short Polish weekday name for a given date
+ * @param dateString - Date in YYYY-MM-DD format
+ * @returns Short weekday name (e.g., "Pn.", "Wt.", "Sb.")
+ */
+export function getWeekdayShort(dateString: string): string {
+  const weekdays = ["Nd.", "Pn.", "Wt.", "Śr.", "Cz.", "Pt.", "Sb."];
+  const date = new Date(dateString + "T00:00:00");
+  return weekdays[date.getDay()];
+}
+
+/**
+ * Check if a date is a weekend (Saturday or Sunday)
+ * @param dateString - Date in YYYY-MM-DD format
+ * @returns True if date is Saturday or Sunday
+ */
+export function isWeekend(dateString: string): boolean {
+  const date = new Date(dateString + "T00:00:00");
+  const dayIndex = date.getDay();
+  return dayIndex === 0 || dayIndex === 6; // 0 = Sunday, 6 = Saturday
+}
+
+/**
+ * Check if a date is today
+ * @param dateString - Date in YYYY-MM-DD format
+ * @returns True if date is today
+ */
+export function isToday(dateString: string): boolean {
+  const today = new Date();
+  const date = new Date(dateString + "T00:00:00");
+
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  );
 }
 
 /**
