@@ -19,6 +19,9 @@ import {
   getSubscriptionStatusLabel,
   getSubscriptionStatusColor,
   getDatesInRange,
+  getWeekdayShort,
+  isWeekend,
+  isToday,
   debounce,
   throttle,
 } from "@/lib/ui-utils";
@@ -355,5 +358,78 @@ describe("UI Utils - Throttle", () => {
     expect(mockFn).toHaveBeenCalledTimes(2);
     expect(mockFn).toHaveBeenNthCalledWith(1, "first");
     expect(mockFn).toHaveBeenNthCalledWith(2, "second");
+  });
+});
+
+describe("UI Utils - Weekday and Weekend", () => {
+  it("getWeekdayShort should return correct Polish weekday", () => {
+    expect(getWeekdayShort("2026-02-16")).toBe("Pn."); // Monday
+    expect(getWeekdayShort("2026-02-17")).toBe("Wt."); // Tuesday
+    expect(getWeekdayShort("2026-02-18")).toBe("Śr."); // Wednesday
+    expect(getWeekdayShort("2026-02-19")).toBe("Cz."); // Thursday
+    expect(getWeekdayShort("2026-02-20")).toBe("Pt."); // Friday
+    expect(getWeekdayShort("2026-02-21")).toBe("Sb."); // Saturday
+    expect(getWeekdayShort("2026-02-22")).toBe("Nd."); // Sunday
+  });
+
+  it("isWeekend should return true for Saturday and Sunday", () => {
+    expect(isWeekend("2026-02-21")).toBe(true); // Saturday
+    expect(isWeekend("2026-02-22")).toBe(true); // Sunday
+  });
+
+  it("isWeekend should return false for weekdays", () => {
+    expect(isWeekend("2026-02-16")).toBe(false); // Monday
+    expect(isWeekend("2026-02-17")).toBe(false); // Tuesday
+    expect(isWeekend("2026-02-18")).toBe(false); // Wednesday
+    expect(isWeekend("2026-02-19")).toBe(false); // Thursday
+    expect(isWeekend("2026-02-20")).toBe(false); // Friday
+  });
+
+  it("isToday should return true for today's date", () => {
+    const today = new Date().toISOString().split("T")[0];
+    expect(isToday(today)).toBe(true);
+  });
+
+  it("isToday should return false for past dates", () => {
+    expect(isToday("2020-01-01")).toBe(false);
+    expect(isToday("2025-01-01")).toBe(false);
+  });
+
+  it("isToday should return false for future dates", () => {
+    expect(isToday("2030-12-31")).toBe(false);
+    expect(isToday("2027-06-15")).toBe(false);
+  });
+
+  it("getDatesInRange with fillToFullWeek=true should extend week range", () => {
+    const dates = getDatesInRange("week", true);
+    expect(dates.length).toBeGreaterThanOrEqual(7);
+    expect(dates.length).toBeLessThanOrEqual(14);
+  });
+
+  it("getDatesInRange with fillToFullWeek=false should return standard 7 days", () => {
+    const dates = getDatesInRange("week", false);
+    expect(dates.length).toBe(7);
+  });
+
+  it("getDatesInRange without fillToFullWeek parameter should default to false", () => {
+    const dates = getDatesInRange("week");
+    expect(dates.length).toBe(7);
+  });
+
+  it("getDatesInRange should not extend month range regardless of fillToFullWeek", () => {
+    const monthDates = getDatesInRange("month", true);
+    expect(monthDates.length).toBe(30);
+  });
+
+  it("getDatesInRange should not extend quarter range regardless of fillToFullWeek", () => {
+    const quarterDates = getDatesInRange("quarter", true);
+    expect(quarterDates.length).toBe(90);
+  });
+
+  it("getDatesInRange with fillToFullWeek should include future dates", () => {
+    const dates = getDatesInRange("week", true);
+    const today = new Date().toISOString().split("T")[0];
+    const lastDate = dates[dates.length - 1];
+    expect(lastDate >= today).toBe(true);
   });
 });

@@ -21,6 +21,8 @@ export interface GridCellEmpty {
   eventId: null;
   symbol: string;
   date: string; // YYYY-MM-DD
+  isWeekend?: boolean; // Whether date is a weekend (Saturday or Sunday)
+  isToday?: boolean; // Whether date is today
 }
 
 /**
@@ -33,6 +35,8 @@ export interface GridCellWithEvent {
   eventType: EventType;
   percentChange: number;
   hasSummary: boolean;
+  isWeekend?: boolean; // Whether date is a weekend (Saturday or Sunday)
+  isToday?: boolean; // Whether date is today
 }
 
 /**

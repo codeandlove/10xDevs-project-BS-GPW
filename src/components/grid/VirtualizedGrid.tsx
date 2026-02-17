@@ -9,7 +9,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import type { BlackSwanEventMinimal, DateRange } from "@/types/nocodb.types";
 import { GridCell } from "./GridCell";
 import { GridMinimap } from "./GridMinimap";
-import { getDatesInRange } from "@/lib/ui-utils";
+import { getDatesInRange, getWeekdayShort, isWeekend, isToday } from "@/lib/ui-utils";
 
 interface VirtualizedGridProps {
   events: BlackSwanEventMinimal[];
@@ -92,7 +92,7 @@ export function VirtualizedGrid({
 
   // Group events by symbol and date
   const { symbols, dates, eventsBySymbolAndDate } = useMemo(() => {
-    const datesInRange = getDatesInRange(range);
+    const datesInRange = getDatesInRange(range, range === "week");
     const symbolsSet = new Set<string>();
     const eventMap = new Map<string, BlackSwanEventMinimal>();
 
@@ -137,6 +137,15 @@ export function VirtualizedGrid({
       const symbolsWithoutEvents = Array.from(symbolsSet).filter((s) => !eventsBySymbol.has(s));
       // Symbols without events are sorted alphabetically and appended
       finalSymbols = [...symbolsWithEvents, ...symbolsWithoutEvents.sort()];
+    }
+
+    // Fill with empty rows if grid has few symbols (minimum 8 rows for better visual)
+    const MIN_ROWS = 8;
+    if (finalSymbols.length < MIN_ROWS && finalSymbols.length > 0) {
+      const emptyRowsNeeded = MIN_ROWS - finalSymbols.length;
+      for (let i = 0; i < emptyRowsNeeded; i++) {
+        finalSymbols.push(`_empty_${i}`); // Placeholder symbol
+      }
     }
 
     return {
@@ -239,7 +248,7 @@ export function VirtualizedGrid({
     <>
       <div className="flex h-full w-full flex-col rounded-lg border" role="grid" aria-label="Black Swan Events Grid">
         {/* Header row with dates (sticky) */}
-        <div className="sticky top-0 z-20 flex min-h-[48px] border-b bg-white md:min-h-[56px]" role="row">
+        <div className="sticky top-0 z-20 flex min-h-[64px] border-b bg-white md:min-h-[72px]" role="row">
           {/* Top-left corner (empty cell for symbol column) */}
           <div
             className="sticky left-0 z-30 flex shrink-0 items-center border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
@@ -259,17 +268,32 @@ export function VirtualizedGrid({
             >
               {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
                 const date = dates[virtualColumn.index];
+                const dateIsWeekend = isWeekend(date);
+                const dateIsToday = isToday(date);
                 return (
                   <div
                     key={virtualColumn.key}
                     role="columnheader"
-                    className="absolute left-0 top-0 flex h-full items-center justify-center border-r px-2 py-2 md:px-4 md:py-3"
+                    className={`absolute left-0 top-0 flex h-full flex-col items-center justify-center border-r px-1 py-1 md:px-2 md:py-2 ${
+                      dateIsWeekend ? "bg-gray-100/80" : ""
+                    } ${dateIsToday ? "bg-blue-50/50 ring-2 ring-inset ring-blue-300" : ""}`}
                     style={{
                       width: `${virtualColumn.size}px`,
                       transform: `translateX(${virtualColumn.start}px)`,
                     }}
                   >
-                    <span className="text-[10px] font-medium text-gray-600 md:text-xs">{date}</span>
+                    {/* Weekday name (top) */}
+                    <span
+                      className={`text-[11px] font-bold md:text-xs ${dateIsWeekend ? "text-gray-500" : "text-gray-700"}`}
+                    >
+                      {getWeekdayShort(date)}
+                    </span>
+                    {/* Date (bottom) */}
+                    <span
+                      className={`mt-0.5 text-[9px] font-medium md:text-[10px] ${dateIsWeekend ? "text-gray-400" : "text-gray-600"}`}
+                    >
+                      {date}
+                    </span>
                   </div>
                 );
               })}
@@ -288,6 +312,7 @@ export function VirtualizedGrid({
           >
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const symbol = symbols[virtualRow.index];
+              const isEmptyRow = symbol.startsWith("_empty_");
 
               return (
                 <div
@@ -303,10 +328,13 @@ export function VirtualizedGrid({
                   <div
                     className="sticky left-0 z-10 shrink-0 border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
                     style={{ width: `${config.symbolWidth}px` }}
+                    role="rowheader"
                   >
-                    <span className="truncate text-xs font-semibold text-gray-900 md:text-sm" title={symbol}>
-                      {symbol}
-                    </span>
+                    {!isEmptyRow && (
+                      <span className="truncate text-xs font-semibold text-gray-900 md:text-sm" title={symbol}>
+                        {symbol}
+                      </span>
+                    )}
                   </div>
 
                   {/* Virtual columns for cells */}
@@ -323,6 +351,8 @@ export function VirtualizedGrid({
                       const dateIndex = virtualColumn.index;
                       const isFocused =
                         focusedCell?.symbolIndex === symbolIndex && focusedCell?.dateIndex === dateIndex;
+                      const dateIsWeekend = isWeekend(date);
+                      const dateIsToday = isToday(date);
 
                       return (
                         <div
@@ -343,11 +373,15 @@ export function VirtualizedGrid({
                                     eventType: event.event_type,
                                     percentChange: event.percent_change,
                                     hasSummary: true,
+                                    isWeekend: dateIsWeekend,
+                                    isToday: dateIsToday,
                                   }
                                 : {
                                     eventId: null,
                                     symbol,
                                     date,
+                                    isWeekend: dateIsWeekend,
+                                    isToday: dateIsToday,
                                   }
                             }
                             onClick={
