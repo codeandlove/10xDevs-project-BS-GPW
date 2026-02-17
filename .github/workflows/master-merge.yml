@@ -80,6 +80,7 @@ jobs:
       NOCODB_TABLE_BLACK_SWANS: ${{ secrets.NOCODB_TABLE_BLACK_SWANS }}
       NOCODB_TABLE_AI_SUMMARY: ${{ secrets.NOCODB_TABLE_AI_SUMMARY }}
       NOCODB_TABLE_HISTORIC_DATA: ${{ secrets.NOCODB_TABLE_HISTORIC_DATA }}
+      NOCODB_TABLE_GPW_SYMBOLS: ${{ secrets.NOCODB_TABLE_GPW_SYMBOLS }}
 
     steps:
       - name: Checkout code
