@@ -20,7 +20,7 @@ interface UseTimelineScrollReturn {
 
 /**
  * Hook to detect scroll position and trigger loading at threshold
- * Uses hysteresis: trigger at 40%, reset at 55% to prevent rapid re-triggering
+ * Uses hysteresis: trigger at 60%, reset at 75% to prevent rapid re-triggering
  */
 export function useTimelineScroll({
   scrollElement,
@@ -39,13 +39,13 @@ export function useTimelineScroll({
     const currentScrollWidth = scrollElement.scrollWidth - scrollElement.clientWidth;
 
     // Hysteresis thresholds to prevent rapid re-triggering
-    const triggerThreshold = getScrollThreshold(currentScrollWidth); // 40% - trigger loading
-    const resetThreshold = getScrollResetThreshold(currentScrollWidth); // 55% - allow re-trigger
+    const triggerThreshold = getScrollThreshold(currentScrollWidth); // 60% - trigger loading
+    const resetThreshold = getScrollResetThreshold(currentScrollWidth); // 75% - allow re-trigger
 
     setScrollLeft(currentScrollLeft);
     setScrollWidth(currentScrollWidth);
 
-    // Trigger loading when scrolled to 40% from left (AND not already triggered)
+    // Trigger loading when scrolled to 60% from left (AND not already triggered)
     if (currentScrollLeft <= triggerThreshold && !thresholdReached) {
       setThresholdReached(true);
 
@@ -64,7 +64,7 @@ export function useTimelineScroll({
         setThresholdReached(false);
       }, 300);
     }
-    // Reset threshold when scrolled past 55% from left (hysteresis zone)
+    // Reset threshold when scrolled past 75% from left (hysteresis zone)
     // This prevents re-triggering until user scrolls significantly to the right
     else if (currentScrollLeft > resetThreshold && thresholdReached) {
       setThresholdReached(false);
