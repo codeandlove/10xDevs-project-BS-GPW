@@ -207,19 +207,21 @@
 2. `57fcbae` - Skeleton Header Loading Indicator
 3. `8445135` - Skeleton Body Cells Loading Indicator
 
-**Fixes (4):**
+**Fixes (6):**
 4. `f39ca0a` - Sticky header transparency fix
 5. `ba59a7f` - /grid routing fix (404 → 200)
-6. `57cf272` - GridSkeleton restore
+6. `57cf272` - GridSkeleton restore (enhanced version)
+7. `e5454cb` - GridSkeleton width matching + viewport fill
+8. `dd53f96` - Symbol cell sticky both axes (top + left)
 
-**Docs (4):**
-7. `26985d2` - SOLUTION_D_COMPLETED update (transparency)
-8. `4660ab3` - SOLUTION_D_COMPLETED update (routing)
-9. `6b25c38` - FINAL_SUMMARY creation
-10. `194319d` - Skeleton indicator docs
-11. `58d13fe` - Skeleton body cells docs update
+**Docs (5):**
+9. `26985d2` - SOLUTION_D_COMPLETED update (transparency)
+10. `4660ab3` - SOLUTION_D_COMPLETED update (routing)
+11. `6b25c38` - FINAL_SUMMARY creation
+12. `194319d` - Skeleton indicator docs
+13. `58d13fe` - Skeleton body cells docs update
 
-**Total:** 11 commits
+**Total:** 14 commits
 
 ---
 
@@ -325,7 +327,7 @@ npm run test:e2e -- grid-keyboard
 ```
 Branch: fix/grid-header-scroll-lag
 Base: master
-Commits ahead: 11
+Commits ahead: 14
 Commits behind: 0
 Conflicts: None
 Status: ✅ CLEAN
@@ -426,7 +428,7 @@ npm run build
 ## 🎯 Stan Projektu
 
 **Dev Server:** http://localhost:3000/grid ✅ **DZIAŁA**  
-**Branch:** `fix/grid-header-scroll-lag` ✅ **11 COMMITS**  
+**Branch:** `fix/grid-header-scroll-lag` ✅ **14 COMMITS**  
 **Build:** ✅ **SUCCESS**  
 **TypeScript:** ✅ **NO ERRORS**  
 **Tests:** ⏳ **PENDING MANUAL TESTING**
@@ -443,6 +445,8 @@ npm run build
 4. ✅ Brak loading indicator → **FIXED (Skeleton Header + Body)**
 5. ✅ Loading tylko w header → **FIXED (SkeletonBodyCell)**
 6. ✅ Stary GridSkeleton → **FIXED (Enhanced restore)**
+7. ✅ GridSkeleton width mismatch → **FIXED (GRID_CONFIG dimensions)**
+8. ✅ Symbol cell nie sticky → **FIXED (position sticky both axes)**
 
 **Branch gotowy do:**
 - ✅ Final manual testing
@@ -457,7 +461,7 @@ npm run build
 
 **Utworzono:** 2026-02-21  
 **Branch:** `fix/grid-header-scroll-lag`  
-**Commits:** 11  
+**Commits:** 14  
 **Files Changed:** 38  
 **Lines Added:** 4,363  
 **Lines Removed:** 7,825  
