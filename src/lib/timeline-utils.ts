@@ -87,10 +87,11 @@ export function getAllDatesFromChunks(chunks: TimelineChunk[]): string[] {
 }
 
 /**
- * Calculate scroll threshold (15% from left edge)
+ * Calculate scroll threshold (40% from left edge)
+ * Triggers loading earlier for smoother UX - user scrolls less
  */
 export function getScrollThreshold(scrollWidth: number): number {
-  return scrollWidth * 0.15;
+  return scrollWidth * 0.4;
 }
 
 /**

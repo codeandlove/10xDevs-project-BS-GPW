@@ -50,13 +50,14 @@ export function useTimelineScroll({
         console.error("[useTimelineScroll] ❌ Error calling onThresholdReached:", error);
       }
 
+      // Reset threshold after 300ms (reduced from 1000ms for faster re-trigger)
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
       timeoutRef.current = window.setTimeout(() => {
         setThresholdReached(false);
-      }, 1000);
+      }, 300);
     } else if (currentScrollLeft > threshold && thresholdReached) {
       setThresholdReached(false);
       if (timeoutRef.current) {
