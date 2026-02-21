@@ -2,8 +2,8 @@
 
 **Data:** 2026-02-21  
 **Branch:** `fix/grid-header-scroll-lag`  
-**Commit:** `57fcbae`  
-**Status:** ✅ **ZAIMPLEMENTOWANE**
+**Commit:** `57fcbae` (header), `8445135` (body cells)  
+**Status:** ✅ **ZAIMPLEMENTOWANE + ENHANCED**
 
 ---
 
@@ -13,24 +13,25 @@ Podczas infinite scroll backward (przewijanie w lewo do historycznych dat):
 - ❌ **Brak visual feedback** - użytkownik nie widzi że dane się ładują
 - ❌ **Brak reprezentacji weekendów** w skeleton state
 - ❌ **Trudno zauważyć moment ładowania** - skeletony były zbyt subtelne
+- ❌ **Skeletony tylko w header** - body cells nie miały loading state (ZA MAŁO!)
 
 ---
 
-## 🎨 Rozwiązanie: Enhanced Skeleton Columns
+## 🎨 Rozwiązanie: Enhanced Skeleton Columns + Body Cells
 
-### Wybrana Opcja: **A - Skeleton Columns z Weekend Support**
+### Wybrana Opcja: **A+ - Skeleton Columns + Body Cells z Weekend Support**
 
 **Dlaczego:**
-- ✅ Używa istniejący komponent (SkeletonColumns)
+- ✅ Używa istniejący komponent pattern
 - ✅ Konsystentny z resztą UI
-- ✅ Minimalna implementacja
+- ✅ Widoczny w CAŁEJ wysokości gridu (header + wszystkie rows)
 - ✅ Accessibility już wbudowana
 
 ---
 
 ## 🚀 Implementacja
 
-### 1. **Enhanced SkeletonColumns Component**
+### 1. **Enhanced SkeletonColumns Component (Header)**
 
 **Nowe Features:**
 ```typescript
@@ -90,11 +91,53 @@ style={{
 )} />
 ```
 
-### 2. **Integration w VirtualizedGrid**
+### 2. **SkeletonBodyCell Component (Body Rows)** ✨ NEW
+
+**Problem:** Skeletony były tylko w header - body cells nie miały loading state!
+
+**Rozwiązanie:** Nowy komponent dla skeleton cells w każdym row gridu.
+
+**Component:**
+```typescript
+interface SkeletonBodyCellProps {
+  isWeekend: boolean;
+  columnWidth: number;
+}
+
+export function SkeletonBodyCell({ isWeekend, columnWidth }: SkeletonBodyCellProps) {
+  return (
+    <div className={cn(
+      "flex h-full w-full items-center justify-center border-r px-2 py-2",
+      isWeekend ? "bg-gray-100/50" : "bg-gray-50/50"
+    )}>
+      {/* Percentage skeleton */}
+      <div className="h-3 w-16 rounded animate-pulse bg-gray-200" />
+      {/* Badge skeleton */}
+      <div className="h-2 w-10 rounded animate-pulse bg-gray-150" />
+    </div>
+  );
+}
+```
+
+**Features:**
+- ✅ Simulates event data (percentage + type badge)
+- ✅ Weekend support: `bg-gray-100/50` vs `bg-gray-50/50`
+- ✅ Two-element pulse (więcej detali niż header)
+- ✅ Matching styling z GridCell pattern
+
+### 3. **Integration w VirtualizedGrid**
 
 **Import:**
 ```typescript
 import { SkeletonColumns } from "./SkeletonColumns";
+```
+
+### 3. **Integration w VirtualizedGrid**
+
+**Import:**
+```typescript
+import { SkeletonColumns } from "./SkeletonColumns";
+import { SkeletonBodyCell } from "./SkeletonBodyCell"; // ✨ NEW
 ```
 
 **Rendering w Header:**
@@ -114,6 +157,46 @@ import { SkeletonColumns } from "./SkeletonColumns";
   {/* Actual date columns */}
   {columnVirtualizer.getVirtualItems().map(...)}
 </div>
+```
+
+**Rendering w Body Rows:** ✨ NEW
+```typescript
+{rowVirtualizer.getVirtualItems().map((virtualRow) => (
+  <div key={virtualRow.key} role="row" className="...">
+    {/* Symbol column */}
+    <div>...</div>
+
+    {/* Virtual columns for cells */}
+    <div className="relative flex" style={{ width: `${columnVirtualizer.getTotalSize()}px` }}>
+      {/* Loading skeleton body cells - EVERY ROW! */}
+      {isLoadingBackward && (
+        <div className="absolute left-0 top-0 z-10 flex h-full">
+          {Array.from({ length: 3 }).map((_, i) => {
+            const skeletonIsWeekend = /* weekend calculation */;
+            return (
+              <div
+                key={`skeleton-body-${i}`}
+                className={i === 0 ? "border-l-2 border-l-blue-400" : ""}
+                style={{ 
+                  width: `${config.colWidth}px`,
+                  boxShadow: i === 0 ? 'inset 2px 0 4px rgba(59, 130, 246, 0.1)' : undefined
+                }}
+              >
+                <SkeletonBodyCell 
+                  isWeekend={skeletonIsWeekend}
+                  columnWidth={config.colWidth}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Actual cells */}
+      {columnVirtualizer.getVirtualItems().map(...)}
+    </div>
+  </div>
+))}
 ```
 
 ---
