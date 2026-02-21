@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { getScrollThreshold } from "@/lib/timeline-utils";
+import { getScrollThreshold, getScrollResetThreshold } from "@/lib/timeline-utils";
 
 interface UseTimelineScrollProps {
   scrollElement: HTMLElement | null;
@@ -19,7 +19,8 @@ interface UseTimelineScrollReturn {
 }
 
 /**
- * Hook to detect scroll position and trigger loading at threshold (15% from left)
+ * Hook to detect scroll position and trigger loading at threshold
+ * Uses hysteresis: trigger at 40%, reset at 55% to prevent rapid re-triggering
  */
 export function useTimelineScroll({
   scrollElement,
@@ -36,12 +37,16 @@ export function useTimelineScroll({
 
     const currentScrollLeft = scrollElement.scrollLeft;
     const currentScrollWidth = scrollElement.scrollWidth - scrollElement.clientWidth;
-    const threshold = getScrollThreshold(currentScrollWidth);
+
+    // Hysteresis thresholds to prevent rapid re-triggering
+    const triggerThreshold = getScrollThreshold(currentScrollWidth); // 40% - trigger loading
+    const resetThreshold = getScrollResetThreshold(currentScrollWidth); // 55% - allow re-trigger
 
     setScrollLeft(currentScrollLeft);
     setScrollWidth(currentScrollWidth);
 
-    if (currentScrollLeft <= threshold && !thresholdReached) {
+    // Trigger loading when scrolled to 40% from left (AND not already triggered)
+    if (currentScrollLeft <= triggerThreshold && !thresholdReached) {
       setThresholdReached(true);
 
       try {
@@ -58,7 +63,10 @@ export function useTimelineScroll({
       timeoutRef.current = window.setTimeout(() => {
         setThresholdReached(false);
       }, 300);
-    } else if (currentScrollLeft > threshold && thresholdReached) {
+    }
+    // Reset threshold when scrolled past 55% from left (hysteresis zone)
+    // This prevents re-triggering until user scrolls significantly to the right
+    else if (currentScrollLeft > resetThreshold && thresholdReached) {
       setThresholdReached(false);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);

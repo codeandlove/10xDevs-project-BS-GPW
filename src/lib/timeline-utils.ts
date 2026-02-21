@@ -87,11 +87,20 @@ export function getAllDatesFromChunks(chunks: TimelineChunk[]): string[] {
 }
 
 /**
- * Calculate scroll threshold (40% from left edge)
+ * Calculate scroll threshold for triggering infinite scroll (40% from left edge)
  * Triggers loading earlier for smoother UX - user scrolls less
  */
 export function getScrollThreshold(scrollWidth: number): number {
   return scrollWidth * 0.4;
+}
+
+/**
+ * Calculate scroll reset threshold (55% from left edge)
+ * Creates hysteresis zone (40%-55%) to prevent rapid re-triggering
+ * User must scroll past 55% to allow next trigger
+ */
+export function getScrollResetThreshold(scrollWidth: number): number {
+  return scrollWidth * 0.55;
 }
 
 /**
