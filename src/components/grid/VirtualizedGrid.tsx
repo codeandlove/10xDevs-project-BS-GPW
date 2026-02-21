@@ -9,6 +9,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import type { BlackSwanEventMinimal, DateRange } from "@/types/nocodb.types";
 import { GridCell } from "./GridCell";
 import { GridMinimap } from "./GridMinimap";
+import { SkeletonColumns } from "./SkeletonColumns";
 import { getDatesInRange, getWeekdayShort, isWeekend, isToday } from "@/lib/ui-utils";
 
 interface VirtualizedGridProps {
@@ -270,6 +271,18 @@ export function VirtualizedGrid({
                 width: `${columnVirtualizer.getTotalSize()}px`,
               }}
             >
+              {/* Loading skeleton columns (shown on left during infinite scroll backward) */}
+              {isLoadingBackward && (
+                <div className="absolute left-0 top-0 z-10 flex h-full">
+                  <SkeletonColumns
+                    count={3}
+                    columnWidth={config.colWidth}
+                    startDate={dates[0]} // First date to calculate weekends accurately
+                  />
+                </div>
+              )}
+
+              {/* Actual date columns */}
               {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
                 const date = dates[virtualColumn.index];
                 const dateIsWeekend = isWeekend(date);
