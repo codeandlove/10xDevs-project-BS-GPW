@@ -255,11 +255,16 @@ export function VirtualizedGrid({
       >
         {/* Header row with dates - STICKY INSIDE scroll container */}
         <div className="sticky top-0 z-20 flex min-h-[64px] border-b bg-white md:min-h-[72px]" role="row">
-          {/* Top-left corner (empty cell for symbol column) */}
+          {/* Top-left corner (empty cell for symbol column) - STICKY BOTH AXES */}
           <div
             className="sticky left-0 z-30 flex shrink-0 items-center border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
             role="columnheader"
-            style={{ width: `${config.symbolWidth}px` }}
+            style={{
+              width: `${config.symbolWidth}px`,
+              position: "sticky",
+              top: 0,
+              left: 0,
+            }}
           >
             <span className="text-xs font-semibold text-gray-700 md:text-sm">Symbol</span>
           </div>
