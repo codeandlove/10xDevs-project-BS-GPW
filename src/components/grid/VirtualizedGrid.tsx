@@ -13,12 +13,15 @@ import { getDatesInRange, getWeekdayShort, isWeekend, isToday } from "@/lib/ui-u
 
 interface VirtualizedGridProps {
   events: BlackSwanEventMinimal[];
+  allDates: string[]; // Pre-calculated dates from timeline (for infinite scroll)
   range: DateRange;
   onCellClick: (eventId: string) => void;
   selectedEventId?: string;
   selectedSymbols?: string[]; // User-selected symbols to always show (even if no events)
   sortField?: "date" | "percent_change" | "symbol";
   sortDirection?: "asc" | "desc";
+  isLoadingBackward?: boolean; // Loading state for infinite scroll
+  onScrollElement?: (element: HTMLDivElement | null) => void; // Expose scroll element
 }
 
 // Responsive grid sizing
@@ -275,9 +278,9 @@ export function VirtualizedGrid({
                   <div
                     key={virtualColumn.key}
                     role="columnheader"
-                    className={`absolute left-0 top-0 flex h-full flex-col items-center justify-center border-r px-1 py-1 md:px-2 md:py-2 ${
-                      dateIsWeekend ? "bg-gray-100/80" : ""
-                    } ${dateIsToday ? "bg-blue-50/50 ring-2 ring-inset ring-blue-300" : ""}`}
+                    className={`absolute left-0 top-0 flex h-full flex-col items-center justify-center border-r px-1 py-1 md:px-2 md:py-2 bg-white ${
+                      dateIsWeekend ? "!bg-gray-100" : ""
+                    } ${dateIsToday ? "!bg-blue-50 ring-2 ring-inset ring-blue-300" : ""}`}
                     style={{
                       width: `${virtualColumn.size}px`,
                       transform: `translateX(${virtualColumn.start}px)`,
