@@ -22,14 +22,11 @@ interface UseTimelineScrollReturn {
  * Hook to detect scroll position and trigger loading at threshold
  * Uses hysteresis: trigger at 60%, reset at 75% to prevent rapid re-triggering
  */
-export function useTimelineScroll({
-  scrollElement,
-  isLoading,
-  onThresholdReached,
-}: UseTimelineScrollProps): UseTimelineScrollReturn {
+export function useTimelineScroll({ scrollElement, isLoading, onThresholdReached }: UseTimelineScrollProps): UseTimelineScrollReturn {
   const [scrollLeft, setScrollLeft] = useState(0);
   const [scrollWidth, setScrollWidth] = useState(0);
   const [thresholdReached, setThresholdReached] = useState(false);
+  const [hasScrolledManually, setHasScrolledManually] = useState(false);
   const timeoutRef = useRef<number | undefined>(undefined);
 
   const handleScroll = useCallback(() => {
@@ -37,6 +34,12 @@ export function useTimelineScroll({
 
     const currentScrollLeft = scrollElement.scrollLeft;
     const currentScrollWidth = scrollElement.scrollWidth - scrollElement.clientWidth;
+
+    // Mark that user has scrolled manually (ignore initial position triggers)
+    if (!hasScrolledManually && currentScrollWidth > 0) {
+      setHasScrolledManually(true);
+      return; // Don't trigger on first measurement
+    }
 
     // Hysteresis thresholds to prevent rapid re-triggering
     const triggerThreshold = getScrollThreshold(currentScrollWidth); // 60% - trigger loading
@@ -73,7 +76,7 @@ export function useTimelineScroll({
         timeoutRef.current = undefined;
       }
     }
-  }, [scrollElement, isLoading, thresholdReached, onThresholdReached]);
+  }, [scrollElement, isLoading, thresholdReached, hasScrolledManually, onThresholdReached]);
 
   useEffect(() => {
     if (!scrollElement) return;
