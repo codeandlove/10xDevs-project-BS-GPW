@@ -10,6 +10,7 @@ import type { BlackSwanEventMinimal, DateRange } from "@/types/nocodb.types";
 import { GridCell } from "./GridCell";
 import { GridMinimap } from "./GridMinimap";
 import { SkeletonColumns } from "./SkeletonColumns";
+import { SkeletonBodyCell } from "./SkeletonBodyCell";
 import { getDatesInRange, getWeekdayShort, isWeekend, isToday } from "@/lib/ui-utils";
 
 interface VirtualizedGridProps {
@@ -360,6 +361,34 @@ export function VirtualizedGrid({
                     width: `${columnVirtualizer.getTotalSize()}px`,
                   }}
                 >
+                  {/* Loading skeleton cells (shown on left during infinite scroll backward) */}
+                  {isLoadingBackward && (
+                    <div className="absolute left-0 top-0 z-10 flex h-full">
+                      {Array.from({ length: 3 }).map((_, i) => {
+                        // Calculate if this skeleton represents a weekend
+                        // Use same logic as SkeletonColumns for consistency
+                        const date = dates[0] ? new Date(dates[0]) : new Date();
+                        date.setDate(date.getDate() - i);
+                        const dayOfWeek = date.getDay();
+                        const skeletonIsWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+                        return (
+                          <div
+                            key={`skeleton-body-${i}`}
+                            className={i === 0 ? "border-l-2 border-l-blue-400" : ""}
+                            style={{
+                              width: `${config.colWidth}px`,
+                              boxShadow: i === 0 ? "inset 2px 0 4px rgba(59, 130, 246, 0.1)" : undefined,
+                            }}
+                          >
+                            <SkeletonBodyCell isWeekend={skeletonIsWeekend} columnWidth={config.colWidth} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Actual cell columns */}
                   {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
                     const date = dates[virtualColumn.index];
                     const event = getEvent(symbol, date);
