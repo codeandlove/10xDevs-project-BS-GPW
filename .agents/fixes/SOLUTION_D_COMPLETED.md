@@ -1,7 +1,7 @@
 # ✅ IMPLEMENTACJA ROZWIĄZANIA D - ZAKOŃCZONA
 
 Data: 2026-02-21
-Status: **GOTOWE - WYMAGA TESTOWANIA**
+Status: **GOTOWE - PRZETESTOWANE I NAPRAWIONE**
 
 ## ✅ Wykonane Zmiany
 
@@ -107,6 +107,33 @@ return {
 - Daty są **na stałe przyklejone** do komórek
 - Brak JavaScript synchronizacji = brak lagów
 
+### ✅ Poprawka przezroczystości sticky header (commit f39ca0a)
+**Problem znaleziony podczas testowania:**
+- Sticky header był przezroczysty podczas scrollowania w dół
+- Weekend dates: `bg-gray-100/80` (80% opacity)
+- Today date: `bg-blue-50/50` (50% opacity)
+- Regular dates: **brak tła w ogóle**
+- Efekt: komórki były widoczne przez header
+
+**Rozwiązanie:**
+```typescript
+// PRZED:
+className={`... ${
+  dateIsWeekend ? "bg-gray-100/80" : ""
+} ${dateIsToday ? "bg-blue-50/50 ring-2 ..." : ""}`}
+
+// PO:
+className={`... bg-white ${
+  dateIsWeekend ? "!bg-gray-100" : ""
+} ${dateIsToday ? "!bg-blue-50 ring-2 ..." : ""}`}
+```
+
+**Rezultat:**
+- ✅ Wszystkie daty mają solidne tło `bg-white`
+- ✅ Weekend dates override z `!bg-gray-100` (bez opacity)
+- ✅ Today date override z `!bg-blue-50` (bez opacity)
+- ✅ Sticky header **właściwie przykrywa** komórki podczas scroll
+
 ### ✅ Infinite scroll działa
 - `onScrollElement` właściwie przekazuje scroll container
 - `allDates` z props wspiera infinite scroll backward
@@ -149,9 +176,10 @@ npm run dev
 Otwórz http://localhost:4321/grid i sprawdź:
 
 #### Desktop:
-- [ ] Header scrolluje **IDEALNIE** z gridem - zero delay
-- [ ] Daty są **przyklejone** do komórek podczas scrollowania
-- [ ] Sticky positioning działa (header przyklejony do top)
+- [x] Header scrolluje **IDEALNIE** z gridem - zero delay ✅
+- [x] Daty są **przyklejone** do komórek podczas scrollowania ✅
+- [x] Sticky positioning działa (header przyklejony do top) ✅
+- [x] **Sticky header przykrywa komórki (nie jest przezroczysty)** ✅ NAPRAWIONE
 - [ ] Symbol column przyklejona do left
 - [ ] Scroll jest **płynny** (60 FPS)
 
@@ -201,17 +229,21 @@ Sprawdź:
 
 ```
 Branch: fix/grid-header-scroll-lag
-Commit: c1ae7e4
+Commit 1: c1ae7e4
 Message: feat: implement single scroll container for grid header
 
+Commit 2: f39ca0a
+Message: fix: add solid background to sticky header dates
+
 Files changed:
-- src/components/grid/VirtualizedGrid.tsx (MAJOR refactor)
+- src/components/grid/VirtualizedGrid.tsx (MAJOR refactor + transparency fix)
 - interface VirtualizedGridProps (props added)
 - JSX structure (single container)
 - useEffect scroll sync (simplified)
+- Date cells background (bg-white + !important overrides)
 
 Stats:
- 35 files changed, 4356 insertions(+), 7821 deletions(-)
+ 37 files changed, 4362 insertions(+), 7824 deletions(-)
 ```
 
 ## 🚀 Deployment Plan
