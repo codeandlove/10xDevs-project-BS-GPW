@@ -24,6 +24,7 @@ import type {
 
 /**
  * Calculate date range based on range type
+ * @deprecated Use explicit startDate/endDate instead
  */
 function calculateDateRange(endDateStr: string, range: DateRange): { startDate: string; endDate: string } {
   const endDate = new Date(endDateStr);
@@ -38,6 +39,10 @@ function calculateDateRange(endDateStr: string, range: DateRange): { startDate: 
       break;
     case "quarter":
       daysToSubtract = 90;
+      break;
+    default:
+      // Custom range or unknown - default to 7 days
+      daysToSubtract = 7;
       break;
   }
 
@@ -174,19 +179,18 @@ export class NocoDBService {
   constructor(private client: NocoDBClient) {}
 
   /**
-   * Get grid events with filters
+   * Get grid events with explicit date range
+   * @param startDate - Start date in YYYY-MM-DD format
+   * @param endDate - End date in YYYY-MM-DD format
+   * @param symbols - Optional array of ticker symbols to filter
    */
-  async getGridEvents(range: DateRange, symbols?: string[], endDate?: string): Promise<GridResponse> {
-    // Calculate date range
-    const endDateStr = endDate || new Date().toISOString().split("T")[0];
-    const { startDate, endDate: calculatedEndDate } = calculateDateRange(endDateStr, range);
-
+  async getGridEvents(startDate: string, endDate: string, symbols?: string[]): Promise<GridResponse> {
     // Build query with date filters using exactDate for NocoDB Date fields
     const queryBuilder = new NocoDBQueryBuilder()
       .where("occurrence_date", "gte", startDate, "exactDate")
-      .where("occurrence_date", "lte", calculatedEndDate, "exactDate")
+      .where("occurrence_date", "lte", endDate, "exactDate")
       .sort("occurrence_date", true) // DESC - newest first
-      .limit(1000); // Increased limit for date range queries
+      .limit(10000); // Increased limit for infinite scroll support
 
     // Add symbols filter if provided
     if (symbols && symbols.length > 0) {
@@ -205,7 +209,7 @@ export class NocoDBService {
         needsMemoryFiltering = true;
 
         // Fetch without date filters
-        const fallbackQuery = new NocoDBQueryBuilder().sort("occurrence_date", true).limit(10000); // Large limit to get all recent events
+        const fallbackQuery = new NocoDBQueryBuilder().sort("occurrence_date", true).limit(15000); // Large limit
 
         if (symbols && symbols.length > 0) {
           fallbackQuery.whereIn("symbol", symbols);
@@ -221,7 +225,7 @@ export class NocoDBService {
     let filteredEvents = eventsResponse.list;
     if (needsMemoryFiltering) {
       filteredEvents = eventsResponse.list.filter((event) => {
-        return event.occurrence_date >= startDate && event.occurrence_date <= calculatedEndDate;
+        return event.occurrence_date >= startDate && event.occurrence_date <= endDate;
       });
     }
 
@@ -262,9 +266,8 @@ export class NocoDBService {
     const uniqueSymbols = [...new Set(events.map((e) => e.symbol))];
 
     return {
-      range,
       start_date: startDate,
-      end_date: calculatedEndDate,
+      end_date: endDate,
       events,
       symbols: uniqueSymbols,
       cached_at: new Date().toISOString(),
@@ -417,8 +420,12 @@ export class NocoDBService {
    * @returns Map of symbol -> event count
    */
   private async getEventCountsBySymbol(range: DateRange): Promise<Map<string, number>> {
+    // Calculate dates from range for backward compatibility
+    const today = new Date().toISOString().split("T")[0];
+    const { startDate, endDate } = calculateDateRange(today, range);
+
     // Fetch all events for the range (without symbol filter)
-    const eventsResponse = await this.getGridEvents(range);
+    const eventsResponse = await this.getGridEvents(startDate, endDate);
 
     // Count events per symbol
     const counts = new Map<string, number>();

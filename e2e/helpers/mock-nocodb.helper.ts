@@ -11,6 +11,7 @@ import { mockGridResponse, mockEventDetailsResponse, mockSummariesResponse } fro
  */
 export async function setupNocoDBMocks(page: Page) {
   // NOTE: Symbols endpoint NOT mocked - uses real API
+  // This is intentional - symbols come from real NocoDB API
   // await page.route("**/api/nocodb/symbols**", async (route) => {
   //   await route.fulfill({
   //     status: 200,

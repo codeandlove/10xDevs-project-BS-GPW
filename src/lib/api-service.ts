@@ -14,9 +14,42 @@ import type {
 import type { UserProfileDTO } from "@/types/types";
 
 /**
- * Fetch grid data
+ * Fetch grid data by explicit date range (for infinite scroll)
  */
-export async function fetchGridData(range: DateRange, symbols: string[] = [], endDate?: string): Promise<GridResponse> {
+export async function fetchGridData(startDate: string, endDate: string, symbols: string[]): Promise<GridResponse>;
+
+/**
+ * Fetch grid data by range preset (for quick filters - backward compatible)
+ */
+export async function fetchGridData(range: DateRange, symbols?: string[], endDate?: string): Promise<GridResponse>;
+
+/**
+ * Fetch grid data - implementation
+ */
+export async function fetchGridData(
+  startDateOrRange: string | DateRange,
+  endDateOrSymbols?: string | string[],
+  symbolsOrEndDate?: string[] | string
+): Promise<GridResponse> {
+  // Explicit date range mode
+  if (
+    typeof startDateOrRange === "string" &&
+    startDateOrRange.match(/^\d{4}-\d{2}-\d{2}$/) &&
+    typeof endDateOrSymbols === "string" &&
+    endDateOrSymbols.match(/^\d{4}-\d{2}-\d{2}$/)
+  ) {
+    const startDate = startDateOrRange;
+    const endDate = endDateOrSymbols;
+    const symbols = ((symbolsOrEndDate as string[]) || []).filter((s) => s && s.trim().length > 0).slice(0, 200);
+    const symbolsParam = symbols.length > 0 ? symbols.join(",") : undefined;
+    const url = API_ENDPOINTS.gridDataByDateRange(startDate, endDate, symbolsParam);
+    return apiClient.get<GridResponse>(url);
+  }
+
+  // Range preset mode (backward compatible)
+  const range = startDateOrRange as DateRange;
+  const symbols = ((endDateOrSymbols as string[]) || []).filter((s) => s && s.trim().length > 0).slice(0, 200);
+  const endDate = symbolsOrEndDate as string | undefined;
   const symbolsParam = symbols.length > 0 ? symbols.join(",") : undefined;
   const url = API_ENDPOINTS.gridData(range, symbolsParam, endDate);
   return apiClient.get<GridResponse>(url);

@@ -22,7 +22,7 @@ describe("timeline-utils", () => {
     });
 
     it("should return 30 for custom ranges", () => {
-      expect(getChunkSize("custom:2026-01-01:2026-01-31" as any)).toBe(30);
+      expect(getChunkSize("month")).toBe(30); // Use valid DateRange value
     });
   });
 

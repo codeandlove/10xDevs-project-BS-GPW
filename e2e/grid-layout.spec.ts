@@ -43,6 +43,8 @@ test.describe("Grid - Layout & Scroll (test@example.com)", () => {
       el.scrollLeft = amount;
     }, scrollAmount);
 
+    // Wait for requestAnimationFrame to execute (50ms = ~3 frames at 60 FPS)
+    // This ensures smooth scroll sync has completed before verification
     await page.waitForTimeout(500);
 
     // Verify scroll occurred

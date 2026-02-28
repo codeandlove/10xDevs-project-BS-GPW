@@ -179,7 +179,7 @@ Biznes zyskuje:
 
 - Desktop (>=1024px): Skeleton 5 columns, date picker inline w filters
 - Tablet (768-1023px): Skeleton 3 columns, date picker inline
-- Mobile (<768px): 
+- Mobile (<768px):
   - ✅ Infinite scroll ENABLED (pełna funkcjonalność)
   - Skeleton 3 columns
   - Date picker modal/drawer
@@ -237,15 +237,15 @@ Biznes zyskuje:
 
 **Zidentyfikowane ryzyka:**
 
-| Ryzyko | Prawdopodobieństwo | Wpływ | Mitygacja |
-|--------|-------------------|-------|-----------|
-| Performance degradation przy >2000 columns | MEDIUM | HIGH | Implement chunk unloading, monitor memory usage, warn user at 1000+ cols |
-| Jump effect po dodaniu kolumn | HIGH | MEDIUM | Precyzyjny scroll adjustment calculation, extensive testing |
-| Race conditions przy szybkim scrollowaniu | MEDIUM | HIGH | Debounce, loading flag, request cancellation |
-| API timeout przy dużych zakresach | LOW | HIGH | Backend optimization, pagination fallback, increase timeout |
-| Date picker complexity | MEDIUM | MEDIUM | Use proven library (react-datepicker?), extensive validation tests |
-| URL sync conflicts | MEDIUM | MEDIUM | Atomic state updates, careful URL param serialization |
-| GridSkeleton mismatch z VirtualizedGrid | MEDIUM | LOW | Shared config object (GRID_CONFIG), visual regression tests |
+| Ryzyko                                     | Prawdopodobieństwo | Wpływ  | Mitygacja                                                                |
+| ------------------------------------------ | ------------------ | ------ | ------------------------------------------------------------------------ |
+| Performance degradation przy >2000 columns | MEDIUM             | HIGH   | Implement chunk unloading, monitor memory usage, warn user at 1000+ cols |
+| Jump effect po dodaniu kolumn              | HIGH               | MEDIUM | Precyzyjny scroll adjustment calculation, extensive testing              |
+| Race conditions przy szybkim scrollowaniu  | MEDIUM             | HIGH   | Debounce, loading flag, request cancellation                             |
+| API timeout przy dużych zakresach          | LOW                | HIGH   | Backend optimization, pagination fallback, increase timeout              |
+| Date picker complexity                     | MEDIUM             | MEDIUM | Use proven library (react-datepicker?), extensive validation tests       |
+| URL sync conflicts                         | MEDIUM             | MEDIUM | Atomic state updates, careful URL param serialization                    |
+| GridSkeleton mismatch z VirtualizedGrid    | MEDIUM             | LOW    | Shared config object (GRID_CONFIG), visual regression tests              |
 
 ## 3. Architektura i design
 
@@ -573,10 +573,10 @@ interface GridState {
   eventId?: string;
   sortField: "date" | "percent_change" | "symbol";
   sortDirection: "asc" | "desc";
-  
+
   // NEW
   startDate: string; // YYYY-MM-DD - najstarsza data w zakresie
-  endDate: string;   // YYYY-MM-DD - najnowsza data (zazwyczaj dzisiaj lub wybrana)
+  endDate: string; // YYYY-MM-DD - najnowsza data (zazwyczaj dzisiaj lub wybrana)
 }
 
 interface GridContextValue {
@@ -588,7 +588,7 @@ interface GridContextValue {
   setSort: (sort: { field: "date" | "percent_change" | "symbol"; direction: "asc" | "desc" }) => void;
   setEventId: (eventId: string | undefined) => void;
   clearFilters: () => void;
-  
+
   // NEW
   setDateRange: (startDate: string, endDate: string) => void;
   // Helper: setRange może automatycznie kalkulować startDate/endDate z range
@@ -680,15 +680,15 @@ src/
 
 **3.4.3. Component Responsibilities**
 
-| Komponent | Odpowiedzialności |
-|-----------|------------------|
-| `useInfiniteTimeline` | Zarządzanie chunks, triggering loads, merging events, state persistence |
-| `useTimelineScroll` | Detekowanie scroll position, threshold calculation, debouncing |
-| `SkeletonColumns` | Renderowanie 3-5 skeleton columns z styling jak header dates |
-| `AdvancedDateRangePicker` | Calendar widget, validation, synchronizacja ze scroll state |
-| `VirtualizedGrid` | Integracja infinite scroll hooks, skeleton columns rendering, scroll offset adjustment |
-| `GridView` | Orchestration - fetching, timeline state management, error handling |
-| `timeline-utils.ts` | calculateChunkDates, mergeEventChunks, getScrollThreshold, adjustScrollOffset |
+| Komponent                 | Odpowiedzialności                                                                      |
+| ------------------------- | -------------------------------------------------------------------------------------- |
+| `useInfiniteTimeline`     | Zarządzanie chunks, triggering loads, merging events, state persistence                |
+| `useTimelineScroll`       | Detekowanie scroll position, threshold calculation, debouncing                         |
+| `SkeletonColumns`         | Renderowanie 3-5 skeleton columns z styling jak header dates                           |
+| `AdvancedDateRangePicker` | Calendar widget, validation, synchronizacja ze scroll state                            |
+| `VirtualizedGrid`         | Integracja infinite scroll hooks, skeleton columns rendering, scroll offset adjustment |
+| `GridView`                | Orchestration - fetching, timeline state management, error handling                    |
+| `timeline-utils.ts`       | calculateChunkDates, mergeEventChunks, getScrollThreshold, adjustScrollOffset          |
 
 ### 3.5. API changes
 
@@ -697,12 +697,14 @@ src/
 Endpoint wspiera **3 tryby działania** z priorytetyzacją parametrów:
 
 **Tryb 1: Explicit date range (HIGHEST PRIORITY)**
+
 ```typescript
 GET /api/nocodb/grid?start_date=2026-01-01&end_date=2026-02-18&symbols=ABC,XYZ
 // Używa dokładnie podanych dat (infinite scroll, custom range picker)
 ```
 
 **Tryb 2: Range with custom end_date (MEDIUM PRIORITY)**
+
 ```typescript
 GET /api/nocodb/grid?range=week&end_date=2026-02-10&symbols=ABC,XYZ
 // Kalkuluje start_date = end_date - 7 dni
@@ -710,6 +712,7 @@ GET /api/nocodb/grid?range=week&end_date=2026-02-10&symbols=ABC,XYZ
 ```
 
 **Tryb 3: Range only (BACKWARD COMPATIBLE)**
+
 ```typescript
 GET /api/nocodb/grid?range=week&symbols=ABC,XYZ
 // Kalkuluje: end_date = today, start_date = today - 7 dni
@@ -717,6 +720,7 @@ GET /api/nocodb/grid?range=week&symbols=ABC,XYZ
 ```
 
 **Logika priorytetów:**
+
 ```typescript
 if (start_date && end_date) {
   // Tryb 1: Use explicit dates
@@ -744,73 +748,85 @@ if (start_date && end_date) {
 ```typescript
 // src/lib/nocodb-validation.ts
 
-export const GridQuerySchema = z.object({
-  // Date range params (flexible)
-  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  
-  // Range param (preserved for presets and legacy)
-  range: z.enum(["week", "month", "quarter"]).optional(),
-  
-  // Existing
-  symbols: z.string().optional(),
-}).refine(
-  (data) => {
-    // Must have at least ONE of:
-    // 1. Both start_date + end_date
-    // 2. range (with optional end_date)
-    const hasExplicitRange = data.start_date && data.end_date;
-    const hasRange = data.range;
-    return hasExplicitRange || hasRange;
-  },
-  { message: "Must provide either (start_date + end_date) OR range" }
-).refine(
-  (data) => {
-    // If both start_date and end_date provided, validate order
-    if (data.start_date && data.end_date) {
-      return new Date(data.start_date) < new Date(data.end_date);
-    }
-    return true;
-  },
-  { message: "start_date must be before end_date" }
-).refine(
-  (data) => {
-    // If start_date provided without end_date (invalid)
-    if (data.start_date && !data.end_date) {
-      return false;
-    }
-    // If end_date provided without start_date, range must be present
-    if (data.end_date && !data.start_date) {
-      return !!data.range;
-    }
-    return true;
-  },
-  { message: "start_date requires end_date, or use range with optional end_date" }
-);
+export const GridQuerySchema = z
+  .object({
+    // Date range params (flexible)
+    start_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+    end_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+
+    // Range param (preserved for presets and legacy)
+    range: z.enum(["week", "month", "quarter"]).optional(),
+
+    // Existing
+    symbols: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // Must have at least ONE of:
+      // 1. Both start_date + end_date
+      // 2. range (with optional end_date)
+      const hasExplicitRange = data.start_date && data.end_date;
+      const hasRange = data.range;
+      return hasExplicitRange || hasRange;
+    },
+    { message: "Must provide either (start_date + end_date) OR range" }
+  )
+  .refine(
+    (data) => {
+      // If both start_date and end_date provided, validate order
+      if (data.start_date && data.end_date) {
+        return new Date(data.start_date) < new Date(data.end_date);
+      }
+      return true;
+    },
+    { message: "start_date must be before end_date" }
+  )
+  .refine(
+    (data) => {
+      // If start_date provided without end_date (invalid)
+      if (data.start_date && !data.end_date) {
+        return false;
+      }
+      // If end_date provided without start_date, range must be present
+      if (data.end_date && !data.start_date) {
+        return !!data.range;
+      }
+      return true;
+    },
+    { message: "start_date requires end_date, or use range with optional end_date" }
+  );
 ```
 
 **3.5.3. Use cases mapping**
 
-| Use Case | Params | Behavior |
-|----------|--------|----------|
-| Infinite scroll load chunk | `start_date` + `end_date` + `symbols` | Explicit date range |
-| Custom date picker | `start_date` + `end_date` + `symbols` | Explicit date range |
-| Quick preset (Tydzień) | `range=week` + `symbols` | Calculate from today |
-| Quick preset with anchor | `range=week` + `end_date=2026-02-10` | Calculate start from anchor |
-| Legacy code | `range=month` + `end_date` (optional) | Backward compatible |
-| Future: Rolling window | `range=week` + `end_date=latest_event_date` | Dynamic anchor |
+| Use Case                   | Params                                      | Behavior                    |
+| -------------------------- | ------------------------------------------- | --------------------------- |
+| Infinite scroll load chunk | `start_date` + `end_date` + `symbols`       | Explicit date range         |
+| Custom date picker         | `start_date` + `end_date` + `symbols`       | Explicit date range         |
+| Quick preset (Tydzień)     | `range=week` + `symbols`                    | Calculate from today        |
+| Quick preset with anchor   | `range=week` + `end_date=2026-02-10`        | Calculate start from anchor |
+| Legacy code                | `range=month` + `end_date` (optional)       | Backward compatible         |
+| Future: Rolling window     | `range=week` + `end_date=latest_event_date` | Dynamic anchor              |
 
 ## 4. Szczegółowy plan implementacji
 
 ### Faza 0: Przygotowanie i setup (0.5 dnia)
 
 **Zadania:**
+
 1. ✅ Checkpoint 1: Doprecyzowanie wymagań (COMPLETED)
 2. ✅ Analiza istniejącego kodu (COMPLETED)
 3. Utworzenie feature branch: `feature/grid-infinite-scroll-timeline`
 4. Przegląd dokumentacji `@tanstack/react-virtual` (potential pitfalls)
 
 **Deliverables:**
+
 - Feature branch ready
 - Notes dokumentujące potential issues
 
@@ -873,11 +889,7 @@ export interface ChunkMetadata {
 export type DateRange = "week" | "month" | "quarter";
 
 // PO
-export type DateRange = 
-  | "week" 
-  | "month" 
-  | "quarter"
-  | `custom:${string}:${string}`; // Format: custom:YYYY-MM-DD:YYYY-MM-DD
+export type DateRange = "week" | "month" | "quarter" | `custom:${string}:${string}`; // Format: custom:YYYY-MM-DD:YYYY-MM-DD
 
 // Helper type guard
 export function isCustomDateRange(range: DateRange): boolean {
@@ -923,20 +935,17 @@ export function getChunkSize(range: DateRange): number {
  * @param chunkSize - Size of chunk in days
  * @returns { startDate, endDate } for the previous chunk
  */
-export function calculatePreviousChunk(
-  oldestDate: string,
-  chunkSize: number
-): { startDate: string; endDate: string } {
+export function calculatePreviousChunk(oldestDate: string, chunkSize: number): { startDate: string; endDate: string } {
   const oldest = new Date(oldestDate);
-  
+
   // endDate = oldestDate - 1 day
   const endDate = new Date(oldest);
   endDate.setDate(endDate.getDate() - 1);
-  
+
   // startDate = endDate - chunkSize days
   const startDate = new Date(endDate);
   startDate.setDate(startDate.getDate() - chunkSize + 1);
-  
+
   return {
     startDate: startDate.toISOString().split("T")[0],
     endDate: endDate.toISOString().split("T")[0],
@@ -948,7 +957,7 @@ export function calculatePreviousChunk(
  */
 export function mergeEventChunks(chunks: TimelineChunk[]): BlackSwanEventMinimal[] {
   const eventMap = new Map<string, BlackSwanEventMinimal>();
-  
+
   chunks.forEach((chunk) => {
     chunk.events.forEach((event) => {
       const key = `${event.symbol}-${event.occurrence_date}`;
@@ -957,7 +966,7 @@ export function mergeEventChunks(chunks: TimelineChunk[]): BlackSwanEventMinimal
       }
     });
   });
-  
+
   return Array.from(eventMap.values());
 }
 
@@ -966,16 +975,16 @@ export function mergeEventChunks(chunks: TimelineChunk[]): BlackSwanEventMinimal
  */
 export function getAllDatesFromChunks(chunks: TimelineChunk[]): string[] {
   const dateSet = new Set<string>();
-  
+
   chunks.forEach((chunk) => {
     const chunkStart = new Date(chunk.startDate);
     const chunkEnd = new Date(chunk.endDate);
-    
+
     for (let d = new Date(chunkStart); d <= chunkEnd; d.setDate(d.getDate() + 1)) {
       dateSet.add(d.toISOString().split("T")[0]);
     }
   });
-  
+
   return Array.from(dateSet).sort();
 }
 
@@ -1004,7 +1013,7 @@ export function calculateScrollAdjustment(
  */
 export function getChunkMetadata(chunk: TimelineChunk): ChunkMetadata {
   const symbolSet = new Set(chunk.events.map((e) => e.symbol));
-  
+
   return {
     totalEvents: chunk.events.length,
     dateRange: { start: chunk.startDate, end: chunk.endDate },
@@ -1060,7 +1069,14 @@ describe("timeline-utils", () => {
           startDate: "2026-01-01",
           endDate: "2026-01-07",
           events: [
-            { id: "1", symbol: "ABC", occurrence_date: "2026-01-05", event_type: "BLACK_SWAN_UP", percent_change: 5, has_summary: true },
+            {
+              id: "1",
+              symbol: "ABC",
+              occurrence_date: "2026-01-05",
+              event_type: "BLACK_SWAN_UP",
+              percent_change: 5,
+              has_summary: true,
+            },
           ],
           loadedAt: Date.now(),
         },
@@ -1069,8 +1085,22 @@ describe("timeline-utils", () => {
           startDate: "2026-01-08",
           endDate: "2026-01-14",
           events: [
-            { id: "2", symbol: "XYZ", occurrence_date: "2026-01-10", event_type: "BLACK_SWAN_DOWN", percent_change: -5, has_summary: true },
-            { id: "1", symbol: "ABC", occurrence_date: "2026-01-05", event_type: "BLACK_SWAN_UP", percent_change: 5, has_summary: true }, // Duplicate
+            {
+              id: "2",
+              symbol: "XYZ",
+              occurrence_date: "2026-01-10",
+              event_type: "BLACK_SWAN_DOWN",
+              percent_change: -5,
+              has_summary: true,
+            },
+            {
+              id: "1",
+              symbol: "ABC",
+              occurrence_date: "2026-01-05",
+              event_type: "BLACK_SWAN_UP",
+              percent_change: 5,
+              has_summary: true,
+            }, // Duplicate
           ],
           loadedAt: Date.now(),
         },
@@ -1093,6 +1123,7 @@ describe("timeline-utils", () => {
 ```
 
 **Deliverables:**
+
 - ✅ Type definitions
 - ✅ Utility functions
 - ✅ Unit tests (>90% coverage)
@@ -1147,7 +1178,7 @@ export function useTimelineScroll({
     // Check if threshold reached (15% from left)
     if (currentScrollLeft <= threshold && !thresholdReached) {
       setThresholdReached(true);
-      
+
       // Debounce to prevent multiple triggers
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
@@ -1161,7 +1192,7 @@ export function useTimelineScroll({
     if (!scrollElement) return;
 
     scrollElement.addEventListener("scroll", handleScroll, { passive: true });
-    
+
     // Initial check
     handleScroll();
 
@@ -1183,12 +1214,7 @@ export function useTimelineScroll({
 import { useState, useCallback, useMemo } from "react";
 import type { TimelineState, TimelineChunk } from "@/types/grid-timeline.types";
 import type { BlackSwanEventMinimal, DateRange } from "@/types/nocodb.types";
-import {
-  calculatePreviousChunk,
-  mergeEventChunks,
-  getAllDatesFromChunks,
-  getChunkSize,
-} from "@/lib/timeline-utils";
+import { calculatePreviousChunk, mergeEventChunks, getAllDatesFromChunks, getChunkSize } from "@/lib/timeline-utils";
 import { fetchGridData } from "@/lib/api-service";
 
 interface UseInfiniteTimelineProps {
@@ -1244,10 +1270,7 @@ export function useInfiniteTimeline({
 
     try {
       const chunkSize = getChunkSize(range);
-      const { startDate, endDate } = calculatePreviousChunk(
-        timelineState.oldestLoadedDate,
-        chunkSize
-      );
+      const { startDate, endDate } = calculatePreviousChunk(timelineState.oldestLoadedDate, chunkSize);
 
       console.log(`[useInfiniteTimeline] Loading chunk: ${startDate} to ${endDate}`);
 
@@ -1405,6 +1428,7 @@ describe("useInfiniteTimeline", () => {
 ```
 
 **Deliverables:**
+
 - ✅ useTimelineScroll hook
 - ✅ useInfiniteTimeline hook
 - ✅ Hook tests
@@ -1443,7 +1467,7 @@ export function SkeletonColumns({ count = 5, columnWidth }: SkeletonColumnsProps
         >
           {/* Weekday skeleton */}
           <div className="mb-1 h-3 w-8 animate-pulse rounded bg-gray-300 md:h-4 md:w-10" />
-          
+
           {/* Date skeleton */}
           <div className="h-2 w-12 animate-pulse rounded bg-gray-200 md:h-3 md:w-16" />
         </div>
@@ -1685,6 +1709,7 @@ export function AdvancedDateRangePicker({
 ```
 
 **Deliverables:**
+
 - ✅ SkeletonColumns component
 - ✅ Refactored GridSkeleton
 - ✅ AdvancedDateRangePicker component
@@ -1890,6 +1915,7 @@ export function VirtualizedGrid({
 ```
 
 **Deliverables:**
+
 - ✅ Modified VirtualizedGrid with infinite scroll support
 - ✅ Scroll offset adjustment logic
 - ✅ SkeletonColumns integration
@@ -1918,7 +1944,7 @@ export function GridView() {
   const today = new Date().toISOString().split("T")[0];
   const initialStartDate = useMemo(() => {
     if (gridState.startDate) return gridState.startDate;
-    
+
     // Calculate from range
     const daysBack = gridState.range === "week" ? 7 : gridState.range === "month" ? 30 : 90;
     const start = new Date();
@@ -2018,10 +2044,10 @@ export function GridView() {
       const end = new Date();
       const start = new Date();
       start.setDate(start.getDate() - daysBack);
-      
+
       const startDate = start.toISOString().split("T")[0];
       const endDate = end.toISOString().split("T")[0];
-      
+
       handleDateRangeChange(startDate, endDate);
     },
     [setRange, handleDateRangeChange]
@@ -2101,6 +2127,7 @@ export function GridView() {
 ```
 
 **Deliverables:**
+
 - ✅ GridView with infinite timeline integration
 - ✅ Date range picker integration
 - ✅ Error handling UI
@@ -2130,10 +2157,10 @@ interface GridContextValue {
 // In getInitialStateFromUrl
 function getInitialStateFromUrl(): GridState {
   // ...existing params...
-  
+
   const startDateParam = urlParams.get("start_date");
   const endDateParam = urlParams.get("end_date");
-  
+
   return {
     // ...existing fields...
     startDate: startDateParam || undefined,
@@ -2144,35 +2171,35 @@ function getInitialStateFromUrl(): GridState {
 // In updateUrlParams
 function updateUrlParams(state: Partial<GridState>): void {
   // ...existing params...
-  
+
   if (state.startDate) {
     params.set("start_date", state.startDate);
   } else {
     params.delete("start_date");
   }
-  
+
   if (state.endDate) {
     params.set("end_date", state.endDate);
   } else {
     params.delete("end_date");
   }
-  
+
   // ...rest of function...
 }
 
 // Add setDateRange method
 export function GridProvider({ children, initialState }: GridProviderProps) {
   // ...existing state...
-  
+
   const setDateRange = useCallback((startDate: string, endDate: string) => {
     setGridState((prev) => ({ ...prev, startDate, endDate }));
   }, []);
-  
+
   const value: GridContextValue = {
     // ...existing fields...
     setDateRange,
   };
-  
+
   // ...rest of component...
 }
 ```
@@ -2186,11 +2213,7 @@ export function GridProvider({ children, initialState }: GridProviderProps) {
  * Fetch grid data - EXPLICIT DATE RANGE
  * Primary method for infinite scroll and custom date picker
  */
-export async function fetchGridData(
-  startDate: string,
-  endDate: string,
-  symbols: string[] = []
-): Promise<GridResponse> {
+export async function fetchGridData(startDate: string, endDate: string, symbols: string[] = []): Promise<GridResponse> {
   const symbolsParam = symbols.length > 0 ? symbols.join(",") : undefined;
   const url = API_ENDPOINTS.gridDataByDateRange(startDate, endDate, symbolsParam);
   return apiClient.get<GridResponse>(url);
@@ -2216,19 +2239,19 @@ export async function fetchGridDataByRange(
 // In api-client.ts, update endpoint builders
 export const API_ENDPOINTS = {
   // ...existing endpoints...
-  
+
   /**
    * Grid data by explicit date range
    */
   gridDataByDateRange: (startDate: string, endDate: string, symbols?: string) => {
-    const params = new URLSearchParams({ 
-      start_date: startDate, 
-      end_date: endDate 
+    const params = new URLSearchParams({
+      start_date: startDate,
+      end_date: endDate,
     });
     if (symbols) params.append("symbols", symbols);
     return `/api/nocodb/grid?${params}`;
   },
-  
+
   /**
    * Grid data by range (preserved for presets)
    */
@@ -2297,7 +2320,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       const end = new Date(rawParams.end_date);
       const start = new Date(end);
       start.setDate(start.getDate() - chunkSize);
-      
+
       startDate = start.toISOString().split("T")[0];
       endDate = rawParams.end_date;
     } else if (rawParams.range) {
@@ -2307,18 +2330,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
       const today = new Date();
       const start = new Date(today);
       start.setDate(start.getDate() - chunkSize);
-      
+
       startDate = start.toISOString().split("T")[0];
       endDate = today.toISOString().split("T")[0];
     } else {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Must provide either (start_date + end_date) OR range",
-          examples: [
-            "?start_date=2026-01-01&end_date=2026-02-18",
-            "?range=week&end_date=2026-02-18",
-            "?range=week"
-          ]
+          examples: ["?start_date=2026-01-01&end_date=2026-02-18", "?range=week&end_date=2026-02-18", "?range=week"],
         }),
         { status: 400 }
       );
@@ -2333,19 +2352,13 @@ export const GET: APIRoute = async ({ request, locals }) => {
     });
 
     // Parse symbols
-    const symbols = validatedParams.symbols
-      ? validatedParams.symbols.split(",").filter(Boolean)
-      : undefined;
+    const symbols = validatedParams.symbols ? validatedParams.symbols.split(",").filter(Boolean) : undefined;
 
     // Fetch from NocoDB
     const nocoClient = new NocoDBClient();
     const nocoService = new NocoDBService(nocoClient);
 
-    const gridData = await nocoService.getGridEvents(
-      startDate,
-      endDate,
-      symbols
-    );
+    const gridData = await nocoService.getGridEvents(startDate, endDate, symbols);
 
     return new Response(JSON.stringify(gridData), {
       status: 200,
@@ -2366,10 +2379,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     console.error("[API /grid] Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
   }
 };
 
@@ -2429,12 +2439,12 @@ async getGridEvents(
     // Fallback to memory filtering if needed
     if (err && typeof err === "object" && "statusCode" in err && (err as { statusCode: number }).statusCode === 422) {
       needsMemoryFiltering = true;
-      
+
       const fallbackQuery = new NocoDBQueryBuilder().sort("occurrence_date", true).limit(15000);
       if (symbols && symbols.length > 0) {
         fallbackQuery.whereIn("symbol", symbols);
       }
-      
+
       eventsResponse = await this.client.queryRecords<NocoDBEventRecord>(
         NOCODB_TABLES.BLACK_SWANS,
         fallbackQuery
@@ -2453,7 +2463,7 @@ async getGridEvents(
   }
 
   // ...rest of transformation logic...
-  
+
   return {
     events: minimalEvents,
     total_count: filteredRecords.length,
@@ -2462,6 +2472,7 @@ async getGridEvents(
 ```
 
 **Deliverables:**
+
 - ✅ API endpoint refactored
 - ✅ GridContext extended
 - ✅ NocoDBService updated
@@ -2615,7 +2626,7 @@ test.describe("Advanced Date Range Picker", () => {
     await page.click('button:has-text("Zastosuj zakres")');
 
     // Should show error
-    await expect(page.locator('text=Data \'od\' musi być wcześniejsza niż data \'do\'')).toBeVisible();
+    await expect(page.locator("text=Data 'od' musi być wcześniejsza niż data 'do'")).toBeVisible();
   });
 
   test("TC-PICKER-003: Visible range indicator updates on scroll", async ({ page }) => {
@@ -2632,12 +2643,13 @@ test.describe("Advanced Date Range Picker", () => {
     await page.waitForTimeout(2000);
 
     // Verify visible range indicator shows
-    await expect(page.locator('text=Widoczny zakres:')).toBeVisible();
+    await expect(page.locator("text=Widoczny zakres:")).toBeVisible();
   });
 });
 ```
 
 **Deliverables:**
+
 - ✅ E2E tests dla infinite scroll
 - ✅ E2E tests dla date picker
 - ✅ All tests passing
@@ -2650,13 +2662,15 @@ test.describe("Advanced Date Range Picker", () => {
 
 **Plik**: `docs/FEATURE_INFINITE_SCROLL_TIMELINE.md` (nowy)
 
-```markdown
+````markdown
 # Feature Documentation: Infinite Scroll Timeline
 
 ## Overview
+
 Infinite horizontal scroll dla Black Swan Grid z dynamicznym date range selection.
 
 ## Architecture
+
 - **Hooks**: useInfiniteTimeline, useTimelineScroll
 - **Components**: SkeletonColumns, AdvancedDateRangePicker
 - **API**: /api/nocodb/grid with start_date & end_date params
@@ -2664,6 +2678,7 @@ Infinite horizontal scroll dla Black Swan Grid z dynamicznym date range selectio
 ## Usage
 
 ### For Developers
+
 ```typescript
 // Use in GridView
 const { allEvents, allDates, loadPreviousChunk } = useInfiniteTimeline({
@@ -2674,33 +2689,40 @@ const { allEvents, allDates, loadPreviousChunk } = useInfiniteTimeline({
   initialEvents: [],
 });
 ```
+````
 
 ### For Users
+
 1. Scroll grid to left edge (15% threshold)
 2. Skeleton columns appear
 3. Previous period loads automatically
 4. Scroll position adjusts to maintain context
 
 ## Configuration
+
 - Chunk size: 7/30/90 days (matches range)
 - Threshold: 15% from left edge
 - Max date range (picker): 730 days (2 years)
 - No history limit: infinite backward scroll
 
 ## Performance
+
 - Chunk load: <500ms (30 days × 100 symbols)
 - Scroll detection: <16ms (60 FPS)
 - Memory: ~50MB for 1 year data
 
 ## Testing
+
 - Unit: timeline-utils, hooks
 - E2E: grid-infinite-scroll.spec.ts, advanced-date-picker.spec.ts
 
 ## Troubleshooting
+
 - **Jump effect**: Check scroll adjustment calculation
 - **Duplicate loads**: Verify debounce logic
 - **Memory issues**: Implement chunk unloading (future)
-```
+
+````
 
 #### Krok 8.2: Code cleanup
 
@@ -2773,7 +2795,7 @@ const ENABLE_INFINITE_SCROLL = import.meta.env.PUBLIC_FEATURE_INFINITE_SCROLL ==
 ) : (
   <VirtualizedGrid legacy mode />
 )}
-```
+````
 
 ### 5.4. Monitoring
 
@@ -2812,7 +2834,7 @@ const ENABLE_INFINITE_SCROLL = import.meta.env.PUBLIC_FEATURE_INFINITE_SCROLL ==
 
 **Ryzyko 1: Performance degradation przy >2000 columns**
 
-- **Mitygacja**: 
+- **Mitygacja**:
   - Implement monitoring on chunk load count
   - Add warning toast at 1000 columns: "Załadowałeś wiele danych - wydajność może spaść"
   - Future: Implement chunk unloading (remove chunks >500 columns away from viewport)
@@ -3003,16 +3025,19 @@ Poza scope MVP, ale warte rozważenia w przyszłości:
 ### 12.1. Alternative approaches considered
 
 **Podejście 1: Pagination zamiast infinite scroll**
+
 - **Pros**: Prostszy implementation, lepsza performance control
 - **Cons**: Gorszy UX, wymaga klikania "poprzednia strona"
 - **Verdict**: Odrzucone - infinite scroll lepszy UX
 
 **Podejście 2: Załadowanie wszystkich danych upfront (no lazy loading)**
+
 - **Pros**: Brak loading states, instant scroll
 - **Cons**: Bardzo wolny initial load (>5s), memory issues
 - **Verdict**: Odrzucone - nieakceptowalna initial load time
 
 **Podejście 3: Virtual scrolling z window-based loading (nie chunks)**
+
 - **Pros**: Bardziej granular control
 - **Cons**: Skomplikowany implementation, trudniejszy cache management
 - **Verdict**: Odrzucone - chunk-based approach prostszy i wystarczający
@@ -3062,4 +3087,3 @@ Poza scope MVP, ale warte rozważenia w przyszłości:
 **Plan gotowy do implementacji - wszystkie decyzje podjęte ✅**
 
 Start implementation: Faza 0 - Feature branch setup
-

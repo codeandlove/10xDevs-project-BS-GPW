@@ -43,10 +43,21 @@ export class GridPage extends BasePage {
   }
 
   /**
-   * Wait for grid to be fully loaded
+   * Wait for grid to be fully loaded with data
    */
-  async waitForGridReady(timeout = 10000): Promise<void> {
-    await expect(this.grid).toBeVisible({ timeout });
+  async waitForGridReady(timeout = 15000): Promise<void> {
+    // Wait for grid container to be visible
+    await expect(this.grid).toBeVisible({ timeout: 5000 });
+
+    // Wait for grid cells to appear (data loaded)
+    // Grid should have at least one data cell (not just headers)
+    await this.page.waitForFunction(
+      () => {
+        const cells = document.querySelectorAll('[role="gridcell"]');
+        return cells.length > 0;
+      },
+      { timeout }
+    );
   }
 
   /**

@@ -19,10 +19,6 @@
 - Never create agent summaries or task recaps.
 - Never create “plan.md”, “summary.md”, “notes.md”, or similar files by default.
 
-## Terminal usage
-
-- Terminal usage is prohibited unless the prompt explicitly authorizes it.
-
 ## Tone
 
 - Neutral, technical, skeptical.

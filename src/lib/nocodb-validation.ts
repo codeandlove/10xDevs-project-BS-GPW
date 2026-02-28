@@ -7,35 +7,104 @@ import { z } from "zod";
 
 /**
  * Grid query parameters schema
+ * Supports 3 modes:
+ * 1. Explicit dates: start_date + end_date
+ * 2. Range with anchor: range + end_date
+ * 3. Range only: range
  */
-export const GridQuerySchema = z.object({
-  range: z.enum(["week", "month", "quarter"], {
-    errorMap: () => ({ message: "range must be one of: week, month, quarter" }),
-  }),
-  symbols: z
-    .string()
-    .optional()
-    .refine(
-      (val) => {
-        if (!val) return true;
-        const symbolArray = val.split(",");
-        return symbolArray.every((s) => s.trim().length > 0 && s.trim().length <= 10);
-      },
-      { message: "Each symbol must be 1-10 characters" }
-    ),
-  end_date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD")
-    .optional()
-    .refine(
-      (val) => {
-        if (!val) return true;
-        const date = new Date(val);
-        return !isNaN(date.getTime());
-      },
-      { message: "Invalid date value" }
-    ),
-});
+export const GridQuerySchema = z
+  .object({
+    // Date range params (flexible)
+    start_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD")
+      .optional()
+      .refine(
+        (val) => {
+          if (!val) return true;
+          const date = new Date(val);
+          return !isNaN(date.getTime());
+        },
+        { message: "Invalid start_date value" }
+      ),
+    end_date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD")
+      .optional()
+      .refine(
+        (val) => {
+          if (!val) return true;
+          const date = new Date(val);
+          return !isNaN(date.getTime());
+        },
+        { message: "Invalid end_date value" }
+      ),
+
+    // Range param (preserved for presets and legacy)
+    range: z
+      .enum(["week", "month", "quarter"], {
+        errorMap: () => ({ message: "range must be one of: week, month, quarter" }),
+      })
+      .optional(),
+
+    // Symbols filter
+    symbols: z
+      .string()
+      .optional()
+      .transform((val) => {
+        if (!val) return val;
+        // Strip trailing comma and filter empty entries
+        return val
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0)
+          .join(",");
+      })
+      .refine(
+        (val) => {
+          if (!val) return true;
+          const symbolArray = val.split(",");
+          if (symbolArray.length > 200) return false;
+          return symbolArray.every((s) => s.length > 0 && s.length <= 10);
+        },
+        { message: "Max 200 symbols, each 1-10 characters" }
+      ),
+  })
+  .refine(
+    (data) => {
+      // Must have at least ONE of:
+      // 1. Both start_date + end_date
+      // 2. range (with optional end_date)
+      const hasExplicitRange = data.start_date && data.end_date;
+      const hasRange = data.range;
+      return hasExplicitRange || hasRange;
+    },
+    { message: "Must provide either (start_date + end_date) OR range" }
+  )
+  .refine(
+    (data) => {
+      // If both start_date and end_date provided, validate order
+      if (data.start_date && data.end_date) {
+        return new Date(data.start_date) < new Date(data.end_date);
+      }
+      return true;
+    },
+    { message: "start_date must be before end_date" }
+  )
+  .refine(
+    (data) => {
+      // If start_date provided without end_date (invalid)
+      if (data.start_date && !data.end_date) {
+        return false;
+      }
+      // If end_date provided without start_date, range must be present
+      if (data.end_date && !data.start_date) {
+        return !!data.range;
+      }
+      return true;
+    },
+    { message: "start_date requires end_date, or use range with optional end_date" }
+  );
 
 /**
  * Event ID path parameter schema

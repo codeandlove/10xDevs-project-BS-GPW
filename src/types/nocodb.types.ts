@@ -15,8 +15,26 @@ export type ArticleSentiment = "positive" | "negative" | "neutral";
 
 /**
  * Date range type for grid queries
+ * Supports preset ranges and custom date ranges
  */
-export type DateRange = "week" | "month" | "quarter";
+export type DateRange = "week" | "month" | "quarter" | `custom:${string}:${string}`; // Format: custom:YYYY-MM-DD:YYYY-MM-DD
+
+/**
+ * Type guard to check if range is custom
+ */
+export function isCustomDateRange(range: DateRange): boolean {
+  return typeof range === "string" && range.startsWith("custom:");
+}
+
+/**
+ * Parse custom date range to start and end dates
+ */
+export function parseCustomDateRange(range: DateRange): { startDate: string; endDate: string } | null {
+  if (!isCustomDateRange(range)) return null;
+  const parts = range.split(":");
+  if (parts.length !== 3) return null;
+  return { startDate: parts[1], endDate: parts[2] };
+}
 
 // ============================================
 // Request DTOs
@@ -60,7 +78,6 @@ export interface BlackSwanEventMinimal {
  * Grid response with date range and events
  */
 export interface GridResponse {
-  range: DateRange;
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
   events: BlackSwanEventMinimal[];

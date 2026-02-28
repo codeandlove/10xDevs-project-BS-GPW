@@ -16,12 +16,12 @@ test.describe("Grid - Advanced Filtering (test@example.com)", () => {
     const gridPage = new GridPage(page);
     await gridPage.goto();
 
-    // Grid starts with 3 pre-selected tickers (CPD, PKN, PKO)
-    // Change to only 1 ticker (PKN)
+    // Open filter and select only 1 ticker (PKN)
     await gridPage.tickerFilter.open();
 
-    // Uncheck CPD and PKO
-    await gridPage.tickerFilter.deselectTickers(["CPD", "PKO"]);
+    // Deselect all first, then select only PKN
+    await gridPage.tickerFilter.deselectAll();
+    await gridPage.tickerFilter.selectTicker("PKN");
 
     // Verify apply button shows 1 selected
     const selectedCount = await gridPage.tickerFilter.getSelectedCount();
@@ -41,11 +41,12 @@ test.describe("Grid - Advanced Filtering (test@example.com)", () => {
     const gridPage = new GridPage(page);
     await gridPage.goto();
 
-    // Change from 3 default (CPD, PKN, PKO) to 2 different (11B, ABE)
+    // Select only 2 tickers
     await gridPage.tickerFilter.open();
 
-    // Replace current with new tickers
-    await gridPage.tickerFilter.replaceFilter(["CPD", "PKN", "PKO"], ["11B", "ABE"]);
+    // Deselect all first, then select 2 specific tickers
+    await gridPage.tickerFilter.deselectAll();
+    await gridPage.tickerFilter.selectTickers(["CPD", "PKN"]);
 
     // Verify apply button shows 2 selected
     const selectedCount = await gridPage.tickerFilter.getSelectedCount();
@@ -80,7 +81,8 @@ test.describe("Grid - Advanced Filtering (test@example.com)", () => {
 
     // First, apply filter with PKN only
     await gridPage.tickerFilter.open();
-    await gridPage.tickerFilter.deselectTickers(["CPD", "PKO"]);
+    await gridPage.tickerFilter.deselectAll();
+    await gridPage.tickerFilter.selectTicker("PKN");
     await gridPage.tickerFilter.apply();
 
     // Verify badge shows 1
@@ -89,7 +91,8 @@ test.describe("Grid - Advanced Filtering (test@example.com)", () => {
 
     // Now replace PKN with CPD
     await gridPage.tickerFilter.open();
-    await gridPage.tickerFilter.replaceFilter(["PKN"], ["CPD"]);
+    await gridPage.tickerFilter.deselectAll();
+    await gridPage.tickerFilter.selectTicker("CPD");
     await gridPage.tickerFilter.apply();
 
     // Badge should still show 1 (but different ticker now)
@@ -117,43 +120,48 @@ test.describe("Grid - Advanced Filtering Mobile", () => {
   test.use({ viewport: { width: 375, height: 667 } }); // iPhone SE
 
   test.skip("TC-FILTER-MOBILE-001: Bottom sheet opens and is scrollable", async ({ page }) => {
-    // SKIP: Mobile UI may have different layout (filters in hamburger menu?)
-    // TODO: Investigate mobile filter UI implementation
+    // NOTE: On mobile (< 768px), filters are in hamburger menu, not separate buttons
+    // Mobile UI uses different layout - would need to test hamburger menu navigation
+    // Desktop has separate filter buttons in header
     const gridPage = new GridPage(page);
     await gridPage.goto();
 
     // Open filter (should be bottom sheet on mobile)
     await gridPage.tickerFilter.open();
 
-    // Dialog should be visible
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
+    // Wait for bottom sheet to be visible
+    await page.waitForTimeout(500);
+
+    // Bottom sheet content should be visible
+    const bottomSheet = page.locator('[data-vaul-drawer]').first();
+    await expect(bottomSheet).toBeVisible({ timeout: 5000 });
 
     // Search input should be enabled
-    const searchInput = dialog.getByPlaceholder(/Szukaj po symbolu/i);
+    const searchInput = page.getByPlaceholder(/Szukaj po symbolu/i);
     await expect(searchInput).toBeEnabled();
 
-    // Bottom sheet should be scrollable (has overflow-y-auto)
-    const isScrollable = await dialog.evaluate((el) => {
-      const style = window.getComputedStyle(el);
-      return style.overflowY === "auto" || el.scrollHeight > el.clientHeight;
+    // Check if bottom sheet body is scrollable
+    const body = page.locator('[data-vaul-drawer] > [role="dialog"]').first();
+    const isScrollable = await body.evaluate((el) => {
+      return el.scrollHeight > el.clientHeight;
     });
 
-    if (!isScrollable) {
-      test.skip(true, "Not enough tickers to make bottom sheet scrollable");
-    }
+    // With 15+ symbols, bottom sheet should be scrollable on mobile
+    expect(isScrollable).toBe(true);
   });
 
   test.skip("TC-FILTER-MOBILE-002: Touch targets meet WCAG requirements", async ({ page }) => {
-    // SKIP: Mobile UI may have different layout
+    // NOTE: Mobile UI uses hamburger menu - test would need hamburger navigation
+    // Verify touch targets are at least 44x44px for accessibility
     const gridPage = new GridPage(page);
     await gridPage.goto();
 
     await gridPage.tickerFilter.open();
+    await page.waitForTimeout(500);
 
     // Get first checkbox label (should be at least 44x44 for WCAG)
     const firstLabel = page.locator('label[for^="ticker-"]').first();
-    await expect(firstLabel).toBeVisible();
+    await expect(firstLabel).toBeVisible({ timeout: 5000 });
 
     const box = await firstLabel.boundingBox();
     if (!box) {

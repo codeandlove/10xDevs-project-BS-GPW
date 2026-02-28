@@ -6,16 +6,13 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { TimelineState, TimelineChunk } from "@/types/grid-timeline.types";
 import type { BlackSwanEventMinimal, DateRange } from "@/types/nocodb.types";
-import { calculatePreviousChunk, mergeEventChunks, getAllDatesFromChunks, getChunkSize } from "@/lib/timeline-utils";
+import { calculateSmartChunkStart, mergeEventChunks, getAllDatesFromChunks } from "@/lib/timeline-utils";
 import { fetchGridData } from "@/lib/api-service";
 import { getFromCache, setInCache, isStale } from "@/lib/cache-utils";
 import { hashSymbols } from "@/lib/cache";
 
 // TTL for timeline chunks: 30 minutes (data rarely changes)
 const TIMELINE_CHUNK_TTL = 30 * 60 * 1000;
-
-// Minimum skeleton display time to ensure user sees loading feedback (200ms)
-const MIN_SKELETON_DISPLAY_TIME = 200;
 
 /**
  * Generate cache key for timeline chunk
@@ -71,18 +68,23 @@ export function useInfiniteTimeline({
   /**
    * Load previous chunk (backward in time)
    * Ensures skeleton is visible for minimum 200ms for better UX
+   * Uses smart date boundaries (Mon-Sun, 1st-last, Q1-Q4)
    */
   const loadPreviousChunk = useCallback(async () => {
     if (timelineState.isLoadingBackward) {
       return;
     }
 
-    const startTime = Date.now();
     setTimelineState((prev) => ({ ...prev, isLoadingBackward: true, error: null }));
 
     try {
-      const chunkSize = getChunkSize(range);
-      const { startDate, endDate } = calculatePreviousChunk(timelineState.oldestLoadedDate, chunkSize);
+      // ✨ Calculate smart chunk start (Mon-Sun, 1st-last, Q1-Q4)
+      const startDate = calculateSmartChunkStart(timelineState.oldestLoadedDate, range);
+
+      // End date = oldestLoadedDate - 1 day
+      const oldestDate = new Date(timelineState.oldestLoadedDate);
+      oldestDate.setDate(oldestDate.getDate() - 1);
+      const endDate = oldestDate.toISOString().split("T")[0];
 
       if (!startDate || !endDate || !startDate.match(/^\d{4}-\d{2}-\d{2}$/) || !endDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
         throw new Error(`Invalid date format: startDate=${startDate}, endDate=${endDate}`);
@@ -97,11 +99,9 @@ export function useInfiniteTimeline({
 
       if (cachedEntry && !isStale(cachedEntry)) {
         // Use cached events
-        console.log(`[useInfiniteTimeline] Using cached chunk: ${startDate} to ${endDate}`);
         events = cachedEntry.data;
       } else {
         // Fetch from API
-        console.log(`[useInfiniteTimeline] Fetching chunk from API: ${startDate} to ${endDate}`);
         const response = await fetchGridData(startDate, endDate, symbols);
         events = response.events;
 
@@ -117,16 +117,8 @@ export function useInfiniteTimeline({
         loadedAt: Date.now(),
       };
 
-      console.log(`[useInfiniteTimeline] Loaded ${events.length} events`);
-
-      // Ensure skeleton is visible for minimum display time (better UX)
-      const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(0, MIN_SKELETON_DISPLAY_TIME - elapsedTime);
-
-      if (remainingTime > 0) {
-        console.log(`[useInfiniteTimeline] ⏱️ Delaying ${remainingTime}ms to show skeleton (cache was too fast)`);
-        await new Promise((resolve) => setTimeout(resolve, remainingTime));
-      }
+      // NO artificial delay - if cache is fast, user sees data immediately
+      // Skeleton is only shown when actually waiting for API fetch
 
       setTimelineState((prev) => ({
         ...prev,
@@ -134,25 +126,23 @@ export function useInfiniteTimeline({
         oldestLoadedDate: startDate,
         isLoadingBackward: false,
       }));
-    } catch (error) {
-      console.error("[useInfiniteTimeline] Failed to load chunk:", error);
+    } catch (err) {
       setTimelineState((prev) => ({
         ...prev,
         isLoadingBackward: false,
-        error: error as Error,
+        error: err instanceof Error ? err : new Error("Failed to load data"),
       }));
     }
   }, [range, symbols, timelineState.oldestLoadedDate, timelineState.isLoadingBackward]);
 
   /**
-   * Auto-preload first chunk on mount to ensure scrollbar exists
-   * DISABLED: With ref callback instant scroll, grid shows only initial week
-   * User scrolls left manually to trigger loadPreviousChunk
-   * Critical for week view (7 days) which doesn't generate scrollbar initially
+   * Auto-preload 2 chunks on mount to ensure scrollbar exists
+   * ENABLED: Critical for week view (7 days) and month view (30 days)
+   * Ensures user can scroll left to trigger infinite scroll sentinel
+   * Loads: initial chunk + 2 previous chunks = 3 chunks total
    */
-  /*
   useEffect(() => {
-    // Only run once, only if we have initial events loaded, and not already preloading
+    // Only run once, only if we have initial events loaded
     if (
       hasPreloadedRef.current ||
       timelineState.isLoadingBackward ||
@@ -164,13 +154,18 @@ export function useInfiniteTimeline({
 
     hasPreloadedRef.current = true;
 
-    const timer = setTimeout(() => {
-      loadPreviousChunk();
+    // Load first chunk after 50ms (let grid render first)
+    const timer1 = setTimeout(() => {
+      loadPreviousChunk().then(() => {
+        // Load second chunk after first completes
+        setTimeout(() => {
+          loadPreviousChunk();
+        }, 100);
+      });
     }, 50);
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer1);
   }, [loadPreviousChunk, timelineState.isLoadingBackward, timelineState.chunks.length, initialEvents.length]);
-  */
 
   /**
    * Reset timeline (e.g., when date range picker changes)

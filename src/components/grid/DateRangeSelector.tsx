@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Calendar, Check } from "lucide-react";
 
 interface DateRangeSelectorProps {
   currentRange: DateRange;
@@ -132,7 +132,7 @@ export function DateRangeSelector({
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="min-w-[160px] justify-between gap-2">
             <span className="flex items-center gap-2">
-              <span className="text-sm">📅</span>
+              <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="truncate">{getDisplayLabel()}</span>
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
@@ -143,10 +143,14 @@ export function DateRangeSelector({
             <DropdownMenuItem
               key={preset.value}
               onClick={() => handlePresetSelect(preset.value)}
-              className={currentRange === preset.value ? "bg-accent" : ""}
+              className={currentRange === preset.value ? "bg-accent font-medium" : ""}
             >
               <span className="flex items-center gap-2">
-                {currentRange === preset.value && <span className="text-xs">✓</span>}
+                {currentRange === preset.value ? (
+                  <Check className="h-4 w-4 shrink-0 text-primary" />
+                ) : (
+                  <span className="h-4 w-4 shrink-0" />
+                )}
                 {preset.label}
               </span>
             </DropdownMenuItem>

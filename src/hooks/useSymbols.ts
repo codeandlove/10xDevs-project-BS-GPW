@@ -64,9 +64,9 @@ export function searchSymbols(query: string, symbols: GPWSymbol[]): GPWSymbol[] 
   // Filter symbols that match query in symbol, label, or name
   const matches = symbols.filter(
     (s) =>
-      s.symbol.toLowerCase().includes(lowerQuery) ||
-      s.label.toLowerCase().includes(lowerQuery) ||
-      s.name.toLowerCase().includes(lowerQuery)
+      (s.symbol ?? "").toLowerCase().includes(lowerQuery) ||
+      (s.label ?? "").toLowerCase().includes(lowerQuery) ||
+      (s.name ?? "").toLowerCase().includes(lowerQuery)
   );
 
   // Sort by priority:
@@ -75,10 +75,10 @@ export function searchSymbols(query: string, symbols: GPWSymbol[]): GPWSymbol[] 
   // 3. Starts with query (symbol or label)
   // 4. Contains query (alphabetical)
   return matches.sort((a, b) => {
-    const aSymbolLower = a.symbol.toLowerCase();
-    const bSymbolLower = b.symbol.toLowerCase();
-    const aLabelLower = a.label.toLowerCase();
-    const bLabelLower = b.label.toLowerCase();
+    const aSymbolLower = (a.symbol ?? "").toLowerCase();
+    const bSymbolLower = (b.symbol ?? "").toLowerCase();
+    const aLabelLower = (a.label ?? "").toLowerCase();
+    const bLabelLower = (b.label ?? "").toLowerCase();
 
     // Priority 1: Exact match on symbol
     const aExactSymbol = aSymbolLower === lowerQuery;
@@ -105,6 +105,6 @@ export function searchSymbols(query: string, symbols: GPWSymbol[]): GPWSymbol[] 
     if (!aStartsLabel && bStartsLabel) return 1;
 
     // Default: Alphabetical by symbol
-    return a.symbol.localeCompare(b.symbol);
+    return (a.symbol ?? "").localeCompare(b.symbol ?? "");
   });
 }

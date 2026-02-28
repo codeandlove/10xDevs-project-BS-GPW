@@ -29,8 +29,9 @@ export class TickerFilter {
     await this.openButton.click();
     await expect(this.dialog).toBeVisible({ timeout: 5000 });
 
-    // Wait for search input to be enabled (symbols loaded)
-    await expect(this.searchInput).toBeEnabled({ timeout: 10000 });
+    // Wait for search input to be enabled (symbols loaded from real API)
+    // Increased timeout for real API call (not mocked)
+    await expect(this.searchInput).toBeEnabled({ timeout: 30000 });
   }
 
   /**
@@ -87,6 +88,15 @@ export class TickerFilter {
       await this.deselectTicker(symbol);
       await this.clearSearch();
     }
+  }
+
+  /**
+   * Deselect all tickers using "Odznacz wszystkie" button
+   */
+  async deselectAll(): Promise<void> {
+    const deselectAllButton = this.dialog.getByRole("button", { name: /Odznacz wszystkie/i });
+    await deselectAllButton.click();
+    await this.page.waitForTimeout(300);
   }
 
   /**

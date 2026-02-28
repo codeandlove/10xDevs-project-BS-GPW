@@ -102,3 +102,32 @@ export function clearAllCache(): void {
     // ignore when localStorage is inaccessible
   }
 }
+
+/**
+ * Clear timeline chunks cache for specific range/symbols combination
+ */
+export function clearTimelineCache(range?: string, symbolsHash?: string): void {
+  try {
+    const keys = Object.keys(localStorage);
+    keys.forEach((key) => {
+      // Match pattern: timeline_chunk_{range}_{symbolsHash}_{startDate}_{endDate}
+      if (key.startsWith("timeline_chunk_")) {
+        if (!range && !symbolsHash) {
+          // Clear all timeline cache
+          localStorage.removeItem(key);
+          memoryCache.delete(key);
+        } else if (range && symbolsHash && key.includes(`timeline_chunk_${range}_${symbolsHash}`)) {
+          // Clear specific range+symbols combination
+          localStorage.removeItem(key);
+          memoryCache.delete(key);
+        } else if (range && !symbolsHash && key.startsWith(`timeline_chunk_${range}_`)) {
+          // Clear specific range (all symbols)
+          localStorage.removeItem(key);
+          memoryCache.delete(key);
+        }
+      }
+    });
+  } catch {
+    // ignore storage errors
+  }
+}

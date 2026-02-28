@@ -14,18 +14,21 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
     const weekendStyle = data.isWeekend
       ? {
           backgroundImage:
-            "repeating-linear-gradient(45deg, rgb(243 244 246) 0px, rgb(243 244 246) 10px, rgb(229 231 235) 10px, rgb(229 231 235) 20px)",
+            "repeating-linear-gradient(45deg, rgb(243 244 246) 10px, rgb(243 244 246) 15px, rgb(229 231 235) 15px, rgb(229 231 235) 20px)",
           pointerEvents: "none" as const,
         }
       : {};
 
-    const todayClass = data.isToday ? "bg-gray-100 ring-1 ring-inset ring-gray-300" : "";
     const weekendLabel = data.isWeekend ? " (weekend)" : "";
 
     return (
       <div
-        className={`flex h-full min-h-[50px] items-center justify-center border border-gray-200 bg-gray-50/50 md:min-h-[60px] ${todayClass}`}
-        style={weekendStyle}
+        className="flex items-center justify-center border-b border-r border-gray-200"
+        style={{
+          height: "var(--grid-row-height)",
+          backgroundColor: data.isToday ? "rgb(243 244 246)" : "rgb(249 250 251 / 0.5)",
+          ...weekendStyle,
+        }}
         role="gridcell"
         aria-label={`${data.symbol} ${data.date}${weekendLabel} - brak zdarzenia`}
         data-symbol={data.symbol}
@@ -47,27 +50,21 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
   const weekendStyle = data.isWeekend
     ? {
         backgroundImage:
-          "repeating-linear-gradient(45deg, currentColor 0px, currentColor 10px, transparent 10px, transparent 20px)",
+          "repeating-linear-gradient(45deg, currentColor 10px, currentColor 15px, transparent 15px, transparent 20px)",
         backgroundBlendMode: "overlay" as const,
         opacity: 0.95,
         pointerEvents: "none" as const,
       }
     : {};
 
-  const todayRing = data.isToday ? "ring-2 ring-blue-300/40" : "";
   const weekendLabel = data.isWeekend ? " (weekend)" : "";
 
   // If no onClick, render as div
   if (!onClick) {
     return (
       <div
-        className={`
-          flex h-full min-h-[50px] w-full flex-col items-center justify-center
-          border p-1
-          md:min-h-[60px] md:p-2
-          ${colorClass} ${todayRing}
-        `}
-        style={weekendStyle}
+        className={`flex w-full flex-col items-center justify-center border-b border-r border-gray-200 p-1 md:p-2 ${colorClass}`}
+        style={{ height: "var(--grid-row-height)", ...weekendStyle }}
         role="gridcell"
         aria-label={`${data.symbol} ${data.date}${weekendLabel} ${data.eventType} ${percentText}`}
         data-symbol={data.symbol}
@@ -93,16 +90,15 @@ export const GridCell = memo(function GridCell({ data, onClick, isSelected = fal
       onClick={data.isWeekend ? undefined : onClick}
       disabled={data.isWeekend}
       className={`
-        flex h-full min-h-[50px] w-full flex-col items-center justify-center
-        border p-1 transition-all
+        flex w-full flex-col items-center justify-center
+        border-b border-r border-gray-200 p-1 transition-all md:p-2
         hover:shadow-md active:scale-95 md:hover:scale-105
-        focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1
-        md:min-h-[60px] md:p-2 md:focus:ring-offset-2
-        ${colorClass} ${todayRing}
-        ${isSelected ? "ring-2 ring-primary ring-offset-1 md:ring-offset-2" : ""}
+        focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1
+        ${colorClass}
+        ${isSelected ? "ring-2 ring-inset ring-blue-500" : ""}
         ${data.isWeekend ? "cursor-not-allowed opacity-90" : ""}
       `}
-      style={weekendStyle}
+      style={{ height: "var(--grid-row-height)", ...weekendStyle }}
       role="gridcell"
       aria-label={`${data.symbol} ${data.date}${weekendLabel} ${data.eventType} ${percentText}`}
       tabIndex={data.isWeekend ? -1 : 0}

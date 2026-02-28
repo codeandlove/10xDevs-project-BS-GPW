@@ -205,6 +205,11 @@ export const API_ENDPOINTS = {
     if (endDate) params.append("end_date", endDate);
     return `/api/nocodb/grid?${params.toString()}`;
   },
+  gridDataByDateRange: (startDate: string, endDate: string, symbols?: string) => {
+    const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
+    if (symbols) params.append("symbols", symbols);
+    return `/api/nocodb/grid?${params.toString()}`;
+  },
   eventDetails: (eventId: string) => `/api/nocodb/events/${eventId}`,
   summaries: (symbol: string, occurrenceDate: string, eventType?: string) => {
     const params = new URLSearchParams({ symbol, occurrence_date: occurrenceDate });

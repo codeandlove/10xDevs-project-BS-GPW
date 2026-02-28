@@ -86,30 +86,26 @@ describe("NocoDB Service - Grid Events", () => {
   });
 
   it("should fetch grid events for week range", async () => {
-    const response = await service.getGridEvents("week");
+    const response = await service.getGridEvents("2025-01-01", "2025-01-07");
 
     expect(response).toHaveProperty("events");
-    expect(response).toHaveProperty("range", "week");
     expect(response.events).toBeInstanceOf(Array);
-    expect(response).toHaveProperty("cached_at");
   });
 
   it("should fetch grid events for month range", async () => {
-    const response = await service.getGridEvents("month");
+    const response = await service.getGridEvents("2025-01-01", "2025-01-31");
 
-    expect(response).toHaveProperty("range", "month");
     expect(response.events).toBeInstanceOf(Array);
   });
 
   it("should fetch grid events for quarter range", async () => {
-    const response = await service.getGridEvents("quarter");
+    const response = await service.getGridEvents("2025-01-01", "2025-03-31");
 
-    expect(response).toHaveProperty("range", "quarter");
     expect(response.events).toBeInstanceOf(Array);
   });
 
   it("should filter events by symbols", async () => {
-    const response = await service.getGridEvents("week", ["CPD", "PKN"]);
+    const response = await service.getGridEvents("2025-01-01", "2025-01-07", ["CPD", "PKN"]);
 
     // Note: Mock returns limited data, verify that symbols parameter was passed
     expect(response).toHaveProperty("symbols");
@@ -118,7 +114,7 @@ describe("NocoDB Service - Grid Events", () => {
   });
 
   it("should handle empty symbols array (all symbols)", async () => {
-    const response = await service.getGridEvents("week", []);
+    const response = await service.getGridEvents("2025-01-01", "2025-01-07", []);
 
     // Note: Mock returns data with symbols, just verify structure
     expect(response.events.length).toBeGreaterThanOrEqual(0);
@@ -126,7 +122,7 @@ describe("NocoDB Service - Grid Events", () => {
 
   it("should use custom end_date if provided", async () => {
     const endDate = "2025-01-15";
-    const response = await service.getGridEvents("week", [], endDate);
+    const response = await service.getGridEvents("2025-01-01", endDate);
 
     expect(response).toHaveProperty("events");
     // All events should be on or before endDate
@@ -136,7 +132,7 @@ describe("NocoDB Service - Grid Events", () => {
   });
 
   it("should return events with required fields", async () => {
-    const response = await service.getGridEvents("week");
+    const response = await service.getGridEvents("2025-01-01", "2025-01-07");
 
     if (response.events.length > 0) {
       const event = response.events[0];
@@ -150,7 +146,7 @@ describe("NocoDB Service - Grid Events", () => {
   });
 
   it("should have valid event_type values", async () => {
-    const response = await service.getGridEvents("week");
+    const response = await service.getGridEvents("2025-01-01", "2025-01-07");
 
     const validEventTypes = ["BLACK_SWAN_UP", "BLACK_SWAN_DOWN", "VOLATILITY_UP", "VOLATILITY_DOWN", "BIG_MOVE"];
 
@@ -314,7 +310,7 @@ describe("NocoDB Service - Data Transformation", () => {
   });
 
   it("should handle missing optional fields gracefully", async () => {
-    const response = await service.getGridEvents("week");
+    const response = await service.getGridEvents("2025-01-01", "2025-01-07");
 
     // Should not throw even if some fields are missing
     expect(response.events).toBeInstanceOf(Array);
@@ -340,7 +336,7 @@ describe("NocoDB Service - Error Handling", () => {
   it("should handle malformed response data", async () => {
     // This would require MSW to return malformed data
     // Service should either throw or return empty results
-    const response = await service.getGridEvents("week");
+    const response = await service.getGridEvents("2025-01-01", "2025-01-07");
     expect(response).toBeDefined();
   });
 });

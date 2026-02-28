@@ -14,6 +14,7 @@ interface GridContextValue {
   setEventTypes: (types: EventType[]) => void;
   setSort: (sort: { field: "date" | "percent_change" | "symbol"; direction: "asc" | "desc" }) => void;
   setEventId: (eventId: string | undefined) => void;
+  setDateRange: (startDate: string, endDate: string) => void; // NEW
   clearFilters: () => void;
   recentSymbols: string[]; // Cached "ostatnie" symbols from smart initialization
   setRecentSymbols: (symbols: string[]) => void;
@@ -50,6 +51,8 @@ function getInitialStateFromUrl(): GridState {
     eventId: params.get("eventId") || undefined,
     sortField: (params.get("sortField") as "date" | "percent_change" | "symbol") || "symbol",
     sortDirection: (params.get("sortDirection") as "asc" | "desc") || "asc",
+    startDate: params.get("start_date") || undefined,
+    endDate: params.get("end_date") || undefined,
   };
 }
 
@@ -93,6 +96,22 @@ function updateUrlParams(state: Partial<GridState>): void {
     } else {
       params.delete("sortField");
       params.delete("sortDirection");
+    }
+  }
+
+  // Handle date range parameters
+  if (state.startDate !== undefined) {
+    if (state.startDate) {
+      params.set("start_date", state.startDate);
+    } else {
+      params.delete("start_date");
+    }
+  }
+  if (state.endDate !== undefined) {
+    if (state.endDate) {
+      params.set("end_date", state.endDate);
+    } else {
+      params.delete("end_date");
     }
   }
 
@@ -154,6 +173,10 @@ export function GridProvider({ children, initialState }: GridProviderProps) {
     setGridState((prev) => ({ ...prev, eventId }));
   }, []);
 
+  const setDateRange = useCallback((startDate: string, endDate: string) => {
+    setGridState((prev) => ({ ...prev, startDate, endDate }));
+  }, []);
+
   const clearFilters = useCallback(() => {
     setGridState((prev) => ({
       ...prev,
@@ -172,6 +195,7 @@ export function GridProvider({ children, initialState }: GridProviderProps) {
     setEventTypes,
     setSort,
     setEventId,
+    setDateRange,
     clearFilters,
     recentSymbols,
     setRecentSymbols,
