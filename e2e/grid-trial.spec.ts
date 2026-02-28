@@ -16,8 +16,8 @@ test.describe("Grid - Trial User (trial@example.com)", () => {
     const gridPage = new GridPage(page);
     await gridPage.goto();
 
-    // Wait for page to fully load
-    await page.waitForLoadState("networkidle");
+    // Wait for grid to be ready (infinite scroll may keep network active)
+    await gridPage.waitForGridReady();
 
     // Real grid should be visible
     expect(await gridPage.isGridVisible()).toBe(true);
