@@ -37,25 +37,25 @@ export const EVENT_TYPE_COLORS: Record<EventType, EventTypeColors> = {
     label: "Czarny Łabędź (wzrost)",
   },
   BLACK_SWAN_DOWN: {
-    cell: "bg-red-100 text-red-900 border-red-300",
+    cell: "bg-red-100 text-red-900",
     badge: "bg-red-500",
     pixel: "#ef4444", // red-500
     label: "Czarny Łabędź (spadek)",
   },
   VOLATILITY_UP: {
-    cell: "bg-orange-100 text-orange-900 border-orange-300",
+    cell: "bg-orange-100 text-orange-900",
     badge: "bg-orange-500",
     pixel: "#f97316", // orange-500
     label: "Wysoka zmienność (wzrost)",
   },
   VOLATILITY_DOWN: {
-    cell: "bg-yellow-100 text-yellow-900 border-yellow-300",
+    cell: "bg-yellow-100 text-yellow-900",
     badge: "bg-yellow-500",
     pixel: "#eab308", // yellow-500
     label: "Wysoka zmienność (spadek)",
   },
   BIG_MOVE: {
-    cell: "bg-blue-100 text-blue-900 border-blue-300",
+    cell: "bg-blue-100 text-blue-900",
     badge: "bg-blue-500",
     pixel: "#3b82f6", // blue-500
     label: "Duży ruch cenowy",

@@ -13,7 +13,7 @@ const PROTECTED_ROUTES = ["/api/nocodb"];
 const AUTH_ONLY_ROUTES = ["/api/users", "/api/subscriptions"];
 
 // Public routes (accessible without authentication)
-const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/register", "/403", "/404", "/500"];
+const PUBLIC_ROUTES = ["/", "/auth/login", "/auth/register", "/grid", "/403", "/404", "/500"];
 
 // Public API routes (no authentication required)
 const PUBLIC_API_ROUTES = ["/api/users/initialize"];

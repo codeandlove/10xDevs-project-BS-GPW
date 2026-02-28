@@ -3,8 +3,10 @@
  * Manages grid state, filters, and data fetching
  */
 
-import { useCallback, useMemo, useEffect, useState } from "react";
+import { useCallback, useMemo, useEffect, useState, useRef } from "react";
 import { useClientCache } from "@/hooks/useClientCache";
+import { useInfiniteTimeline } from "@/hooks/useInfiniteTimeline";
+import { useInfiniteSentinel } from "@/hooks/useInfiniteSentinel";
 import { useGrid } from "@/contexts/GridContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessPremiumFeatures } from "@/lib/auth";
@@ -12,7 +14,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Header } from "@/components/layout/Header";
 import { AvatarMenu } from "@/components/layout/AvatarMenu";
-import { RangeSelector } from "./RangeSelector";
+import { DateRangeSelector } from "./DateRangeSelector";
 import { AdvancedTickerFilter } from "./AdvancedTickerFilter";
 import { EventTypeFilter } from "./EventTypeFilter";
 import { SortOptions } from "./SortOptions";
@@ -24,8 +26,23 @@ import { GridSkeleton } from "@/components/ui/skeleton";
 import { SummaryView } from "@/components/summary/SummaryView";
 import { fetchGridData } from "@/lib/api-service";
 import { hashSymbols } from "@/lib/cache";
+import { clearTimelineCache } from "@/lib/cache-utils";
 import { WIG20_SYMBOLS } from "@/config/gpw-indices";
-import type { EventType } from "@/types/nocodb.types";
+import type { EventType, DateRange } from "@/types/nocodb.types";
+
+// Hook to detect mobile
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return isMobile;
+}
 
 export function GridView() {
   const {
@@ -35,6 +52,7 @@ export function GridView() {
     setEventTypes,
     setSort,
     setEventId,
+    setDateRange,
     clearFilters,
     recentSymbols,
     setRecentSymbols,
@@ -42,6 +60,43 @@ export function GridView() {
     setIsInitialized,
   } = useGrid();
   const { profile, isLoading: isLoadingAuth, session } = useAuth();
+  const isMobile = useIsMobile();
+
+  // Refs for infinite scroll sentinel pattern
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Sync scrollContainerRef with VirtualizedGrid's scroll container (for IntersectionObserver)
+  useEffect(() => {
+    // Wait for VirtualizedGrid to mount and find its scroll container
+    const timer = setTimeout(() => {
+      const gridContainer = document.querySelector('[role="grid"]') as HTMLDivElement | null;
+      if (gridContainer && scrollContainerRef) {
+        scrollContainerRef.current = gridContainer;
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Stable callback to sync scrollContainerRef with VirtualizedGrid's scroll element
+  const handleScrollContainer = useCallback((el: HTMLDivElement | null) => {
+    scrollContainerRef.current = el;
+  }, []);
+
+  // ...existing code...
+  const today = new Date().toISOString().split("T")[0];
+  const initialStartDate = useMemo(() => {
+    if (gridState.startDate) return gridState.startDate;
+
+    // Calculate from range
+    const daysBack = gridState.range === "week" ? 7 : gridState.range === "month" ? 30 : 90;
+    const start = new Date();
+    start.setDate(start.getDate() - daysBack);
+    return start.toISOString().split("T")[0];
+  }, [gridState.startDate, gridState.range]);
+
+  const initialEndDate = gridState.endDate || today;
 
   // Redirect unauthenticated users - but only if loading complete AND no session exists
   // If session exists but profile is null, it means profile is still loading - don't redirect
@@ -68,7 +123,8 @@ export function GridView() {
 
       try {
         // Fetch events from last 7 days without symbol filter
-        const recentEvents = await fetchGridData("week", []);
+        // Using backward compatible range overload
+        const recentEvents = await fetchGridData("week", [], undefined);
 
         // Extract unique symbols from events
         const uniqueSymbols = [...new Set(recentEvents.events.map((e) => e.symbol))];
@@ -96,17 +152,6 @@ export function GridView() {
     }
   }, [hasAccess, isInitialized, setIsInitialized, setRecentSymbols, setSymbols]);
 
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // sm breakpoint
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
   // Listen for browser back/forward navigation
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
@@ -121,14 +166,29 @@ export function GridView() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [setEventId]);
 
-  const cacheKey = `cache:grid:${gridState.range}:${hashSymbols(gridState.symbols)}`;
+  // Fetch initial data
+  const cacheKey = useMemo(() => {
+    // If custom dates in URL, use them for cache key
+    if (gridState.startDate && gridState.endDate) {
+      return `cache:grid:${gridState.startDate}:${gridState.endDate}:${hashSymbols(gridState.symbols)}`;
+    }
+    // Otherwise use range
+    return `cache:grid:${gridState.range}:${hashSymbols(gridState.symbols)}`;
+  }, [gridState.startDate, gridState.endDate, gridState.range, gridState.symbols]);
 
   const shouldFetch = hasAccess === true;
 
-  // Memoize fetcher to ensure useClientCache properly detects key changes
   const fetcher = useCallback(() => {
-    return shouldFetch ? fetchGridData(gridState.range, gridState.symbols) : Promise.resolve(null);
-  }, [shouldFetch, gridState.range, gridState.symbols]);
+    if (!shouldFetch) return Promise.resolve(null);
+
+    // If custom dates in URL (start_date + end_date), use Mode 1 (explicit dates)
+    if (gridState.startDate && gridState.endDate) {
+      return fetchGridData(gridState.startDate, gridState.endDate, gridState.symbols);
+    }
+
+    // Otherwise use Mode 3 (range only - backward compatible)
+    return fetchGridData(gridState.range, gridState.symbols, undefined);
+  }, [shouldFetch, gridState.startDate, gridState.endDate, gridState.range, gridState.symbols]);
 
   const {
     data: gridResponse,
@@ -136,8 +196,80 @@ export function GridView() {
     error,
   } = useClientCache(cacheKey, fetcher, { ttl: shouldFetch ? 5 * 60 * 1000 : 0 });
 
-  // Extract and filter events
-  let events = gridResponse?.events || [];
+  // Infinite timeline hook
+  const { timelineState, loadPreviousChunk, resetTimeline, allEvents, allDates } = useInfiniteTimeline({
+    range: gridState.range,
+    symbols: gridState.symbols,
+    initialStartDate,
+    initialEndDate,
+    initialEvents: gridResponse?.events || [],
+  });
+
+  // Re-initialize timeline when gridResponse loads (fixes timing issue with hasAccess)
+  useEffect(() => {
+    if (gridResponse && gridResponse.events.length > 0 && allEvents.length === 0 && !timelineState.isLoadingBackward) {
+      resetTimeline(initialStartDate, initialEndDate, gridResponse.events);
+    }
+  }, [
+    gridResponse,
+    initialStartDate,
+    initialEndDate,
+    resetTimeline,
+    allEvents.length,
+    timelineState.isLoadingBackward,
+  ]);
+
+  // Reset timeline when symbols or range changes - forces refetch with new filters
+  // This ensures cached chunks don't have stale data from old symbol filters
+  const symbolsKey = gridState.symbols.sort().join(",");
+  const prevSymbolsKeyRef = useRef<string>(symbolsKey);
+  const prevRangeRef = useRef<DateRange>(gridState.range);
+
+  useEffect(() => {
+    const symbolsChanged = prevSymbolsKeyRef.current !== symbolsKey;
+    const rangeChanged = prevRangeRef.current !== gridState.range;
+
+    if ((symbolsChanged || rangeChanged) && gridResponse && gridResponse.events.length > 0) {
+      resetTimeline(initialStartDate, initialEndDate, gridResponse.events);
+      prevSymbolsKeyRef.current = symbolsKey;
+      prevRangeRef.current = gridState.range;
+    }
+  }, [symbolsKey, gridState.range, gridResponse, initialStartDate, initialEndDate, resetTimeline]);
+
+  // Sentinel-based infinite scroll (IntersectionObserver)
+  useInfiniteSentinel({
+    sentinelRef: sentinelRef as React.RefObject<HTMLDivElement | null>,
+    scrollContainerRef: scrollContainerRef as React.RefObject<HTMLDivElement | null>,
+    onTrigger: loadPreviousChunk,
+    isLoading: timelineState.isLoadingBackward,
+    hasMore: true, // TODO: Add hasMoreHistoricalData state when API returns empty chunk
+    config: {
+      rootMargin: "0px 0px 0px 200px", // Trigger 200px BEFORE left edge (top right bottom left)
+      threshold: 0,
+    },
+  });
+
+  // Mobile performance warning (10+ chunks)
+  useEffect(() => {
+    if (isMobile && timelineState.chunks.length >= 10) {
+      // TODO: Implement toast notification when toast library is available
+    }
+  }, [isMobile, timelineState.chunks.length]);
+
+  // Clear timeline cache when range changes (after mount)
+  // This ensures fresh data when switching between week/month/quarter
+  const previousRangeRef = useRef(gridState.range);
+  useEffect(() => {
+    if (previousRangeRef.current !== gridState.range) {
+      // Clear cache for the old range
+      const symbolsHash = hashSymbols(gridState.symbols);
+      clearTimelineCache(previousRangeRef.current, symbolsHash);
+      previousRangeRef.current = gridState.range;
+    }
+  }, [gridState.range, gridState.symbols]);
+
+  // Extract and filter events from timeline
+  let events = allEvents;
 
   // Apply event type filter
   if (gridState.eventTypes && gridState.eventTypes.length > 0) {
@@ -196,6 +328,37 @@ export function GridView() {
     }
   }, [setEventId]);
 
+  // Handle date range change from picker
+  const handleDateRangeChange = useCallback(
+    (startDate: string, endDate: string) => {
+      setDateRange(startDate, endDate);
+
+      fetchGridData(startDate, endDate, gridState.symbols).then((response) => {
+        resetTimeline(startDate, endDate, response.events);
+      });
+    },
+    [setDateRange, resetTimeline, gridState.symbols]
+  );
+
+  // Handle preset change (quick filters)
+  const handlePresetChange = useCallback(
+    (preset: DateRange) => {
+      setRange(preset);
+
+      // Calculate new dates from preset
+      const daysBack = preset === "week" ? 7 : preset === "month" ? 30 : 90;
+      const end = new Date();
+      const start = new Date();
+      start.setDate(start.getDate() - daysBack);
+
+      const startDate = start.toISOString().split("T")[0];
+      const endDate = end.toISOString().split("T")[0];
+
+      handleDateRangeChange(startDate, endDate);
+    },
+    [setRange, handleDateRangeChange]
+  );
+
   return (
     <ErrorBoundary>
       <AppLayout
@@ -204,7 +367,15 @@ export function GridView() {
           <Header
             showRangeSelector
             showFilters
-            rangeSelector={<RangeSelector value={gridState.range} onChange={setRange} />}
+            rangeSelector={
+              <DateRangeSelector
+                currentRange={gridState.range}
+                startDate={initialStartDate}
+                endDate={initialEndDate}
+                onPresetChange={handlePresetChange}
+                onCustomRangeChange={handleDateRangeChange}
+              />
+            }
             filters={
               <div className="flex flex-wrap items-center gap-2">
                 <AdvancedTickerFilter
@@ -228,7 +399,7 @@ export function GridView() {
           />
         }
       >
-        <div className="flex h-full flex-col p-4">
+        <div className="flex h-full flex-col">
           {error && (
             <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4 text-center">
               <p className="text-sm font-medium text-red-800">Wystąpił błąd podczas ładowania danych</p>
@@ -254,15 +425,18 @@ export function GridView() {
               ) : (
                 <BlurredDemoGrid range={gridState.range} />
               )
-            ) : events.length > 0 ? (
+            ) : events.length > 0 || timelineState.chunks.length > 0 ? (
               <VirtualizedGrid
                 events={events}
-                range={gridState.range}
+                allDates={allDates}
                 onCellClick={handleCellClick}
                 selectedEventId={gridState.eventId}
                 selectedSymbols={gridState.symbols}
                 sortField={gridState.sortField}
                 sortDirection={gridState.sortDirection}
+                isLoadingBackward={timelineState.isLoadingBackward}
+                sentinelRef={sentinelRef}
+                onScrollContainer={handleScrollContainer}
               />
             ) : (
               <div className="flex h-full items-center justify-center">
@@ -272,6 +446,19 @@ export function GridView() {
                     Spróbuj zmienić zakres czasowy lub filtry tickerów
                   </p>
                 </div>
+              </div>
+            )}
+
+            {/* Timeline error state (floating at bottom) */}
+            {timelineState.error && (
+              <div className="absolute bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 shadow-lg">
+                <p className="text-sm font-medium text-red-800">Błąd ładowania danych</p>
+                <button
+                  onClick={() => loadPreviousChunk()}
+                  className="mt-2 text-sm text-red-600 underline hover:text-red-700"
+                >
+                  Spróbuj ponownie
+                </button>
               </div>
             )}
           </div>

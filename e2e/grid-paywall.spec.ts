@@ -7,6 +7,7 @@
  */
 
 import { test, expect } from "./fixtures";
+import { RangeSelector } from "./pages/components/RangeSelector";
 
 test.describe("Grid - Paywall (Expired User)", () => {
   // NO beforeEach - auth handled by auto-fixture via expired-user project!
@@ -66,11 +67,12 @@ test.describe("Grid - Paywall (Expired User)", () => {
     // Wait for paywall
     await expect(page.getByText("Odblokuj pełny dostęp")).toBeVisible({ timeout: 10000 });
 
-    // Range selector should be visible
-    await expect(page.getByRole("button", { name: "Tydzień" })).toBeVisible();
+    // Range selector should be visible (now it's a dropdown)
+    const rangeSelector = new RangeSelector(page);
+    await expect(rangeSelector.getDropdownButton()).toBeVisible();
 
-    // Change range
-    await page.getByRole("button", { name: "Miesiąc" }).click();
+    // Change range to month
+    await rangeSelector.selectRange("month");
     await page.waitForTimeout(500);
 
     // Grid should still be blurred

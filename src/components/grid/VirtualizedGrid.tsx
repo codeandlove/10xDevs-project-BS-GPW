@@ -5,27 +5,34 @@
  */
 
 import { useRef, useMemo, useCallback, useState, useEffect } from "react";
+import type { RefObject } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import type { BlackSwanEventMinimal, DateRange } from "@/types/nocodb.types";
+import type { BlackSwanEventMinimal } from "@/types/nocodb.types";
 import { GridCell } from "./GridCell";
 import { GridMinimap } from "./GridMinimap";
-import { getDatesInRange, getWeekdayShort, isWeekend, isToday } from "@/lib/ui-utils";
+import { SentinelElement } from "./SentinelElement";
+import { InfiniteScrollIndicator } from "./InfiniteScrollIndicator";
+import { useDragScroll } from "@/hooks/useDragScroll";
+import { getWeekdayShort, isWeekend, isToday } from "@/lib/ui-utils";
 
 interface VirtualizedGridProps {
   events: BlackSwanEventMinimal[];
-  range: DateRange;
+  allDates: string[]; // Pre-calculated dates from timeline (for infinite scroll)
   onCellClick: (eventId: string) => void;
   selectedEventId?: string;
   selectedSymbols?: string[]; // User-selected symbols to always show (even if no events)
   sortField?: "date" | "percent_change" | "symbol";
   sortDirection?: "asc" | "desc";
+  isLoadingBackward?: boolean; // Loading state for infinite scroll
+  sentinelRef?: RefObject<HTMLDivElement | null>; // Ref for sentinel element (infinite scroll trigger)
+  onScrollContainer?: (element: HTMLDivElement | null) => void; // Callback for scroll container
 }
 
-// Responsive grid sizing
+// Responsive grid sizing - tylko szerokości (wysokości w CSS)
 const GRID_CONFIG = {
-  mobile: { rowHeight: 60, colWidth: 100, symbolWidth: 80 },
-  tablet: { rowHeight: 70, colWidth: 120, symbolWidth: 100 },
-  desktop: { rowHeight: 80, colWidth: 140, symbolWidth: 128 },
+  mobile: { colWidth: 100, weekendColWidth: 40, symbolWidth: 80 },
+  tablet: { colWidth: 120, weekendColWidth: 48, symbolWidth: 100 },
+  desktop: { colWidth: 140, weekendColWidth: 56, symbolWidth: 140 },
 };
 
 // Hook to detect breakpoint
@@ -54,45 +61,48 @@ function useBreakpoint() {
 
 export function VirtualizedGrid({
   events,
-  range,
+  allDates,
   onCellClick,
   selectedEventId,
   selectedSymbols,
   sortField = "symbol",
   sortDirection = "asc",
+  isLoadingBackward = false,
+  sentinelRef,
+  onScrollContainer,
 }: VirtualizedGridProps) {
   const parentRef = useRef<HTMLDivElement>(null);
-  const headerScrollRef = useRef<HTMLDivElement>(null);
   const breakpoint = useBreakpoint();
   const config = GRID_CONFIG[breakpoint];
+
+  // Drag-and-drop scrolling for better UX (desktop + mobile)
+  const { isDragging } = useDragScroll({
+    ref: parentRef as RefObject<HTMLElement>,
+    enabled: true,
+    direction: "both", // Allow both horizontal and vertical dragging
+    dragThreshold: 5, // 5px movement to start drag
+  });
 
   // Keyboard navigation state
   const [focusedCell, setFocusedCell] = useState<{ symbolIndex: number; dateIndex: number } | null>(null);
 
   // Store grid scroll element for minimap
   const [gridScrollElement, setGridScrollElement] = useState<HTMLDivElement | null>(null);
+  const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
 
-  // Scroll synchronization between header and body
-  useEffect(() => {
-    const bodyEl = parentRef.current;
-    const headerEl = headerScrollRef.current;
-
-    if (!bodyEl || !headerEl) return;
-
-    // Set grid scroll element for minimap
-    setGridScrollElement(bodyEl);
-
-    const handleScroll = () => {
-      headerEl.scrollLeft = bodyEl.scrollLeft;
-    };
-
-    bodyEl.addEventListener("scroll", handleScroll);
-    return () => bodyEl.removeEventListener("scroll", handleScroll);
-  }, []);
+  // Callback ref - sets internal ref, updates minimap, and notifies parent of scroll container
+  const setParentRef = useCallback(
+    (element: HTMLDivElement | null) => {
+      parentRef.current = element;
+      setGridScrollElement(element);
+      onScrollContainer?.(element);
+    },
+    [onScrollContainer]
+  );
 
   // Group events by symbol and date
   const { symbols, dates, eventsBySymbolAndDate } = useMemo(() => {
-    const datesInRange = getDatesInRange(range, range === "week");
+    // Use allDates from props (includes infinite scroll dates)
     const symbolsSet = new Set<string>();
     const eventMap = new Map<string, BlackSwanEventMinimal>();
 
@@ -117,7 +127,9 @@ export function VirtualizedGrid({
     // Add user-selected symbols (even if no events) - append at end
     if (selectedSymbols && selectedSymbols.length > 0) {
       selectedSymbols.forEach((symbol) => {
-        symbolsSet.add(symbol);
+        if (symbol && symbol.trim().length > 0) {
+          symbolsSet.add(symbol.trim());
+        }
       });
     }
 
@@ -125,11 +137,13 @@ export function VirtualizedGrid({
     let finalSymbols: string[];
 
     if (sortField === "symbol") {
-      // Alphabetic sorting
-      finalSymbols = Array.from(symbolsSet).sort((a, b) => {
-        const comparison = a.localeCompare(b);
-        return sortDirection === "asc" ? comparison : -comparison;
-      });
+      // Alphabetic sorting - guard against null/undefined
+      finalSymbols = Array.from(symbolsSet)
+        .filter((s): s is string => typeof s === "string" && s.length > 0)
+        .sort((a, b) => {
+          const comparison = a.localeCompare(b);
+          return sortDirection === "asc" ? comparison : -comparison;
+        });
     } else {
       // For date/percent_change sorting: preserve order from events array
       // Symbols with events stay in the order of their first (most significant) event
@@ -150,27 +164,68 @@ export function VirtualizedGrid({
 
     return {
       symbols: finalSymbols,
-      dates: datesInRange,
+      dates: allDates,
       eventsBySymbolAndDate: eventMap,
     };
-  }, [events, range, selectedSymbols, sortField, sortDirection]);
+  }, [events, allDates, selectedSymbols, sortField, sortDirection]);
 
   // Row virtualizer (symbols) - recreate when config changes
   const rowVirtualizer = useVirtualizer({
     count: symbols.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => config.rowHeight,
+    estimateSize: () => 74, // Match CSS custom property --grid-row-height
     overscan: 3, // Render 3 extra rows outside viewport
   });
 
-  // Column virtualizer (dates) - recreate when config changes
+  // Column virtualizer (dates)
   const columnVirtualizer = useVirtualizer({
     horizontal: true,
     count: dates.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => config.colWidth,
-    overscan: 5, // Render 5 extra columns outside viewport
+    overscan: 5,
   });
+
+  // Auto-scroll to RIGHT (newest dates) on initial mount
+  // This allows user to scroll LEFT to load older data (infinite scroll backward)
+  useEffect(() => {
+    const scrollEl = parentRef.current;
+    if (!scrollEl || hasInitialScrolled || dates.length === 0) return;
+
+    // Wait for grid to render before scrolling
+    const timer = setTimeout(() => {
+      const maxScrollLeft = scrollEl.scrollWidth - scrollEl.clientWidth;
+      if (maxScrollLeft > 0) {
+        scrollEl.scrollLeft = maxScrollLeft;
+        setHasInitialScrolled(true);
+      }
+    }, 100); // 100ms delay to ensure grid is rendered
+
+    return () => clearTimeout(timer);
+  }, [dates.length, hasInitialScrolled]);
+
+  // Adjust scrollLeft when new data loads (infinite scroll backward)
+  // This prevents sentinel from staying visible and triggering infinite loop
+  const previousDatesLength = useRef(dates.length);
+  useEffect(() => {
+    const scrollEl = parentRef.current;
+    if (!scrollEl || !hasInitialScrolled) return;
+
+    const datesAdded = dates.length - previousDatesLength.current;
+
+    // Only adjust if dates were added (not removed)
+    if (datesAdded > 0) {
+      const columnsAdded = datesAdded;
+      const widthAdded = columnsAdded * config.colWidth;
+
+      // Adjust scrollLeft to maintain current view position
+      // This pushes sentinel back out of viewport
+      const newScrollLeft = scrollEl.scrollLeft + widthAdded;
+      scrollEl.scrollLeft = newScrollLeft;
+    }
+
+    previousDatesLength.current = dates.length;
+  }, [dates.length, hasInitialScrolled, config.colWidth]);
 
   const getEvent = useCallback(
     (symbol: string, date: string) => {
@@ -246,26 +301,49 @@ export function VirtualizedGrid({
 
   return (
     <>
-      <div className="flex h-full w-full flex-col rounded-lg border" role="grid" aria-label="Black Swan Events Grid">
-        {/* Header row with dates (sticky) */}
-        <div className="sticky top-0 z-20 flex min-h-[64px] border-b bg-white md:min-h-[72px]" role="row">
-          {/* Top-left corner (empty cell for symbol column) */}
-          <div
-            className="sticky left-0 z-30 flex shrink-0 items-center border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
-            role="columnheader"
-            style={{ width: `${config.symbolWidth}px` }}
-          >
-            <span className="text-xs font-semibold text-gray-700 md:text-sm">Symbol</span>
-          </div>
+      {/* Single scroll container with header inside as sticky element */}
+      <div
+        ref={setParentRef}
+        className={`h-full w-full overflow-auto rounded-lg ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+        role="grid"
+        aria-label="Black Swan Events Grid"
+        style={{ outline: "1px solid rgb(229 231 235)", outlineOffset: "-1px" }}
+      >
+        {/* Symbol header - ABSOLUTE positioned to stay at top-left corner always */}
+        <div
+          className="absolute left-0 top-0 z-40 flex shrink-0 items-center justify-center rounded-tl-lg border-b border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
+          role="columnheader"
+          style={{
+            width: `${config.symbolWidth}px`,
+            height: "var(--grid-header-height)",
+          }}
+        >
+          <span className="text-xs font-semibold text-gray-700 md:text-sm">Symbol</span>
+        </div>
 
-          {/* Scrollable dates container */}
-          <div ref={headerScrollRef} className="flex flex-1 items-stretch overflow-x-hidden">
+        {/* Header row with dates - STICKY INSIDE scroll container */}
+        <div
+          className="sticky top-0 z-20 flex border-b border-gray-200 bg-white"
+          role="row"
+          style={{ height: "var(--grid-header-height)" }}
+        >
+          {/* Empty spacer for symbol column width */}
+          <div
+            className="shrink-0 border-r border-gray-200 bg-gray-50"
+            style={{
+              width: `${config.symbolWidth}px`,
+            }}
+          />
+
+          {/* Dates container - NO overflow-x-hidden, scrolls naturally with parent */}
+          <div className="flex flex-1 items-stretch">
             <div
               className="relative flex"
               style={{
                 width: `${columnVirtualizer.getTotalSize()}px`,
               }}
             >
+              {/* Actual date columns */}
               {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
                 const date = dates[virtualColumn.index];
                 const dateIsWeekend = isWeekend(date);
@@ -274,11 +352,12 @@ export function VirtualizedGrid({
                   <div
                     key={virtualColumn.key}
                     role="columnheader"
-                    className={`absolute left-0 top-0 flex h-full flex-col items-center justify-center border-r px-1 py-1 md:px-2 md:py-2 ${
-                      dateIsWeekend ? "bg-gray-100/80" : ""
-                    } ${dateIsToday ? "bg-blue-50/50 ring-2 ring-inset ring-blue-300" : ""}`}
+                    className={`absolute left-0 top-0 flex flex-col items-center justify-center border-b border-r border-gray-200 px-1 py-1 md:px-2 md:py-2 bg-white ${
+                      dateIsWeekend ? "!bg-gray-100" : ""
+                    } ${dateIsToday ? "!bg-gray-100" : ""}`}
                     style={{
                       width: `${virtualColumn.size}px`,
+                      height: "var(--grid-header-height)",
                       transform: `translateX(${virtualColumn.start}px)`,
                     }}
                   >
@@ -301,102 +380,108 @@ export function VirtualizedGrid({
           </div>
         </div>
 
-        {/* Scrollable body */}
-        <div ref={parentRef} className="flex-1 overflow-auto rounded-b-lg">
-          <div
-            className="relative"
-            style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
-              width: `${columnVirtualizer.getTotalSize() + config.symbolWidth}px`,
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const symbol = symbols[virtualRow.index];
-              const isEmptyRow = symbol.startsWith("_empty_");
+        {/* Body rows - in the same scroll container */}
+        <div
+          className="relative"
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: `${columnVirtualizer.getTotalSize() + config.symbolWidth}px`,
+          }}
+        >
+          {/* Sentinel element - invisible trigger at left edge for infinite scroll */}
+          {/* Must be inside scrollable content area to be detected by IntersectionObserver */}
+          {sentinelRef && <SentinelElement ref={sentinelRef} />}
 
-              return (
+          {/* Loading indicator - shows visual feedback during backward loading */}
+          <InfiniteScrollIndicator isVisible={isLoadingBackward} message="Loading older dates..." position="left" />
+
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const symbol = symbols[virtualRow.index];
+            const isEmptyRow = symbol.startsWith("_empty_");
+
+            return (
+              <div
+                key={virtualRow.key}
+                role="row"
+                className="absolute left-0 top-0 flex w-full"
+                style={{
+                  height: `${virtualRow.size}px`,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                {/* Symbol column (sticky left) */}
                 <div
-                  key={virtualRow.key}
-                  role="row"
-                  className="absolute left-0 top-0 flex w-full"
+                  className="sticky left-0 z-10 flex shrink-0 items-center border-b border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
                   style={{
-                    height: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start}px)`,
+                    width: `${config.symbolWidth}px`,
+                    height: "var(--grid-row-height)",
+                  }}
+                  role="rowheader"
+                >
+                  {!isEmptyRow && (
+                    <span className="truncate text-xs font-semibold text-gray-900 md:text-sm" title={symbol}>
+                      {symbol}
+                    </span>
+                  )}
+                </div>
+
+                {/* Virtual columns for cells */}
+                <div
+                  className="relative flex"
+                  style={{
+                    width: `${columnVirtualizer.getTotalSize()}px`,
                   }}
                 >
-                  {/* Symbol column (sticky left) */}
-                  <div
-                    className="sticky left-0 z-10 shrink-0 border-r bg-gray-50 px-2 py-2 md:px-4 md:py-3"
-                    style={{ width: `${config.symbolWidth}px` }}
-                    role="rowheader"
-                  >
-                    {!isEmptyRow && (
-                      <span className="truncate text-xs font-semibold text-gray-900 md:text-sm" title={symbol}>
-                        {symbol}
-                      </span>
-                    )}
-                  </div>
+                  {/* Actual cell columns */}
+                  {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
+                    const date = dates[virtualColumn.index];
+                    const event = getEvent(symbol, date);
+                    const symbolIndex = virtualRow.index;
+                    const dateIndex = virtualColumn.index;
+                    const isFocused = focusedCell?.symbolIndex === symbolIndex && focusedCell?.dateIndex === dateIndex;
+                    const dateIsWeekend = isWeekend(date);
+                    const dateIsToday = isToday(date);
 
-                  {/* Virtual columns for cells */}
-                  <div
-                    className="relative flex"
-                    style={{
-                      width: `${columnVirtualizer.getTotalSize()}px`,
-                    }}
-                  >
-                    {columnVirtualizer.getVirtualItems().map((virtualColumn) => {
-                      const date = dates[virtualColumn.index];
-                      const event = getEvent(symbol, date);
-                      const symbolIndex = virtualRow.index;
-                      const dateIndex = virtualColumn.index;
-                      const isFocused =
-                        focusedCell?.symbolIndex === symbolIndex && focusedCell?.dateIndex === dateIndex;
-                      const dateIsWeekend = isWeekend(date);
-                      const dateIsToday = isToday(date);
-
-                      return (
-                        <div
-                          key={virtualColumn.key}
-                          className={`absolute left-0 top-0 h-full ${isFocused ? "ring-2 ring-blue-500 ring-offset-1" : ""}`}
-                          style={{
-                            width: `${virtualColumn.size}px`,
-                            transform: `translateX(${virtualColumn.start}px)`,
-                          }}
-                        >
-                          <GridCell
-                            data={
-                              event
-                                ? {
-                                    eventId: event.id,
-                                    symbol,
-                                    date,
-                                    eventType: event.event_type,
-                                    percentChange: event.percent_change,
-                                    hasSummary: true,
-                                    isWeekend: dateIsWeekend,
-                                    isToday: dateIsToday,
-                                  }
-                                : {
-                                    eventId: null,
-                                    symbol,
-                                    date,
-                                    isWeekend: dateIsWeekend,
-                                    isToday: dateIsToday,
-                                  }
-                            }
-                            onClick={
-                              event ? () => handleCellClickWithFocus(event.id, symbolIndex, dateIndex) : undefined
-                            }
-                            isSelected={event?.id === selectedEventId}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
+                    return (
+                      <div
+                        key={virtualColumn.key}
+                        className={`absolute left-0 top-0 h-full ${isFocused ? "ring-2 ring-blue-500 ring-offset-1" : ""}`}
+                        style={{
+                          width: `${virtualColumn.size}px`,
+                          transform: `translateX(${virtualColumn.start}px)`,
+                        }}
+                      >
+                        <GridCell
+                          data={
+                            event
+                              ? {
+                                  eventId: event.id,
+                                  symbol,
+                                  date,
+                                  eventType: event.event_type,
+                                  percentChange: event.percent_change,
+                                  hasSummary: true,
+                                  isWeekend: dateIsWeekend,
+                                  isToday: dateIsToday,
+                                }
+                              : {
+                                  eventId: null,
+                                  symbol,
+                                  date,
+                                  isWeekend: dateIsWeekend,
+                                  isToday: dateIsToday,
+                                }
+                          }
+                          onClick={event ? () => handleCellClickWithFocus(event.id, symbolIndex, dateIndex) : undefined}
+                          isSelected={event?.id === selectedEventId}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

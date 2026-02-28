@@ -5,6 +5,20 @@
 
 :root {
   --radius: 0.625rem;
+
+  /* Grid cell heights - unified across all grid elements (74px matches GridCell min-height + borders) */
+  --grid-row-height: 74px;
+  --grid-header-height: 74px;
+
+  /* Grid column widths - responsive breakpoints */
+  --grid-col-width-mobile: 100px;
+  --grid-col-width-tablet: 120px;
+  --grid-col-width-desktop: 140px;
+
+  --grid-symbol-width-mobile: 80px;
+  --grid-symbol-width-tablet: 100px;
+  --grid-symbol-width-desktop: 140px;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

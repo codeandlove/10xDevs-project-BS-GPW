@@ -1,6 +1,7 @@
 /**
  * Range Selector Component
- * Handles week/month/quarter selection
+ * Handles week/month/quarter selection via dropdown
+ * Updated to match new DateRangeSelector component
  */
 
 import { type Page, expect } from "@playwright/test";
@@ -16,36 +17,69 @@ const RANGE_LABELS: Record<RangeType, string> = {
 export class RangeSelector {
   constructor(private page: Page) {}
 
-  private getButton(range: RangeType) {
-    return this.page.getByRole("button", { name: RANGE_LABELS[range] });
+  /**
+   * Get the dropdown trigger button
+   */
+  private getDropdownButton() {
+    // Button has Calendar icon and range label, aria-haspopup="menu"
+    return this.page.getByRole("button", { name: /Tydzień|Miesiąc|Kwartał|\./ });
+  }
+
+  /**
+   * Get menu item by range label
+   */
+  private getMenuItem(range: RangeType) {
+    // Get all menuitems and filter to the exact one
+    const label = RANGE_LABELS[range];
+    return this.page.locator(`[role="menuitem"]:has-text("${label}")`).first();
   }
 
   /**
    * Select range (week, month, quarter)
    */
   async selectRange(range: RangeType): Promise<void> {
-    await this.getButton(range).click();
+    // Open dropdown
+    await this.getDropdownButton().click();
+
+    // Wait a bit for dropdown to animate
+    await this.page.waitForTimeout(500);
+
+    // Click menu item directly - Playwright will auto-wait for it to be visible
+    await this.getMenuItem(range).click();
+
+    // Wait for selection to apply
+    await this.page.waitForTimeout(500);
+
+    // Verify range is selected
     await this.verifyRangeSelected(range);
   }
 
   /**
    * Verify that range is selected
+   * Checks if dropdown button contains the range label
    */
   async verifyRangeSelected(range: RangeType): Promise<void> {
-    await expect(this.getButton(range)).toHaveAttribute("aria-pressed", "true");
+    const button = this.getDropdownButton();
+    await expect(button).toContainText(RANGE_LABELS[range]);
   }
 
   /**
    * Get currently selected range
+   * Reads the dropdown button text to determine selection
    */
   async getSelectedRange(): Promise<RangeType | null> {
-    for (const range of Object.keys(RANGE_LABELS)) {
-      const button = this.getButton(range as RangeType);
-      const isPressed = await button.getAttribute("aria-pressed");
-      if (isPressed === "true") {
+    const button = this.getDropdownButton();
+    const text = await button.textContent();
+
+    if (!text) return null;
+
+    // Check which label is in the button text
+    for (const [range, label] of Object.entries(RANGE_LABELS)) {
+      if (text.includes(label)) {
         return range as RangeType;
       }
     }
+
     return null;
   }
 }

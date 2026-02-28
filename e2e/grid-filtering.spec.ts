@@ -51,9 +51,5 @@ test.describe("Grid - Filtering (test@example.com)", () => {
     expect(selected).toBe("month");
   });
 
-  test("TC-GRID-FILTER-001: Filter by ticker", async () => {
-    // This test requires AdvancedTickerFilter interaction
-    // Complex: search, uncheck, apply - defer to Phase B migration
-    test.skip();
-  });
+  // TC-GRID-FILTER-001: Removed - functionality already covered by TC-FILTER-001 to TC-FILTER-005 in grid-filtering-advanced.spec.ts
 });

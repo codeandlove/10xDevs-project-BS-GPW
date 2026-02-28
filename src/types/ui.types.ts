@@ -48,7 +48,8 @@ export interface GridState {
   eventTypes?: EventType[]; // Selected event type filters
   sortField?: "date" | "percent_change" | "symbol"; // Sort field
   sortDirection?: "asc" | "desc"; // Sort direction
-  endDate?: string; // Optional end date for range
+  startDate?: string; // YYYY-MM-DD - For custom date ranges (infinite scroll)
+  endDate?: string; // YYYY-MM-DD - For custom date ranges (infinite scroll)
   eventId?: string; // Selected event for sidebar
   scrollPosition?: number;
 }
