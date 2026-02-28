@@ -104,9 +104,7 @@ describe("useMediaQuery", () => {
 
     // Simulate media query change
     currentMatches = true;
-    handlers.forEach((handler) =>
-      handler({ matches: true, media: "(min-width: 768px)" } as MediaQueryListEvent)
-    );
+    handlers.forEach((handler) => handler({ matches: true, media: "(min-width: 768px)" } as MediaQueryListEvent));
 
     rerender();
 

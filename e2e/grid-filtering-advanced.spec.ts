@@ -133,7 +133,7 @@ test.describe("Grid - Advanced Filtering Mobile", () => {
     await page.waitForTimeout(500);
 
     // Bottom sheet content should be visible
-    const bottomSheet = page.locator('[data-vaul-drawer]').first();
+    const bottomSheet = page.locator("[data-vaul-drawer]").first();
     await expect(bottomSheet).toBeVisible({ timeout: 5000 });
 
     // Search input should be enabled

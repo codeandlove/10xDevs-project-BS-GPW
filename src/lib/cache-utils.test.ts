@@ -65,7 +65,7 @@ describe("cache-utils", () => {
       const stored = localStorage.getItem(key);
       expect(stored).toBeTruthy();
 
-      const parsed = JSON.parse(stored!);
+      const parsed = JSON.parse(stored as string);
       expect(parsed.data).toEqual(data);
     });
 
