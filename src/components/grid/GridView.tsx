@@ -27,7 +27,6 @@ import { SummaryView } from "@/components/summary/SummaryView";
 import { fetchGridData } from "@/lib/api-service";
 import { hashSymbols } from "@/lib/cache";
 import { clearTimelineCache } from "@/lib/cache-utils";
-import { WIG20_SYMBOLS } from "@/config/gpw-indices";
 import type { EventType, DateRange } from "@/types/nocodb.types";
 
 // Hook to detect mobile
@@ -45,20 +44,7 @@ function useIsMobile() {
 }
 
 export function GridView() {
-  const {
-    gridState,
-    setRange,
-    setSymbols,
-    setEventTypes,
-    setSort,
-    setEventId,
-    setDateRange,
-    clearFilters,
-    recentSymbols,
-    setRecentSymbols,
-    isInitialized,
-    setIsInitialized,
-  } = useGrid();
+  const { gridState, setRange, setSymbols, setEventTypes, setSort, setEventId, setDateRange, clearFilters } = useGrid();
   const { profile, isLoading: isLoadingAuth, session } = useAuth();
   const isMobile = useIsMobile();
 
@@ -84,7 +70,6 @@ export function GridView() {
     scrollContainerRef.current = el;
   }, []);
 
-  // ...existing code...
   const today = new Date().toISOString().split("T")[0];
   const initialStartDate = useMemo(() => {
     if (gridState.startDate) return gridState.startDate;
@@ -111,46 +96,6 @@ export function GridView() {
     () => (profile && !isLoadingAuth ? canAccessPremiumFeatures(profile) : null),
     [profile, isLoadingAuth]
   );
-
-  // Smart initialization: show tickers with events from last 7 days or WIG20 fallback
-  // Only runs once on first load
-  useEffect(() => {
-    async function smartInitialization() {
-      // Skip if already initialized or no access
-      if (isInitialized || !hasAccess) {
-        return;
-      }
-
-      try {
-        // Fetch events from last 7 days without symbol filter
-        // Using backward compatible range overload
-        const recentEvents = await fetchGridData("week", [], undefined);
-
-        // Extract unique symbols from events
-        const uniqueSymbols = [...new Set(recentEvents.events.map((e) => e.symbol))];
-
-        // If >= 2 events, use those symbols; otherwise fallback to WIG20
-        if (recentEvents.events.length >= 2) {
-          setSymbols(uniqueSymbols);
-          setRecentSymbols(uniqueSymbols); // Cache "ostatnie" for "Zaznacz ostatnie" button
-        } else {
-          setSymbols([...WIG20_SYMBOLS]);
-          setRecentSymbols([...WIG20_SYMBOLS]); // Cache WIG20 as fallback
-        }
-
-        setIsInitialized(true); // Mark as initialized - won't run again
-      } catch {
-        // Fallback to WIG20 on error
-        setSymbols([...WIG20_SYMBOLS]);
-        setRecentSymbols([...WIG20_SYMBOLS]);
-        setIsInitialized(true);
-      }
-    }
-
-    if (hasAccess === true) {
-      smartInitialization();
-    }
-  }, [hasAccess, isInitialized, setIsInitialized, setRecentSymbols, setSymbols]);
 
   // Listen for browser back/forward navigation
   useEffect(() => {
@@ -378,12 +323,7 @@ export function GridView() {
             }
             filters={
               <div className="flex flex-wrap items-center gap-2">
-                <AdvancedTickerFilter
-                  selected={gridState.symbols}
-                  onChange={setSymbols}
-                  recentSymbols={recentSymbols}
-                  range={gridState.range}
-                />
+                <AdvancedTickerFilter selected={gridState.symbols} onChange={setSymbols} range={gridState.range} />
                 <EventTypeFilter selected={(gridState.eventTypes || []) as EventType[]} onChange={setEventTypes} />
                 <SortOptions
                   value={{
@@ -414,10 +354,7 @@ export function GridView() {
           )}
 
           <div className="relative min-h-0 flex-1">
-            {isLoading ||
-            hasAccess === null ||
-            (!isInitialized && hasAccess) ||
-            (hasAccess && gridResponse === null) ? (
+            {isLoading || hasAccess === null || (hasAccess && gridResponse === null) ? (
               <GridSkeleton />
             ) : !hasAccess ? (
               isMobile ? (

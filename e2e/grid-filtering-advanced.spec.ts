@@ -63,9 +63,10 @@ test.describe("Grid - Advanced Filtering (test@example.com)", () => {
     const gridPage = new GridPage(page);
     await gridPage.goto();
 
-    // Keep only PKN (uncheck CPD and PKO)
+    // Explicitly select PKN and apply (no pre-selected tickers after smartInitialization removal)
     await gridPage.tickerFilter.open();
-    await gridPage.tickerFilter.deselectTickers(["CPD", "PKO"]);
+    await gridPage.tickerFilter.deselectAll();
+    await gridPage.tickerFilter.selectTicker("PKN");
     await gridPage.tickerFilter.apply();
 
     // Check localStorage for saved preferences

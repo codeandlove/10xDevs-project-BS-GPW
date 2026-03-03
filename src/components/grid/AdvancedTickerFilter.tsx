@@ -37,11 +37,10 @@ import type { DateRange } from "@/types/nocodb.types";
 interface AdvancedTickerFilterProps {
   selected: string[];
   onChange: (selected: string[]) => void;
-  recentSymbols?: string[]; // "Ostatnie" symbols from smart initialization
-  range?: DateRange; // Current date range to show event counts
+  range?: DateRange;
 }
 
-export function AdvancedTickerFilter({ selected, onChange, recentSymbols, range }: AdvancedTickerFilterProps) {
+export function AdvancedTickerFilter({ selected, onChange, range }: AdvancedTickerFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [localSelected, setLocalSelected] = useState<Set<string>>(new Set(selected));
@@ -101,13 +100,6 @@ export function AdvancedTickerFilter({ selected, onChange, recentSymbols, range 
   const handleDeselectAll = useCallback(() => {
     setLocalSelected(new Set());
   }, []);
-
-  // Select "ostatnie" tickers (from smart initialization)
-  const handleSelectRecent = useCallback(() => {
-    if (recentSymbols && recentSymbols.length > 0) {
-      setLocalSelected(new Set(recentSymbols));
-    }
-  }, [recentSymbols]);
 
   // Select all tickers from a specific index
   const handleSelectIndex = useCallback((indexId: string) => {
@@ -181,15 +173,6 @@ export function AdvancedTickerFilter({ selected, onChange, recentSymbols, range 
               disabled={isLoading || localSelected.size === 0}
             >
               Odznacz wszystkie
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSelectRecent}
-              disabled={isLoading || !recentSymbols || recentSymbols.length === 0}
-              title="Zaznacz tickery z ostatniej inicjalizacji"
-            >
-              Zaznacz ostatnie ({recentSymbols?.length || 0})
             </Button>
           </div>
         </div>
