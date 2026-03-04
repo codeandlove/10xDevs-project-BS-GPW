@@ -11,11 +11,13 @@ import type { GPWSymbol, SymbolsResponse, DateRange } from "@/types/nocodb.types
 /**
  * Cache configuration for symbols
  * Symbols change rarely, so we cache for 24h
- * When range provided, cache for 5min (event counts are dynamic)
+ * When event counts are requested (range provided), cache for 30min under a
+ * fixed "alltime" key - counts are now all-time, not range-specific, so a
+ * single cache entry is sufficient regardless of which range is active.
  */
 const SYMBOLS_CACHE_KEY_BASE = "gpw:cache:v1:symbols";
 const SYMBOLS_TTL = 24 * 60 * 60 * 1000; // 24 hours
-const SYMBOLS_WITH_COUNTS_TTL = 5 * 60 * 1000; // 5 minutes
+const SYMBOLS_WITH_COUNTS_TTL = 30 * 60 * 1000; // 30 minutes
 
 /**
  * Custom hook for GPW symbols with caching
@@ -23,7 +25,9 @@ const SYMBOLS_WITH_COUNTS_TTL = 5 * 60 * 1000; // 5 minutes
  * @param range - Optional date range to include event counts per symbol
  */
 export function useSymbols(range?: DateRange) {
-  const cacheKey = range ? `${SYMBOLS_CACHE_KEY_BASE}:${range}` : SYMBOLS_CACHE_KEY_BASE;
+  // Use a fixed "alltime" key when range is provided - counts are all-time,
+  // so switching between week/month/quarter must not create separate cache entries.
+  const cacheKey = range ? `${SYMBOLS_CACHE_KEY_BASE}:alltime` : SYMBOLS_CACHE_KEY_BASE;
   const ttl = range ? SYMBOLS_WITH_COUNTS_TTL : SYMBOLS_TTL;
 
   const fetcher = useMemo(() => () => fetchSymbols(range), [range]);

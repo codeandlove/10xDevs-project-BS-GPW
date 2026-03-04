@@ -34,6 +34,8 @@ export interface TimelineState {
   isLoadingBackward: boolean;
   isLoadingForward: boolean; // Future use
   error: Error | null;
+  /** True after resetTimeline is called at least once with a real API response */
+  isInitialized: boolean;
 }
 
 /**

@@ -150,9 +150,21 @@ export function GridView() {
     initialEvents: gridResponse?.events || [],
   });
 
+  // Track last gridResponse we initialized from to prevent re-running on every render
+  const lastInitializedResponseRef = useRef<typeof gridResponse>(null);
+
   // Re-initialize timeline when gridResponse loads (fixes timing issue with hasAccess)
+  // Note: gridResponse.events may be empty (ticker with no events in current range) -
+  // we still need to reset timeline so the empty ticker row is visible and historical
+  // chunks can be loaded by scrolling left.
   useEffect(() => {
-    if (gridResponse && gridResponse.events.length > 0 && allEvents.length === 0 && !timelineState.isLoadingBackward) {
+    if (
+      gridResponse &&
+      gridResponse !== lastInitializedResponseRef.current &&
+      allEvents.length === 0 &&
+      !timelineState.isLoadingBackward
+    ) {
+      lastInitializedResponseRef.current = gridResponse;
       resetTimeline(initialStartDate, initialEndDate, gridResponse.events);
     }
   }, [
@@ -174,7 +186,9 @@ export function GridView() {
     const symbolsChanged = prevSymbolsKeyRef.current !== symbolsKey;
     const rangeChanged = prevRangeRef.current !== gridState.range;
 
-    if ((symbolsChanged || rangeChanged) && gridResponse && gridResponse.events.length > 0) {
+    // Reset timeline regardless of event count - tickers with 0 events still need
+    // a valid timeline so the empty row is shown and historical chunks can be loaded.
+    if ((symbolsChanged || rangeChanged) && gridResponse) {
       resetTimeline(initialStartDate, initialEndDate, gridResponse.events);
       prevSymbolsKeyRef.current = symbolsKey;
       prevRangeRef.current = gridState.range;
@@ -362,7 +376,7 @@ export function GridView() {
               ) : (
                 <BlurredDemoGrid range={gridState.range} />
               )
-            ) : events.length > 0 || timelineState.chunks.length > 0 ? (
+            ) : timelineState.chunks.length > 0 ? (
               <VirtualizedGrid
                 events={events}
                 allDates={allDates}

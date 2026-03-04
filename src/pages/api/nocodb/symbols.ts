@@ -74,8 +74,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        // Cache for 24h if no range (static symbols), 5min if range (dynamic event counts)
-        "Cache-Control": range ? "private, max-age=300" : "private, max-age=86400",
+        // All-time event counts change rarely - 30 min TTL is safe
+        "Cache-Control": range ? "private, max-age=1800" : "private, max-age=86400",
         ...getRateLimitHeaders(rateLimitResult),
       },
     });

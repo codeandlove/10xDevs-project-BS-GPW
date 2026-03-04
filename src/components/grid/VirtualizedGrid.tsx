@@ -88,7 +88,6 @@ export function VirtualizedGrid({
 
   // Store grid scroll element for minimap
   const [gridScrollElement, setGridScrollElement] = useState<HTMLDivElement | null>(null);
-  const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
 
   // Callback ref - sets internal ref, updates minimap, and notifies parent of scroll container
   const setParentRef = useCallback(
@@ -102,15 +101,23 @@ export function VirtualizedGrid({
 
   // Group events by symbol and date
   const { symbols, dates, eventsBySymbolAndDate } = useMemo(() => {
-    // Use allDates from props (includes infinite scroll dates)
+    // When user has an active symbol filter, only those symbols may appear as rows.
+    // Without this guard, historical chunks (auto-preloaded) add extra symbols that
+    // were present in the DB for that date range but are not in the user's selection.
+    const selectedSet =
+      selectedSymbols && selectedSymbols.length > 0
+        ? new Set(selectedSymbols.map((s) => s.trim()).filter(Boolean))
+        : null;
+
     const symbolsSet = new Set<string>();
     const eventMap = new Map<string, BlackSwanEventMinimal>();
-
-    // Group events by symbol to find most significant event per symbol
     const eventsBySymbol = new Map<string, BlackSwanEventMinimal[]>();
 
     // Add symbols from events and group by symbol
     events.forEach((event) => {
+      // Skip symbols outside the active filter to prevent row leakage from chunks
+      if (selectedSet && !selectedSet.has(event.symbol)) return;
+
       symbolsSet.add(event.symbol);
       const key = `${event.symbol}-${event.occurrence_date}`;
       eventMap.set(key, event);
@@ -124,13 +131,9 @@ export function VirtualizedGrid({
       }
     });
 
-    // Add user-selected symbols (even if no events) - append at end
-    if (selectedSymbols && selectedSymbols.length > 0) {
-      selectedSymbols.forEach((symbol) => {
-        if (symbol && symbol.trim().length > 0) {
-          symbolsSet.add(symbol.trim());
-        }
-      });
+    // Always add selected symbols (ensures row exists even for tickers with 0 events)
+    if (selectedSet) {
+      selectedSet.forEach((symbol) => symbolsSet.add(symbol));
     }
 
     // Determine symbol order based on sortField
@@ -186,30 +189,12 @@ export function VirtualizedGrid({
     overscan: 5,
   });
 
-  // Auto-scroll to RIGHT (newest dates) on initial mount
-  // This allows user to scroll LEFT to load older data (infinite scroll backward)
-  useEffect(() => {
-    const scrollEl = parentRef.current;
-    if (!scrollEl || hasInitialScrolled || dates.length === 0) return;
-
-    // Wait for grid to render before scrolling
-    const timer = setTimeout(() => {
-      const maxScrollLeft = scrollEl.scrollWidth - scrollEl.clientWidth;
-      if (maxScrollLeft > 0) {
-        scrollEl.scrollLeft = maxScrollLeft;
-        setHasInitialScrolled(true);
-      }
-    }, 100); // 100ms delay to ensure grid is rendered
-
-    return () => clearTimeout(timer);
-  }, [dates.length, hasInitialScrolled]);
-
   // Adjust scrollLeft when new data loads (infinite scroll backward)
   // This prevents sentinel from staying visible and triggering infinite loop
   const previousDatesLength = useRef(dates.length);
   useEffect(() => {
     const scrollEl = parentRef.current;
-    if (!scrollEl || !hasInitialScrolled) return;
+    if (!scrollEl) return;
 
     const datesAdded = dates.length - previousDatesLength.current;
 
@@ -225,7 +210,7 @@ export function VirtualizedGrid({
     }
 
     previousDatesLength.current = dates.length;
-  }, [dates.length, hasInitialScrolled, config.colWidth]);
+  }, [dates.length, config.colWidth]);
 
   const getEvent = useCallback(
     (symbol: string, date: string) => {

@@ -9,6 +9,9 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+
+type TickerSortMode = "name-asc" | "name-desc" | "count-asc" | "count-desc";
+
 import {
   Dialog,
   DialogContent,
@@ -43,6 +46,7 @@ interface AdvancedTickerFilterProps {
 export function AdvancedTickerFilter({ selected, onChange, range }: AdvancedTickerFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortMode, setSortMode] = useState<TickerSortMode>("name-asc");
   const [localSelected, setLocalSelected] = useState<Set<string>>(new Set(selected));
 
   // Detect mobile viewport
@@ -51,10 +55,24 @@ export function AdvancedTickerFilter({ selected, onChange, range }: AdvancedTick
   // Fetch symbols with caching (with event counts if range provided)
   const { symbols, isLoading, error } = useSymbols(range);
 
-  // Filter symbols based on search query
+  // Filter and sort symbols based on search query and sort mode
   const filteredSymbols = useMemo(() => {
-    return searchSymbols(searchQuery, symbols);
-  }, [searchQuery, symbols]);
+    const searched = searchSymbols(searchQuery, symbols);
+    return [...searched].sort((a, b) => {
+      switch (sortMode) {
+        case "name-asc":
+          return (a.symbol ?? "").localeCompare(b.symbol ?? "");
+        case "name-desc":
+          return (b.symbol ?? "").localeCompare(a.symbol ?? "");
+        case "count-asc":
+          return (a.eventCount ?? 0) - (b.eventCount ?? 0);
+        case "count-desc":
+          return (b.eventCount ?? 0) - (a.eventCount ?? 0);
+        default:
+          return 0;
+      }
+    });
+  }, [searchQuery, symbols, sortMode]);
 
   // Reset local state when opening modal
   const handleOpen = useCallback(() => {
@@ -113,10 +131,23 @@ export function AdvancedTickerFilter({ selected, onChange, range }: AdvancedTick
     });
   }, []);
 
-  // Get only selected symbols that exist in current symbols list
+  // Get only selected symbols that exist in current symbols list, sorted by sortMode
   const selectedSymbols = useMemo(() => {
-    return symbols.filter((s) => localSelected.has(s.symbol));
-  }, [symbols, localSelected]);
+    return [...symbols.filter((s) => localSelected.has(s.symbol))].sort((a, b) => {
+      switch (sortMode) {
+        case "name-asc":
+          return (a.symbol ?? "").localeCompare(b.symbol ?? "");
+        case "name-desc":
+          return (b.symbol ?? "").localeCompare(a.symbol ?? "");
+        case "count-asc":
+          return (a.eventCount ?? 0) - (b.eventCount ?? 0);
+        case "count-desc":
+          return (b.eventCount ?? 0) - (a.eventCount ?? 0);
+        default:
+          return 0;
+      }
+    });
+  }, [symbols, localSelected, sortMode]);
 
   // Shared content for both Dialog and BottomSheet
   const renderContent = () => (
@@ -187,6 +218,41 @@ export function AdvancedTickerFilter({ selected, onChange, range }: AdvancedTick
               Wyników wyszukiwania: <strong>{filteredSymbols.length}</strong>
             </span>
           )}
+        </div>
+
+        {/* Sort Controls */}
+        <div className="flex items-center gap-1" role="group" aria-label="Sortowanie listy tickerów">
+          <span className="mr-1 text-xs text-muted-foreground">Sortuj:</span>
+          {(["name-asc", "name-desc", "count-desc", "count-asc"] as const).map((mode) => {
+            const labels: Record<TickerSortMode, string> = {
+              "name-asc": "A-Z",
+              "name-desc": "Z-A",
+              "count-desc": "9→1",
+              "count-asc": "1→9",
+            };
+            const ariaLabels: Record<TickerSortMode, string> = {
+              "name-asc": "Sortuj A-Z",
+              "name-desc": "Sortuj Z-A",
+              "count-desc": "Sortuj malejąco wg zdarzeń",
+              "count-asc": "Sortuj rosnąco wg zdarzeń",
+            };
+            const isCountMode = mode.startsWith("count");
+            const countsAvailable = symbols.some((s) => s.eventCount !== undefined);
+            return (
+              <Button
+                key={mode}
+                variant={sortMode === mode ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setSortMode(mode)}
+                className="h-7 px-2 text-xs"
+                aria-label={ariaLabels[mode]}
+                title={ariaLabels[mode]}
+                disabled={isCountMode && !countsAvailable}
+              >
+                {labels[mode]}
+              </Button>
+            );
+          })}
         </div>
       </div>
 

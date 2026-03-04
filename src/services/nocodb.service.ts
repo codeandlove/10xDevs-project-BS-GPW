@@ -23,39 +23,6 @@ import type {
 } from "../types/nocodb.types";
 
 /**
- * Calculate date range based on range type
- * @deprecated Use explicit startDate/endDate instead
- */
-function calculateDateRange(endDateStr: string, range: DateRange): { startDate: string; endDate: string } {
-  const endDate = new Date(endDateStr);
-
-  let daysToSubtract: number;
-  switch (range) {
-    case "week":
-      daysToSubtract = 7;
-      break;
-    case "month":
-      daysToSubtract = 30;
-      break;
-    case "quarter":
-      daysToSubtract = 90;
-      break;
-    default:
-      // Custom range or unknown - default to 7 days
-      daysToSubtract = 7;
-      break;
-  }
-
-  const startDate = new Date(endDate);
-  startDate.setDate(startDate.getDate() - daysToSubtract);
-
-  return {
-    startDate: startDate.toISOString().split("T")[0], // YYYY-MM-DD
-    endDate: endDate.toISOString().split("T")[0],
-  };
-}
-
-/**
  * Transform NocoDB event record to minimal DTO
  */
 function transformToMinimal(record: NocoDBEventRecord, hasSummary: boolean): BlackSwanEventMinimal {
@@ -396,9 +363,11 @@ export class NocoDBService {
     // Transform to DTOs
     let symbols: GPWSymbol[] = symbolsResponse.list.map((record) => transformSymbol(record));
 
-    // If range provided, aggregate event counts per symbol
+    // If range provided, aggregate ALL-TIME event counts per symbol
+    // (not just for the current range - so tickers with 0 events this week
+    // still show their historical count in the filter modal)
     if (range) {
-      const eventCounts = await this.getEventCountsBySymbol(range);
+      const eventCounts = await this.getAllTimeEventCounts();
 
       // Add eventCount to each symbol
       symbols = symbols.map((symbol) => ({
@@ -415,21 +384,18 @@ export class NocoDBService {
   }
 
   /**
-   * Get event counts per symbol for given date range
-   * @param range - Date range to query
-   * @returns Map of symbol -> event count
+   * Get all-time event counts per symbol (no date restriction)
+   * Used in AdvancedTickerFilter so tickers with 0 events in the current range
+   * still show their historical count.
+   * @returns Map of symbol -> total event count
    */
-  private async getEventCountsBySymbol(range: DateRange): Promise<Map<string, number>> {
-    // Calculate dates from range for backward compatibility
-    const today = new Date().toISOString().split("T")[0];
-    const { startDate, endDate } = calculateDateRange(today, range);
+  private async getAllTimeEventCounts(): Promise<Map<string, number>> {
+    const queryBuilder = new NocoDBQueryBuilder().sort("occurrence_date", true).limit(10000);
 
-    // Fetch all events for the range (without symbol filter)
-    const eventsResponse = await this.getGridEvents(startDate, endDate);
+    const eventsResponse = await this.client.queryRecords<NocoDBEventRecord>(NOCODB_TABLES.BLACK_SWANS, queryBuilder);
 
-    // Count events per symbol
     const counts = new Map<string, number>();
-    eventsResponse.events.forEach((event) => {
+    eventsResponse.list.forEach((event) => {
       counts.set(event.symbol, (counts.get(event.symbol) || 0) + 1);
     });
 
