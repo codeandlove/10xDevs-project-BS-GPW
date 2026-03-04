@@ -60,6 +60,7 @@ export function useInfiniteTimeline({
     isLoadingBackward: false,
     isLoadingForward: false,
     error: null,
+    isInitialized: false,
   }));
 
   // Track if initial preload happened
@@ -142,12 +143,13 @@ export function useInfiniteTimeline({
    * Loads: initial chunk + 2 previous chunks = 3 chunks total
    */
   useEffect(() => {
-    // Only run once, only if we have initial events loaded
+    // Only run once, only after timeline is initialized by resetTimeline
+    // (avoids premature preload before gridResponse arrives)
     if (
       hasPreloadedRef.current ||
       timelineState.isLoadingBackward ||
       timelineState.chunks.length > 1 ||
-      initialEvents.length === 0
+      !timelineState.isInitialized
     ) {
       return;
     }
@@ -165,7 +167,7 @@ export function useInfiniteTimeline({
     }, 50);
 
     return () => clearTimeout(timer1);
-  }, [loadPreviousChunk, timelineState.isLoadingBackward, timelineState.chunks.length, initialEvents.length]);
+  }, [loadPreviousChunk, timelineState.isLoadingBackward, timelineState.chunks.length, timelineState.isInitialized]);
 
   /**
    * Reset timeline (e.g., when date range picker changes)
@@ -191,6 +193,7 @@ export function useInfiniteTimeline({
         isLoadingBackward: false,
         isLoadingForward: false,
         error: null,
+        isInitialized: true,
       });
       hasPreloadedRef.current = false; // Reset preload flag
     },
