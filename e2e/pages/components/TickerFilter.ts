@@ -91,12 +91,17 @@ export class TickerFilter {
   }
 
   /**
-   * Deselect all tickers using "Odznacz wszystkie" button
+   * Deselect all tickers using "Odznacz wszystkie" button.
+   * No-op if nothing is selected (button is disabled).
    */
   async deselectAll(): Promise<void> {
     const deselectAllButton = this.dialog.getByRole("button", { name: /Odznacz wszystkie/i });
-    await deselectAllButton.click();
-    await this.page.waitForTimeout(300);
+    await deselectAllButton.waitFor({ state: "visible", timeout: 5000 });
+    const isEnabled = await deselectAllButton.isEnabled();
+    if (isEnabled) {
+      await deselectAllButton.click();
+      await this.page.waitForTimeout(300);
+    }
   }
 
   /**

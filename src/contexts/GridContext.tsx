@@ -14,12 +14,8 @@ interface GridContextValue {
   setEventTypes: (types: EventType[]) => void;
   setSort: (sort: { field: "date" | "percent_change" | "symbol"; direction: "asc" | "desc" }) => void;
   setEventId: (eventId: string | undefined) => void;
-  setDateRange: (startDate: string, endDate: string) => void; // NEW
+  setDateRange: (startDate: string, endDate: string) => void;
   clearFilters: () => void;
-  recentSymbols: string[]; // Cached "ostatnie" symbols from smart initialization
-  setRecentSymbols: (symbols: string[]) => void;
-  isInitialized: boolean; // Flag to prevent re-initialization on "Odznacz wszystkie"
-  setIsInitialized: (value: boolean) => void;
 }
 
 interface GridProviderProps {
@@ -132,12 +128,6 @@ export function GridProvider({ children, initialState }: GridProviderProps) {
     return { ...defaultState, ...initialState };
   });
 
-  // State for "ostatnie" symbols (cached from smart initialization)
-  const [recentSymbols, setRecentSymbols] = useState<string[]>([]);
-
-  // Flag to prevent re-initialization when user clears symbols
-  const [isInitialized, setIsInitialized] = useState(false);
-
   // Update URL when state changes
   useEffect(() => {
     updateUrlParams(gridState);
@@ -197,10 +187,6 @@ export function GridProvider({ children, initialState }: GridProviderProps) {
     setEventId,
     setDateRange,
     clearFilters,
-    recentSymbols,
-    setRecentSymbols,
-    isInitialized,
-    setIsInitialized,
   };
 
   return <GridContext.Provider value={value}>{children}</GridContext.Provider>;
