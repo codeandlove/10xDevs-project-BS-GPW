@@ -36,6 +36,7 @@ interface UseInfiniteTimelineReturn {
   resetTimeline: (newStartDate: string, newEndDate: string, newEvents: BlackSwanEventMinimal[]) => void;
   allEvents: BlackSwanEventMinimal[];
   allDates: string[];
+  isReady: boolean;
 }
 
 export function useInfiniteTimeline({
@@ -65,6 +66,9 @@ export function useInfiniteTimeline({
 
   // Track if initial preload happened
   const hasPreloadedRef = useRef(false);
+
+  // True once initial preload completes — blocks VirtualizedGrid until ready
+  const [isReady, setIsReady] = useState(false);
 
   /**
    * Load previous chunk (backward in time)
@@ -137,14 +141,12 @@ export function useInfiniteTimeline({
   }, [range, symbols, timelineState.oldestLoadedDate, timelineState.isLoadingBackward]);
 
   /**
-   * Auto-preload 2 chunks on mount to ensure scrollbar exists
-   * ENABLED: Critical for week view (7 days) and month view (30 days)
-   * Ensures user can scroll left to trigger infinite scroll sentinel
-   * Loads: initial chunk + 2 previous chunks = 3 chunks total
+   * Auto-preload 1 chunk on mount to ensure scrollbar exists
+   * Loads: initial chunk + 1 previous chunk = 2 chunks total
+   * Further chunks load on demand via infinite scroll (user scrolls left)
    */
   useEffect(() => {
     // Only run once, only after timeline is initialized by resetTimeline
-    // (avoids premature preload before gridResponse arrives)
     if (
       hasPreloadedRef.current ||
       timelineState.isLoadingBackward ||
@@ -156,17 +158,19 @@ export function useInfiniteTimeline({
 
     hasPreloadedRef.current = true;
 
-    // Load first chunk after 50ms (let grid render first)
-    const timer1 = setTimeout(() => {
-      loadPreviousChunk().then(() => {
-        // Load second chunk after first completes
-        setTimeout(() => {
-          loadPreviousChunk();
-        }, 100);
-      });
-    }, 50);
+    const runPreload = async () => {
+      try {
+        await loadPreviousChunk();
+      } catch {
+        // Preload failure is non-critical — grid still shows with initial chunk
+      } finally {
+        setIsReady(true);
+      }
+    };
 
-    return () => clearTimeout(timer1);
+    const timer = setTimeout(runPreload, 50);
+
+    return () => clearTimeout(timer);
   }, [loadPreviousChunk, timelineState.isLoadingBackward, timelineState.chunks.length, timelineState.isInitialized]);
 
   /**
@@ -177,6 +181,8 @@ export function useInfiniteTimeline({
       // Cache the initial chunk
       const cacheKey = getChunkCacheKey(range, symbols, newStartDate, newEndDate);
       setInCache(cacheKey, newEvents, TIMELINE_CHUNK_TTL);
+
+      setIsReady(false); // Reset — preload effect will set true after 1 preload chunk
 
       setTimelineState({
         chunks: [
@@ -220,5 +226,6 @@ export function useInfiniteTimeline({
     resetTimeline,
     allEvents,
     allDates,
+    isReady,
   };
 }

@@ -61,19 +61,15 @@ test.describe("Grid - Paywall (Expired User)", () => {
     expect(sidebarVisible).toBe(false);
   });
 
-  test("TC-ACCESS-004: Range selector visible but grid stays blurred", async ({ page }) => {
+  test("TC-ACCESS-004: Date selector visible but grid stays blurred", async ({ page }) => {
     await page.goto("/grid");
 
     // Wait for paywall
     await expect(page.getByText("Odblokuj pełny dostęp")).toBeVisible({ timeout: 10000 });
 
-    // Range selector should be visible (now it's a dropdown)
+    // Date selector button should be visible (shows explicit dates, e.g. "19.12 - 02.01.2026")
     const rangeSelector = new RangeSelector(page);
     await expect(rangeSelector.getDropdownButton()).toBeVisible();
-
-    // Change range to month
-    await rangeSelector.selectRange("month");
-    await page.waitForTimeout(500);
 
     // Grid should still be blurred
     await expect(page.locator(".blur-\\[3px\\]")).toBeVisible();

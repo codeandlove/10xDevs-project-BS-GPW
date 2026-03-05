@@ -60,7 +60,8 @@ function updateUrlParams(state: Partial<GridState>): void {
 
   const params = new URLSearchParams(window.location.search);
 
-  if (state.range) params.set("range", state.range);
+  // Note: range is intentionally NOT written to URL — it's used only as chunk-size hint internally.
+  // Backward-compat: ?range= in URL is still parsed on load (getInitialStateFromUrl) but not generated.
   if (state.symbols !== undefined) {
     if (state.symbols.length > 0) {
       params.set("symbols", state.symbols.join(","));
@@ -111,7 +112,8 @@ function updateUrlParams(state: Partial<GridState>): void {
     }
   }
 
-  const newUrl = `${window.location.pathname}?${params.toString()}`;
+  const searchStr = params.toString();
+  const newUrl = searchStr ? `${window.location.pathname}?${searchStr}` : window.location.pathname;
   window.history.pushState({}, "", newUrl);
 }
 

@@ -26,8 +26,7 @@ import { GridSkeleton } from "@/components/ui/skeleton";
 import { SummaryView } from "@/components/summary/SummaryView";
 import { fetchGridData } from "@/lib/api-service";
 import { hashSymbols } from "@/lib/cache";
-import { clearTimelineCache } from "@/lib/cache-utils";
-import type { EventType, DateRange } from "@/types/nocodb.types";
+import type { EventType } from "@/types/nocodb.types";
 
 // Hook to detect mobile
 function useIsMobile() {
@@ -44,7 +43,7 @@ function useIsMobile() {
 }
 
 export function GridView() {
-  const { gridState, setRange, setSymbols, setEventTypes, setSort, setEventId, setDateRange, clearFilters } = useGrid();
+  const { gridState, setSymbols, setEventTypes, setSort, setEventId, setDateRange, clearFilters } = useGrid();
   const { profile, isLoading: isLoadingAuth, session } = useAuth();
   const isMobile = useIsMobile();
 
@@ -71,15 +70,15 @@ export function GridView() {
   }, []);
 
   const today = new Date().toISOString().split("T")[0];
+
+  // Fixed 14-day initial window — not range-dependent
+  const INITIAL_WINDOW_DAYS = 14;
   const initialStartDate = useMemo(() => {
     if (gridState.startDate) return gridState.startDate;
-
-    // Calculate from range
-    const daysBack = gridState.range === "week" ? 7 : gridState.range === "month" ? 30 : 90;
     const start = new Date();
-    start.setDate(start.getDate() - daysBack);
+    start.setDate(start.getDate() - INITIAL_WINDOW_DAYS);
     return start.toISOString().split("T")[0];
-  }, [gridState.startDate, gridState.range]);
+  }, [gridState.startDate]);
 
   const initialEndDate = gridState.endDate || today;
 
@@ -111,29 +110,19 @@ export function GridView() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [setEventId]);
 
-  // Fetch initial data
-  const cacheKey = useMemo(() => {
-    // If custom dates in URL, use them for cache key
-    if (gridState.startDate && gridState.endDate) {
-      return `cache:grid:${gridState.startDate}:${gridState.endDate}:${hashSymbols(gridState.symbols)}`;
-    }
-    // Otherwise use range
-    return `cache:grid:${gridState.range}:${hashSymbols(gridState.symbols)}`;
-  }, [gridState.startDate, gridState.endDate, gridState.range, gridState.symbols]);
+  // Cache key always uses explicit dates — never range string
+  const cacheKey = useMemo(
+    () => `cache:grid:${initialStartDate}:${initialEndDate}:${hashSymbols(gridState.symbols)}`,
+    [initialStartDate, initialEndDate, gridState.symbols]
+  );
 
   const shouldFetch = hasAccess === true;
 
-  const fetcher = useCallback(() => {
-    if (!shouldFetch) return Promise.resolve(null);
-
-    // If custom dates in URL (start_date + end_date), use Mode 1 (explicit dates)
-    if (gridState.startDate && gridState.endDate) {
-      return fetchGridData(gridState.startDate, gridState.endDate, gridState.symbols);
-    }
-
-    // Otherwise use Mode 3 (range only - backward compatible)
-    return fetchGridData(gridState.range, gridState.symbols, undefined);
-  }, [shouldFetch, gridState.startDate, gridState.endDate, gridState.range, gridState.symbols]);
+  // Always fetch with explicit dates (Mode 1) — no range-based fetch
+  const fetcher = useCallback(
+    () => (shouldFetch ? fetchGridData(initialStartDate, initialEndDate, gridState.symbols) : Promise.resolve(null)),
+    [shouldFetch, initialStartDate, initialEndDate, gridState.symbols]
+  );
 
   const {
     data: gridResponse,
@@ -142,7 +131,7 @@ export function GridView() {
   } = useClientCache(cacheKey, fetcher, { ttl: shouldFetch ? 5 * 60 * 1000 : 0 });
 
   // Infinite timeline hook
-  const { timelineState, loadPreviousChunk, resetTimeline, allEvents, allDates } = useInfiniteTimeline({
+  const { timelineState, loadPreviousChunk, resetTimeline, allEvents, allDates, isReady } = useInfiniteTimeline({
     range: gridState.range,
     symbols: gridState.symbols,
     initialStartDate,
@@ -180,7 +169,7 @@ export function GridView() {
   // This ensures cached chunks don't have stale data from old symbol filters
   const symbolsKey = gridState.symbols.sort().join(",");
   const prevSymbolsKeyRef = useRef<string>(symbolsKey);
-  const prevRangeRef = useRef<DateRange>(gridState.range);
+  const prevRangeRef = useRef(gridState.range);
 
   useEffect(() => {
     const symbolsChanged = prevSymbolsKeyRef.current !== symbolsKey;
@@ -205,6 +194,7 @@ export function GridView() {
     config: {
       rootMargin: "0px 0px 0px 200px", // Trigger 200px BEFORE left edge (top right bottom left)
       threshold: 0,
+      enabled: isReady, // Don't observe before grid is ready — prevents firing before scroll-to-today
     },
   });
 
@@ -214,18 +204,6 @@ export function GridView() {
       // TODO: Implement toast notification when toast library is available
     }
   }, [isMobile, timelineState.chunks.length]);
-
-  // Clear timeline cache when range changes (after mount)
-  // This ensures fresh data when switching between week/month/quarter
-  const previousRangeRef = useRef(gridState.range);
-  useEffect(() => {
-    if (previousRangeRef.current !== gridState.range) {
-      // Clear cache for the old range
-      const symbolsHash = hashSymbols(gridState.symbols);
-      clearTimelineCache(previousRangeRef.current, symbolsHash);
-      previousRangeRef.current = gridState.range;
-    }
-  }, [gridState.range, gridState.symbols]);
 
   // Extract and filter events from timeline
   let events = allEvents;
@@ -291,31 +269,11 @@ export function GridView() {
   const handleDateRangeChange = useCallback(
     (startDate: string, endDate: string) => {
       setDateRange(startDate, endDate);
-
       fetchGridData(startDate, endDate, gridState.symbols).then((response) => {
         resetTimeline(startDate, endDate, response.events);
       });
     },
     [setDateRange, resetTimeline, gridState.symbols]
-  );
-
-  // Handle preset change (quick filters)
-  const handlePresetChange = useCallback(
-    (preset: DateRange) => {
-      setRange(preset);
-
-      // Calculate new dates from preset
-      const daysBack = preset === "week" ? 7 : preset === "month" ? 30 : 90;
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - daysBack);
-
-      const startDate = start.toISOString().split("T")[0];
-      const endDate = end.toISOString().split("T")[0];
-
-      handleDateRangeChange(startDate, endDate);
-    },
-    [setRange, handleDateRangeChange]
   );
 
   return (
@@ -328,10 +286,8 @@ export function GridView() {
             showFilters
             rangeSelector={
               <DateRangeSelector
-                currentRange={gridState.range}
                 startDate={initialStartDate}
                 endDate={initialEndDate}
-                onPresetChange={handlePresetChange}
                 onCustomRangeChange={handleDateRangeChange}
               />
             }
@@ -368,7 +324,7 @@ export function GridView() {
           )}
 
           <div className="relative min-h-0 flex-1">
-            {isLoading || hasAccess === null || (hasAccess && gridResponse === null) ? (
+            {isLoading || hasAccess === null || (hasAccess && gridResponse === null) || (hasAccess && !isReady) ? (
               <GridSkeleton />
             ) : !hasAccess ? (
               isMobile ? (

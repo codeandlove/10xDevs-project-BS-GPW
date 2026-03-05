@@ -16,6 +16,8 @@ interface GridPageWrapperProps {
   initialEventId?: string;
   initialSortField?: string;
   initialSortDirection?: string;
+  initialStartDate?: string;
+  initialEndDate?: string;
 }
 
 export function GridPageWrapper({
@@ -25,6 +27,8 @@ export function GridPageWrapper({
   initialEventId = "",
   initialSortField = "symbol",
   initialSortDirection = "asc",
+  initialStartDate = "",
+  initialEndDate = "",
 }: GridPageWrapperProps) {
   // Parse initial values from Astro props
   const range = (initialRange as DateRange) || "week";
@@ -33,6 +37,8 @@ export function GridPageWrapper({
   const eventId = initialEventId || undefined;
   const sortField = (initialSortField as "date" | "percent_change" | "symbol") || "symbol";
   const sortDirection = (initialSortDirection as "asc" | "desc") || "asc";
+  const startDate = initialStartDate || undefined;
+  const endDate = initialEndDate || undefined;
 
   return (
     <AuthProvider>
@@ -44,6 +50,8 @@ export function GridPageWrapper({
           eventId,
           sortField,
           sortDirection,
+          startDate,
+          endDate,
         }}
       >
         <GridView />

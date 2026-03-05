@@ -4,7 +4,7 @@
  * Includes keyboard navigation support (Arrow keys, Enter, Escape)
  */
 
-import { useRef, useMemo, useCallback, useState, useEffect } from "react";
+import { useRef, useMemo, useCallback, useState, useEffect, useLayoutEffect } from "react";
 import type { RefObject } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { BlackSwanEventMinimal } from "@/types/nocodb.types";
@@ -180,6 +180,15 @@ export function VirtualizedGrid({
     overscan: 3, // Render 3 extra rows outside viewport
   });
 
+  // Estimate initial scroll offset so TanStack Virtual renders rightmost columns
+  // on first render — computed once at mount time (no reactive deps by design)
+  const [estimatedInitialOffset] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    const totalColumnWidth = dates.length * config.colWidth;
+    const estimatedViewportWidth = window.innerWidth - config.symbolWidth;
+    return Math.max(0, totalColumnWidth - estimatedViewportWidth);
+  });
+
   // Column virtualizer (dates)
   const columnVirtualizer = useVirtualizer({
     horizontal: true,
@@ -187,12 +196,22 @@ export function VirtualizedGrid({
     getScrollElement: () => parentRef.current,
     estimateSize: () => config.colWidth,
     overscan: 5,
+    initialOffset: estimatedInitialOffset,
   });
 
-  // Adjust scrollLeft when new data loads (infinite scroll backward)
-  // This prevents sentinel from staying visible and triggering infinite loop
+  // Scroll to rightmost position (newest dates) on initial mount — runs before first paint
+  const hasScrolledToRight = useRef(false);
+  useLayoutEffect(() => {
+    if (hasScrolledToRight.current) return;
+    const el = parentRef.current;
+    if (!el) return;
+    el.scrollLeft = el.scrollWidth - el.clientWidth;
+    hasScrolledToRight.current = true;
+  }, []);
+
+  // Adjust scrollLeft when new data loads (infinite scroll backward) — before paint to prevent jump
   const previousDatesLength = useRef(dates.length);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const scrollEl = parentRef.current;
     if (!scrollEl) return;
 
@@ -200,13 +219,10 @@ export function VirtualizedGrid({
 
     // Only adjust if dates were added (not removed)
     if (datesAdded > 0) {
-      const columnsAdded = datesAdded;
-      const widthAdded = columnsAdded * config.colWidth;
-
+      const widthAdded = datesAdded * config.colWidth;
       // Adjust scrollLeft to maintain current view position
       // This pushes sentinel back out of viewport
-      const newScrollLeft = scrollEl.scrollLeft + widthAdded;
-      scrollEl.scrollLeft = newScrollLeft;
+      scrollEl.scrollLeft = scrollEl.scrollLeft + widthAdded;
     }
 
     previousDatesLength.current = dates.length;

@@ -65,11 +65,45 @@ const { data: user } = await supabase
 **Grid rendering** (`src/components/grid/VirtualizedGrid.tsx`):
 
 - Uses `@tanstack/react-virtual` for both rows (tickers) and columns (dates)
-- Responsive sizing: `{ mobile: 60px, tablet: 70px, desktop: 80px }` row height
-- Initial scroll: Positions at today's date (or rightmost if today not in range)
+- Responsive sizing: `{ mobile: 100px, tablet: 120px, desktop: 140px }` column width
+- Initial scroll: Always positions at rightmost (newest) dates — see Grid Scroll Architecture below
 - Keyboard navigation: Arrow keys, Enter (open sidebar), Escape (close)
 
 **Ticker filter** (`src/components/grid/TickerList.tsx`): Also virtualized with 460+ symbols.
+
+### Grid Scroll Architecture
+
+Three rules that must be followed when modifying scroll behavior in `VirtualizedGrid.tsx`:
+
+**1. `useLayoutEffect` for all `scrollLeft` mutations — never `useEffect`**
+`useEffect` runs after the browser paints, causing a visible jump. `useLayoutEffect` runs synchronously after React commits to the DOM but before paint. Any write to `scrollLeft` (initial positioning, infinite scroll compensation) must use `useLayoutEffect`.
+
+**2. `initialOffset` in TanStack Virtual for flash-free initial render**
+When the grid must start at a non-zero scroll position (rightmost dates), set `initialOffset` in `useVirtualizer` so the virtualizer renders the correct columns on the very first render — before `useLayoutEffect` has a chance to run. Compute it once at mount via `useState` lazy initializer:
+
+```typescript
+const [estimatedInitialOffset] = useState<number>(() => {
+  if (typeof window === "undefined") return 0;
+  const totalColumnWidth = dates.length * config.colWidth;
+  return Math.max(0, totalColumnWidth - (window.innerWidth - config.symbolWidth));
+});
+```
+
+**3. `hasScrolledToRight` ref guard for one-time mount effects**
+Use `useRef(false)` as a guard inside `useLayoutEffect` with `[]` deps to run scroll-to-edge exactly once on mount, regardless of subsequent re-renders triggered by data changes:
+
+```typescript
+const hasScrolledToRight = useRef(false);
+useLayoutEffect(() => {
+  if (hasScrolledToRight.current) return;
+  const el = parentRef.current;
+  if (!el) return;
+  el.scrollLeft = el.scrollWidth - el.clientWidth;
+  hasScrolledToRight.current = true;
+}, []);
+```
+
+**Decided against: `direction: rtl`** — `@tanstack/react-virtual` reads `scrollLeft` directly and does not support RTL. Cross-browser `scrollLeft` in RTL context is inconsistent (Chrome: negative values, Safari: 0+growing, Firefox: reversed). Do not attempt RTL as a scroll-position workaround.
 
 ### API Endpoints
 
@@ -204,6 +238,8 @@ npm run dev            # Starts on :3000
 5. **Error handling** - Use custom errors from `src/lib/errors.ts` (`APIError`, `ValidationError`, etc.) for consistent error responses.
 
 6. **Astro vs React state** - Astro components cannot use React hooks. Extract interactive parts to React components in `src/components/`.
+
+7. **Do not add `viewport_date` to URL** — scroll position is ephemeral UI state, not navigation state. `replaceState` at scroll frequency requires ≥500ms debounce (Safari hard limit: 100 calls/30s), and restoring a position outside the initial 14-day window requires a prefetch round-trip. The grid already initializes to newest dates (rightmost), which covers the common case. If deep-link sharing of historical positions becomes a product requirement, implement as a separate explicit "share" action, not passive URL sync.
 
 ## Feature Implementation Checklist
 

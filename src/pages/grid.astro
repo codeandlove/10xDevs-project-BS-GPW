@@ -13,6 +13,8 @@ const eventTypes = Astro.url.searchParams.get("eventTypes") || "";
 const eventId = Astro.url.searchParams.get("eventId") || "";
 const sortField = Astro.url.searchParams.get("sortField") || "symbol";
 const sortDirection = Astro.url.searchParams.get("sortDirection") || "asc";
+const startDate = Astro.url.searchParams.get("start_date") || "";
+const endDate = Astro.url.searchParams.get("end_date") || "";
 ---
 
 <Layout title="Grid - Black Swan Grid">
@@ -24,5 +26,7 @@ const sortDirection = Astro.url.searchParams.get("sortDirection") || "asc";
     initialEventId={eventId}
     initialSortField={sortField}
     initialSortDirection={sortDirection}
+    initialStartDate={startDate}
+    initialEndDate={endDate}
   />
 </Layout>
