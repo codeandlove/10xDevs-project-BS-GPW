@@ -1,85 +1,106 @@
 /**
  * Range Selector Component
- * Handles week/month/quarter selection via dropdown
- * Updated to match new DateRangeSelector component
+ * Interacts with the dialog-based DateRangeSelector component.
+ * There are no preset buttons (week/month/quarter) — ranges are simulated
+ * by filling explicit dates in the date picker dialog.
  */
 
 import { type Page, expect } from "@playwright/test";
 
 export type RangeType = "week" | "month" | "quarter";
 
-const RANGE_LABELS: Record<RangeType, string> = {
-  week: "Tydzień",
-  month: "Miesiąc",
-  quarter: "Kwartał",
+const RANGE_DAYS: Record<RangeType, number> = {
+  week: 7,
+  month: 30,
+  quarter: 90,
 };
 
 export class RangeSelector {
   constructor(private page: Page) {}
 
   /**
-   * Get the dropdown trigger button
+   * DateRangeSelector button — shows current date range, e.g. "19.02 - 05.03.2026"
    */
-  private getDropdownButton() {
-    // Button has Calendar icon and range label, aria-haspopup="menu"
-    return this.page.getByRole("button", { name: /Tydzień|Miesiąc|Kwartał|\./ });
+  private getButton() {
+    return this.page.getByRole("button", { name: /\d{2}\.\d{2}/ });
   }
 
   /**
-   * Get menu item by range label
+   * Public alias for the date range button — used by tests that assert visibility directly.
    */
-  private getMenuItem(range: RangeType) {
-    // Get all menuitems and filter to the exact one
-    const label = RANGE_LABELS[range];
-    return this.page.locator(`[role="menuitem"]:has-text("${label}")`).first();
+  getDropdownButton() {
+    return this.getButton();
+  }
+
+  private formatDate(d: Date): string {
+    return d.toISOString().split("T")[0]; // YYYY-MM-DD
   }
 
   /**
-   * Select range (week, month, quarter)
+   * Select a named range by computing explicit start/end dates and applying via dialog.
    */
   async selectRange(range: RangeType): Promise<void> {
-    // Open dropdown
-    await this.getDropdownButton().click();
+    const days = RANGE_DAYS[range];
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - days);
 
-    // Wait a bit for dropdown to animate
-    await this.page.waitForTimeout(500);
+    // Open dialog
+    await this.getButton().click();
+    await this.page.waitForSelector("#custom-from-date", { state: "visible", timeout: 5000 });
 
-    // Click menu item directly - Playwright will auto-wait for it to be visible
-    await this.getMenuItem(range).click();
+    // Fill dates
+    await this.page.fill("#custom-from-date", this.formatDate(startDate));
+    await this.page.fill("#custom-to-date", this.formatDate(today));
 
-    // Wait for selection to apply
-    await this.page.waitForTimeout(500);
+    // Apply
+    await this.page.getByRole("button", { name: "Zastosuj" }).click();
 
-    // Verify range is selected
-    await this.verifyRangeSelected(range);
+    // Wait for dialog to close
+    await this.page.waitForSelector("#custom-from-date", { state: "hidden", timeout: 5000 });
+
+    // Wait for button text to update
+    await expect(this.getButton()).toBeVisible({ timeout: 3000 });
   }
 
   /**
-   * Verify that range is selected
-   * Checks if dropdown button contains the range label
+   * Get displayed text from the button (e.g. "19.02 - 05.03.2026")
    */
-  async verifyRangeSelected(range: RangeType): Promise<void> {
-    const button = this.getDropdownButton();
-    await expect(button).toContainText(RANGE_LABELS[range]);
+  async getDisplayedText(): Promise<string> {
+    return (await this.getButton().textContent()) ?? "";
   }
 
   /**
-   * Get currently selected range
-   * Reads the dropdown button text to determine selection
+   * Infer range type from the displayed date span.
+   * Parses "DD.MM - DD.MM.YYYY" and calculates day difference.
    */
   async getSelectedRange(): Promise<RangeType | null> {
-    const button = this.getDropdownButton();
-    const text = await button.textContent();
+    const text = await this.getDisplayedText();
+    const match = text.match(/(\d{2})\.(\d{2})\s*-\s*(\d{2})\.(\d{2})\.(\d{4})/);
+    if (!match) return null;
 
-    if (!text) return null;
+    const [, startDay, startMonth, endDay, endMonth, endYear] = match;
+    const endYearNum = parseInt(endYear);
+    const startMonthNum = parseInt(startMonth);
+    const endMonthNum = parseInt(endMonth);
 
-    // Check which label is in the button text
-    for (const [range, label] of Object.entries(RANGE_LABELS)) {
-      if (text.includes(label)) {
-        return range as RangeType;
-      }
-    }
+    // Start year: same as end year unless month wraps across year boundary
+    const startYearNum = startMonthNum <= endMonthNum ? endYearNum : endYearNum - 1;
 
-    return null;
+    const start = new Date(startYearNum, startMonthNum - 1, parseInt(startDay));
+    const end = new Date(endYearNum, endMonthNum - 1, parseInt(endDay));
+    const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 10) return "week";
+    if (diffDays <= 45) return "month";
+    return "quarter";
+  }
+
+  /**
+   * Verify that a specific range is currently selected.
+   */
+  async verifyRangeSelected(range: RangeType): Promise<void> {
+    const selected = await this.getSelectedRange();
+    expect(selected).toBe(range);
   }
 }

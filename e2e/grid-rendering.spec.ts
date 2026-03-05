@@ -12,7 +12,7 @@ import { GridPage } from "./pages/GridPage";
 test.describe("Grid - Rendering (test@example.com)", () => {
   // NO beforeEach - auth handled by auto-fixture!
 
-  test("TC-GRID-001: Grid renders with default range", async ({ page }) => {
+  test("TC-GRID-001: Grid renders with explicit date range", async ({ page }) => {
     const gridPage = new GridPage(page);
 
     // Navigate to grid
@@ -20,10 +20,6 @@ test.describe("Grid - Rendering (test@example.com)", () => {
 
     // Verify grid is visible
     expect(await gridPage.isGridVisible()).toBe(true);
-
-    // Verify default range is week
-    const selectedRange = await gridPage.rangeSelector.getSelectedRange();
-    expect(selectedRange).toBe("week");
 
     // Verify grid has data
     expect(await gridPage.hasData()).toBe(true);

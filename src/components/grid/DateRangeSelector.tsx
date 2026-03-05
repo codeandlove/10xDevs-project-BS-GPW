@@ -1,48 +1,24 @@
 /**
- * Date Range Selector Component (Dropdown)
- * Unified component replacing RangeSelector + AdvancedDateRangePicker
- * Allows preset selection (Week/Month/Quarter) and custom date range via dialog
+ * Date Range Selector Component
+ * Opens a custom date range dialog directly (no range presets).
  */
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import type { DateRange } from "@/types/nocodb.types";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown, Calendar, Check } from "lucide-react";
+import { ChevronDown, Calendar } from "lucide-react";
 
 interface DateRangeSelectorProps {
-  currentRange: DateRange;
-  startDate: string; // YYYY-MM-DD (for display when custom)
-  endDate: string; // YYYY-MM-DD (for display when custom)
-  onPresetChange: (preset: DateRange) => void;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
   onCustomRangeChange: (startDate: string, endDate: string) => void;
 }
 
-const QUICK_PRESETS: { label: string; value: DateRange }[] = [
-  { label: "Tydzień", value: "week" },
-  { label: "Miesiąc", value: "month" },
-  { label: "Kwartał", value: "quarter" },
-];
-
-export function DateRangeSelector({
-  currentRange,
-  startDate,
-  endDate,
-  onPresetChange,
-  onCustomRangeChange,
-}: DateRangeSelectorProps) {
+export function DateRangeSelector({ startDate, endDate, onCustomRangeChange }: DateRangeSelectorProps) {
   const [isCustomDialogOpen, setIsCustomDialogOpen] = useState(false);
   const [fromDate, setFromDate] = useState(startDate);
   const [toDate, setToDate] = useState(endDate);
   const [error, setError] = useState<string | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Sync local state with props
   useEffect(() => {
@@ -50,49 +26,17 @@ export function DateRangeSelector({
     setToDate(endDate);
   }, [startDate, endDate]);
 
-  // Determine display label
+  // Always show explicit date range in DD.MM - DD.MM.YYYY format
   const getDisplayLabel = () => {
-    const preset = QUICK_PRESETS.find((p) => p.value === currentRange);
-    if (preset) {
-      // Check if current dates actually match the preset
-      const today = new Date();
-      const start = new Date(startDate);
-      const daysDiff = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
-      // Expected days for each preset
-      const expectedDays: Record<DateRange, number> = {
-        week: 7,
-        month: 30,
-        quarter: 90,
-      };
-
-      const expected = expectedDays[currentRange as keyof typeof expectedDays];
-
-      // If dates match preset (±1 day tolerance), show preset name
-      if (expected && Math.abs(daysDiff - expected) <= 1) {
-        return preset.label;
-      }
-    }
-
-    // Show custom date range in shorter format (DD.MM - DD.MM.YYYY)
     const formatDate = (dateStr: string) => {
       const [, month, day] = dateStr.split("-");
       return `${day}.${month}`;
     };
-
     const [endYear] = endDate.split("-");
     return `${formatDate(startDate)} - ${formatDate(endDate)}.${endYear}`;
   };
 
-  const handlePresetSelect = (preset: DateRange) => {
-    setIsCustomDialogOpen(false);
-    setError(null);
-    setDropdownOpen(false);
-    onPresetChange(preset);
-  };
-
   const handleCustomApply = () => {
-    // Validation
     if (!fromDate || !toDate) {
       setError("Proszę wybrać obie daty");
       return;
@@ -115,50 +59,29 @@ export function DateRangeSelector({
     setError(null);
     onCustomRangeChange(fromDate, toDate);
     setIsCustomDialogOpen(false);
-    setDropdownOpen(false);
   };
 
   const handleCustomCancel = () => {
     setIsCustomDialogOpen(false);
     setError(null);
-    // Reset to current range dates
     setFromDate(startDate);
     setToDate(endDate);
   };
 
   return (
     <div className="relative">
-      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="min-w-[160px] justify-between gap-2">
-            <span className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="truncate">{getDisplayLabel()}</span>
-            </span>
-            <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-[200px]">
-          {QUICK_PRESETS.map((preset) => (
-            <DropdownMenuItem
-              key={preset.value}
-              onClick={() => handlePresetSelect(preset.value)}
-              className={currentRange === preset.value ? "bg-accent font-medium" : ""}
-            >
-              <span className="flex items-center gap-2">
-                {currentRange === preset.value ? (
-                  <Check className="h-4 w-4 shrink-0 text-primary" />
-                ) : (
-                  <span className="h-4 w-4 shrink-0" />
-                )}
-                {preset.label}
-              </span>
-            </DropdownMenuItem>
-          ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setIsCustomDialogOpen(true)}>Własny zakres...</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        variant="outline"
+        size="sm"
+        className="min-w-[160px] justify-between gap-2"
+        onClick={() => setIsCustomDialogOpen(true)}
+      >
+        <span className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="truncate">{getDisplayLabel()}</span>
+        </span>
+        <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+      </Button>
 
       {/* Custom Date Range Dialog (Overlay) */}
       {isCustomDialogOpen &&
