@@ -5,10 +5,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useDragScroll } from "./useDragScroll";
-import { createRef } from "react";
+import { createRef, type RefObject } from "react";
 
 describe("useDragScroll", () => {
-  let mockElement: HTMLDivElement;
+  let mockElement: HTMLElement;
 
   beforeEach(() => {
     mockElement = document.createElement("div");
@@ -23,11 +23,11 @@ describe("useDragScroll", () => {
     mockElement.scrollTo = vi.fn((left: number, top: number) => {
       mockElement.scrollLeft = left;
       mockElement.scrollTop = top;
-    });
+    }) as unknown as typeof mockElement.scrollTo;
   });
 
   it("should return initial state", () => {
-    const ref = createRef<HTMLDivElement>();
+    const ref = createRef<HTMLElement>();
 
     const { result } = renderHook(() => useDragScroll({ ref }));
 
@@ -37,7 +37,7 @@ describe("useDragScroll", () => {
   });
 
   it("should not enable dragging when disabled", () => {
-    const ref = { current: mockElement };
+    const ref: RefObject<HTMLElement | null> = { current: mockElement };
 
     const { result } = renderHook(() => useDragScroll({ ref, enabled: false }));
 
@@ -48,7 +48,7 @@ describe("useDragScroll", () => {
   });
 
   it("should start dragging on mouse down", () => {
-    const ref = { current: mockElement };
+    const ref: RefObject<HTMLElement | null> = { current: mockElement };
 
     const { result } = renderHook(() => useDragScroll({ ref, enabled: true }));
 
@@ -60,7 +60,7 @@ describe("useDragScroll", () => {
   });
 
   it("should end dragging on dragEnd call", () => {
-    const ref = { current: mockElement };
+    const ref: RefObject<HTMLElement | null> = { current: mockElement };
 
     const { result } = renderHook(() => useDragScroll({ ref, enabled: true }));
 
@@ -70,7 +70,7 @@ describe("useDragScroll", () => {
   });
 
   it("should handle horizontal scrolling", () => {
-    const ref = { current: mockElement };
+    const ref: RefObject<HTMLElement | null> = { current: mockElement };
 
     renderHook(() => useDragScroll({ ref, enabled: true, direction: "horizontal" }));
 
@@ -78,7 +78,7 @@ describe("useDragScroll", () => {
   });
 
   it("should handle vertical scrolling", () => {
-    const ref = { current: mockElement };
+    const ref: RefObject<HTMLElement | null> = { current: mockElement };
 
     renderHook(() => useDragScroll({ ref, enabled: true, direction: "vertical" }));
 
@@ -86,7 +86,7 @@ describe("useDragScroll", () => {
   });
 
   it("should handle both directions scrolling", () => {
-    const ref = { current: mockElement };
+    const ref: RefObject<HTMLElement | null> = { current: mockElement };
 
     renderHook(() => useDragScroll({ ref, enabled: true, direction: "both" }));
 
@@ -94,7 +94,7 @@ describe("useDragScroll", () => {
   });
 
   it("should not trigger drag on interactive elements", () => {
-    const ref = { current: mockElement };
+    const ref: RefObject<HTMLElement | null> = { current: mockElement };
     const button = document.createElement("button");
     mockElement.appendChild(button);
 
@@ -113,7 +113,7 @@ describe("useDragScroll", () => {
   });
 
   it("should respect drag threshold", () => {
-    const ref = { current: mockElement };
+    const ref: RefObject<HTMLElement | null> = { current: mockElement };
 
     renderHook(() => useDragScroll({ ref, enabled: true, dragThreshold: 10 }));
 
@@ -121,7 +121,7 @@ describe("useDragScroll", () => {
   });
 
   it("should handle touch events", () => {
-    const ref = { current: mockElement };
+    const ref: RefObject<HTMLElement | null> = { current: mockElement };
 
     const { result } = renderHook(() => useDragScroll({ ref, enabled: true }));
 
@@ -135,7 +135,7 @@ describe("useDragScroll", () => {
   });
 
   it("should cleanup event listeners on unmount", () => {
-    const ref = { current: mockElement };
+    const ref: RefObject<HTMLElement | null> = { current: mockElement };
     const removeEventListenerSpy = vi.spyOn(mockElement, "removeEventListener");
 
     const { unmount } = renderHook(() => useDragScroll({ ref, enabled: true }));
@@ -146,7 +146,7 @@ describe("useDragScroll", () => {
   });
 
   it("should handle null ref", () => {
-    const ref = { current: null };
+    const ref: RefObject<HTMLElement | null> = { current: null };
 
     const { result } = renderHook(() => useDragScroll({ ref }));
 
