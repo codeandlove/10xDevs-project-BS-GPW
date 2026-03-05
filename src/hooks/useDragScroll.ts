@@ -38,7 +38,7 @@ import type { RefObject } from "react";
 
 interface UseDragScrollProps {
   /** Ref to the scrollable element */
-  ref: RefObject<HTMLElement>;
+  ref: RefObject<HTMLElement | null>;
   /** Enable/disable drag scrolling (default: true) */
   enabled?: boolean;
   /** Scroll direction (default: 'both') */
